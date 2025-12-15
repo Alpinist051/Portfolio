@@ -277,7 +277,10 @@
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
-  transition: width 0.3s ease;
+}
+
+::-webkit-scrollbar:hover {
+  width: 14px;
 }
 
 ::-webkit-scrollbar-track {
@@ -287,20 +290,10 @@
 ::-webkit-scrollbar-thumb {
   background: hsl(185 100% 50% / 0.3);
   border-radius: 4px;
-  transition: all 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(185 100% 50% / 0.5);
-}
-
-/* Wider scrollbar on body hover for better UX */
-body:hover::-webkit-scrollbar {
-  width: 14px;
-}
-
-body:hover::-webkit-scrollbar-thumb {
-  background: hsl(185 100% 50% / 0.4);
 }
 
 /* Selection */
