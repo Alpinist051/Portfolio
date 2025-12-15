@@ -46,15 +46,37 @@ const ContactSection = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="mb-16 text-center"
+          className="mb-16 flex flex-col items-center text-center"
         >
-          <span className="font-body text-sm tracking-[0.3em] text-primary">CONNECT</span>
-          <h2 className="mt-2 font-display text-3xl font-bold tracking-wider md:text-4xl">
-            INITIATE <span className="text-neon">CONTACT</span>
-          </h2>
-          <p className="mx-auto mt-4 max-w-2xl font-body text-muted-foreground">
-            Ready to transform your vision into reality? Let's discuss how we can build
-            something extraordinary together.
+          {/* Icon */}
+          <div className="mb-2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              className="text-foreground"
+            >
+              <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
+            </svg>
+          </div>
+          
+          {/* Vertical line */}
+          <div className="mb-4 h-8 w-px bg-foreground/60" />
+          
+          {/* Title with watermark effect */}
+          <div className="relative">
+            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 select-none font-display text-5xl font-bold uppercase tracking-widest text-muted/30 md:text-7xl">
+              CONTACT
+            </span>
+            <h2 className="relative z-10 font-display text-3xl font-bold tracking-wider text-foreground md:text-4xl">
+              Contact
+            </h2>
+          </div>
+          
+          <p className="mx-auto mt-6 max-w-2xl font-body text-muted-foreground">
+            Ready to build something extraordinary together.
           </p>
         </motion.div>
 
