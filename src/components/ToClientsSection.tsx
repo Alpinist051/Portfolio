@@ -93,15 +93,37 @@ const ToClientsSection = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="mb-16 text-center"
+          className="mb-16 flex flex-col items-center text-center"
         >
-          <span className="font-body text-sm tracking-[0.3em] text-amber-600">TO CLIENTS</span>
-          <h2 className="mt-2 font-display text-3xl font-bold tracking-wider text-stone-800 md:text-4xl">
-            INSIGHTS & <span className="text-amber-600">PHILOSOPHY</span>
-          </h2>
-          <p className="mx-auto mt-4 max-w-2xl font-body text-stone-600">
-            Thoughts on technology, development, and building successful digital products
-            that I share with my clients.
+          {/* Icon */}
+          <div className="mb-2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              className="text-stone-700"
+            >
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+            </svg>
+          </div>
+          
+          {/* Vertical line */}
+          <div className="mb-4 h-8 w-px bg-stone-400" />
+          
+          {/* Title with watermark effect */}
+          <div className="relative">
+            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 select-none font-display text-5xl font-bold uppercase tracking-widest text-stone-200 md:text-7xl">
+              INSIGHTS
+            </span>
+            <h2 className="relative z-10 font-display text-3xl font-bold tracking-wider text-stone-800 md:text-4xl">
+              Insights
+            </h2>
+          </div>
+          
+          <p className="mx-auto mt-6 max-w-2xl font-body text-stone-600">
+            Thoughts on technology and building successful products.
           </p>
         </motion.div>
 

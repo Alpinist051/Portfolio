@@ -129,14 +129,37 @@ const CertificationsSection = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="mb-16 text-center"
+          className="mb-16 flex flex-col items-center text-center"
         >
-          <span className="font-body text-sm tracking-[0.3em] text-amber-600">CREDENTIALS</span>
-          <h2 className="mt-2 font-display text-3xl font-bold tracking-wider text-stone-800 md:text-4xl">
-            CERTIFICATIONS & <span className="text-amber-600">ACHIEVEMENTS</span>
-          </h2>
-          <p className="mx-auto mt-4 max-w-2xl font-body text-stone-600">
-            Continuous learning and professional development through industry-recognized certifications.
+          {/* Icon */}
+          <div className="mb-2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              className="text-stone-700"
+            >
+              <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+            </svg>
+          </div>
+          
+          {/* Vertical line */}
+          <div className="mb-4 h-8 w-px bg-stone-400" />
+          
+          {/* Title with watermark effect */}
+          <div className="relative">
+            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 select-none font-display text-5xl font-bold uppercase tracking-widest text-stone-200 md:text-7xl">
+              CERTIFICATIONS
+            </span>
+            <h2 className="relative z-10 font-display text-3xl font-bold tracking-wider text-stone-800 md:text-4xl">
+              Certifications
+            </h2>
+          </div>
+          
+          <p className="mx-auto mt-6 max-w-2xl font-body text-stone-600">
+            Industry-recognized certifications and achievements.
           </p>
         </motion.div>
 
