@@ -35,25 +35,25 @@ const InsightCard = ({ insight, index }: { insight: typeof insights[0]; index: n
       whileHover={{ scale: 1.02 }}
       className="group relative"
     >
-      <div className="relative overflow-hidden rounded-xl border border-border/50 bg-gradient-to-br from-card via-card to-muted/30 p-8">
+      <div className="relative overflow-hidden rounded-xl border border-stone-200 bg-white p-8 shadow-md">
         {/* Quote icon */}
         <motion.div
           initial={{ opacity: 0, scale: 0 }}
           whileInView={{ opacity: 0.1, scale: 1 }}
           viewport={{ once: true }}
           transition={{ delay: 0.3 + index * 0.1 }}
-          className="absolute -left-4 -top-4 font-serif text-9xl text-primary"
+          className="absolute -left-4 -top-4 font-serif text-9xl text-amber-500/20"
         >
           "
         </motion.div>
 
         {/* Content */}
         <div className="relative z-10">
-          <p className="mb-6 font-serif text-lg italic leading-relaxed text-foreground/90 md:text-xl">
+          <p className="mb-6 font-serif text-lg italic leading-relaxed text-stone-700 md:text-xl">
             {insight.quote}
           </p>
-          <div className="inline-block rounded-full border border-secondary/30 bg-secondary/10 px-3 py-1">
-            <span className="font-display text-xs tracking-wider text-secondary">
+          <div className="inline-block rounded-full border border-amber-300 bg-amber-50 px-3 py-1">
+            <span className="font-display text-xs tracking-wider text-amber-700">
               {insight.category}
             </span>
           </div>
@@ -61,12 +61,12 @@ const InsightCard = ({ insight, index }: { insight: typeof insights[0]; index: n
 
         {/* Hover gradient */}
         <motion.div
-          className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+          className="absolute inset-0 bg-gradient-to-br from-amber-50 to-stone-50 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
         />
 
         {/* Bottom accent */}
         <motion.div
-          className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-primary via-secondary to-accent"
+          className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-300"
           initial={{ width: "0%" }}
           whileInView={{ width: "30%" }}
           viewport={{ once: true }}
@@ -82,20 +82,11 @@ const ToClientsSection = () => {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <section id="insights" className="relative overflow-hidden py-32" ref={ref}>
-      {/* Background elements */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/5 to-background" />
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={isInView ? { opacity: 1 } : {}}
-        className="pointer-events-none absolute left-1/4 top-0 h-96 w-96 rounded-full bg-primary/5 blur-3xl"
-      />
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={isInView ? { opacity: 1 } : {}}
-        transition={{ delay: 0.3 }}
-        className="pointer-events-none absolute bottom-0 right-1/4 h-96 w-96 rounded-full bg-secondary/5 blur-3xl"
-      />
+    <section id="insights" className="relative overflow-hidden bg-[#fafafa] py-32" ref={ref}>
+      {/* Book page curl effect */}
+      <div className="pointer-events-none absolute left-0 top-0 h-full w-16 bg-gradient-to-r from-stone-300/50 via-stone-200/30 to-transparent" />
+      <div className="pointer-events-none absolute left-0 top-0 h-full w-2 bg-gradient-to-r from-stone-400/40 to-stone-300/20" />
+      <div className="pointer-events-none absolute left-2 top-0 h-full w-1 shadow-[2px_0_8px_rgba(0,0,0,0.1)]" />
 
       <div className="container relative z-10 mx-auto px-4">
         <motion.div
@@ -104,11 +95,11 @@ const ToClientsSection = () => {
           transition={{ duration: 0.6 }}
           className="mb-16 text-center"
         >
-          <span className="font-body text-sm tracking-[0.3em] text-secondary">TO CLIENTS</span>
-          <h2 className="mt-2 font-display text-3xl font-bold tracking-wider md:text-4xl">
-            INSIGHTS & <span className="text-neon-magenta">PHILOSOPHY</span>
+          <span className="font-body text-sm tracking-[0.3em] text-amber-600">TO CLIENTS</span>
+          <h2 className="mt-2 font-display text-3xl font-bold tracking-wider text-stone-800 md:text-4xl">
+            INSIGHTS & <span className="text-amber-600">PHILOSOPHY</span>
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl font-body text-muted-foreground">
+          <p className="mx-auto mt-4 max-w-2xl font-body text-stone-600">
             Thoughts on technology, development, and building successful digital products
             that I share with my clients.
           </p>
@@ -130,7 +121,7 @@ const ToClientsSection = () => {
         >
           <Link
             to="/insights"
-            className="group relative inline-flex items-center gap-2 overflow-hidden rounded-lg border border-accent/50 bg-accent/10 px-8 py-4 font-display text-sm font-semibold tracking-wider text-accent transition-all hover:border-accent hover:bg-accent/20"
+            className="group relative inline-flex items-center gap-2 overflow-hidden rounded-lg border border-amber-400 bg-amber-50 px-8 py-4 font-display text-sm font-semibold tracking-wider text-amber-700 transition-all hover:bg-amber-100"
           >
             <span className="relative z-10">VIEW ALL INSIGHTS</span>
             <motion.svg

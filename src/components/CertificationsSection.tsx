@@ -65,45 +65,45 @@ const CertificationCard = ({ cert, index }: { cert: Certification; index: number
       className="group relative"
     >
       {/* Paper card */}
-      <div className="paper-texture relative overflow-hidden rounded-lg p-6 shadow-paper transition-shadow hover:shadow-lg">
+      <div className="relative overflow-hidden rounded-lg border border-stone-200 bg-white p-6 shadow-md transition-shadow hover:shadow-lg">
         {/* Decorative stamp */}
         <motion.div
           initial={{ opacity: 0, scale: 0, rotate: -20 }}
           whileInView={{ opacity: 1, scale: 1, rotate: -12 }}
           viewport={{ once: true }}
           transition={{ delay: 0.3 + index * 0.1, type: "spring" }}
-          className="absolute right-4 top-4 flex h-14 w-14 items-center justify-center rounded-full border-2 border-dashed border-red-400/60"
+          className="absolute right-4 top-4 flex h-14 w-14 items-center justify-center rounded-full border-2 border-dashed border-amber-500/60"
         >
-          <span className="font-display text-[10px] font-bold tracking-wider text-red-500/70">
+          <span className="font-display text-[10px] font-bold tracking-wider text-amber-600/70">
             VERIFIED
           </span>
         </motion.div>
 
         {/* Content */}
         <div className="relative z-10 pr-16">
-          <h3 className="mb-2 font-serif text-lg font-semibold text-paper-text transition-colors group-hover:text-primary md:text-xl">
+          <h3 className="mb-2 font-serif text-lg font-semibold text-stone-800 transition-colors group-hover:text-amber-700 md:text-xl">
             {cert.title}
           </h3>
-          <p className="mb-3 font-body text-sm text-paper-text/70">{cert.issuer}</p>
+          <p className="mb-3 font-body text-sm text-stone-600">{cert.issuer}</p>
           
-          <div className="flex items-center gap-4 border-t border-paper-border/50 pt-3">
+          <div className="flex items-center gap-4 border-t border-stone-200 pt-3">
             <div>
-              <span className="font-body text-xs text-paper-text/50">Issued</span>
-              <p className="font-serif text-sm font-medium text-paper-text">{cert.date}</p>
+              <span className="font-body text-xs text-stone-400">Issued</span>
+              <p className="font-serif text-sm font-medium text-stone-700">{cert.date}</p>
             </div>
             <div>
-              <span className="font-body text-xs text-paper-text/50">Credential ID</span>
-              <p className="font-body text-xs text-paper-text/70">{cert.credentialId}</p>
+              <span className="font-body text-xs text-stone-400">Credential ID</span>
+              <p className="font-body text-xs text-stone-500">{cert.credentialId}</p>
             </div>
           </div>
         </div>
 
         {/* Paper corner fold */}
-        <div className="absolute -bottom-1 -right-1 h-6 w-6 rotate-180 bg-gradient-to-br from-paper-dark to-paper" />
+        <div className="absolute -bottom-1 -right-1 h-6 w-6 rotate-180 bg-gradient-to-br from-stone-200 to-white" />
 
         {/* Underline animation */}
         <motion.div
-          className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-primary to-secondary"
+          className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-amber-500 to-amber-300"
           initial={{ width: "0%" }}
           whileHover={{ width: "100%" }}
           transition={{ duration: 0.3 }}
@@ -118,9 +118,11 @@ const CertificationsSection = () => {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <section id="certifications" className="relative overflow-hidden py-32" ref={ref}>
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/10 to-background" />
+    <section id="certifications" className="relative overflow-hidden bg-[#fafafa] py-32" ref={ref}>
+      {/* Book page curl effect */}
+      <div className="pointer-events-none absolute left-0 top-0 h-full w-16 bg-gradient-to-r from-stone-300/50 via-stone-200/30 to-transparent" />
+      <div className="pointer-events-none absolute left-0 top-0 h-full w-2 bg-gradient-to-r from-stone-400/40 to-stone-300/20" />
+      <div className="pointer-events-none absolute left-2 top-0 h-full w-1 shadow-[2px_0_8px_rgba(0,0,0,0.1)]" />
 
       <div className="container relative z-10 mx-auto px-4">
         <motion.div
@@ -129,11 +131,11 @@ const CertificationsSection = () => {
           transition={{ duration: 0.6 }}
           className="mb-16 text-center"
         >
-          <span className="font-body text-sm tracking-[0.3em] text-accent">CREDENTIALS</span>
-          <h2 className="mt-2 font-display text-3xl font-bold tracking-wider md:text-4xl">
-            CERTIFICATIONS & <span className="text-neon">ACHIEVEMENTS</span>
+          <span className="font-body text-sm tracking-[0.3em] text-amber-600">CREDENTIALS</span>
+          <h2 className="mt-2 font-display text-3xl font-bold tracking-wider text-stone-800 md:text-4xl">
+            CERTIFICATIONS & <span className="text-amber-600">ACHIEVEMENTS</span>
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl font-body text-muted-foreground">
+          <p className="mx-auto mt-4 max-w-2xl font-body text-stone-600">
             Continuous learning and professional development through industry-recognized certifications.
           </p>
         </motion.div>
@@ -145,23 +147,6 @@ const CertificationsSection = () => {
           ))}
         </div>
 
-        {/* Decorative elements */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={isInView ? { opacity: 1 } : {}}
-          transition={{ delay: 1 }}
-          className="pointer-events-none absolute -left-20 top-1/2 -translate-y-1/2"
-        >
-          <div className="h-40 w-40 rounded-full bg-primary/5 blur-3xl" />
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={isInView ? { opacity: 1 } : {}}
-          transition={{ delay: 1.2 }}
-          className="pointer-events-none absolute -right-20 top-1/3"
-        >
-          <div className="h-60 w-60 rounded-full bg-secondary/5 blur-3xl" />
-        </motion.div>
       </div>
     </section>
   );
