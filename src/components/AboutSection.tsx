@@ -1,9 +1,10 @@
 import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
 const AboutSection = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const [activeTab, setActiveTab] = useState("about");
 
   const skills = [
     { category: "Frontend", items: ["React", "TypeScript", "Next.js", "Tailwind CSS"] },
@@ -12,12 +13,73 @@ const AboutSection = () => {
     { category: "Infrastructure", items: ["AWS", "Docker", "Kubernetes", "MLOps"] },
   ];
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.6, ease: "easeOut" },
+    },
+  };
+
+  const floatVariants = {
+    animate: {
+      y: [0, -10, 0],
+      transition: {
+        duration: 3,
+        repeat: Infinity,
+        ease: "easeInOut",
+      },
+    },
+  };
+
   return (
     <section id="about" className="relative overflow-hidden" ref={ref}>
       {/* Book page with curl effect */}
       <div className="relative min-h-screen bg-[#fafafa]">
+        {/* Animated background particles */}
+        <div className="absolute inset-0 overflow-hidden">
+          {[...Array(20)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute h-2 w-2 rounded-full bg-primary/10"
+              initial={{ 
+                x: Math.random() * 100 + "%", 
+                y: Math.random() * 100 + "%",
+                scale: Math.random() * 0.5 + 0.5,
+              }}
+              animate={{
+                y: [null, "-20%", null],
+                opacity: [0.3, 0.6, 0.3],
+              }}
+              transition={{
+                duration: Math.random() * 5 + 5,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: Math.random() * 2,
+              }}
+            />
+          ))}
+        </div>
+
         {/* Page curl effect - left side */}
-        <div className="absolute left-0 top-0 h-full w-24 md:w-40 lg:w-56 overflow-hidden">
+        <motion.div 
+          className="absolute left-0 top-0 h-full w-24 md:w-40 lg:w-56 overflow-hidden"
+          initial={{ x: -100, opacity: 0 }}
+          animate={isInView ? { x: 0, opacity: 1 } : {}}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+        >
           <div 
             className="absolute inset-0"
             style={{
@@ -32,7 +94,7 @@ const AboutSection = () => {
               background: 'linear-gradient(to right, rgba(0,0,0,0.15), transparent)',
             }}
           />
-        </div>
+        </motion.div>
 
         {/* Main content area */}
         <div className="relative z-10 px-8 py-24 md:px-16 lg:px-32">
@@ -43,23 +105,55 @@ const AboutSection = () => {
             transition={{ duration: 0.6 }}
             className="mb-16 text-center"
           >
-            {/* Icon */}
-            <div className="mb-4 inline-flex items-center justify-center">
-              <svg className="h-8 w-8 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+            {/* Animated Icon */}
+            <motion.div 
+              className="mb-4 inline-flex items-center justify-center"
+              variants={floatVariants}
+              animate="animate"
+            >
+              <motion.svg 
+                className="h-8 w-8 text-gray-600" 
+                fill="currentColor" 
+                viewBox="0 0 24 24"
+                whileHover={{ scale: 1.2, rotate: 360 }}
+                transition={{ duration: 0.5 }}
+              >
                 <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-              </svg>
-            </div>
-            <div className="mx-auto mb-2 h-8 w-px bg-gray-400" />
+              </motion.svg>
+            </motion.div>
+            <motion.div 
+              className="mx-auto mb-2 h-8 w-px bg-gray-400"
+              initial={{ scaleY: 0 }}
+              animate={isInView ? { scaleY: 1 } : {}}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            />
             
-            <h2 className="relative font-display text-4xl font-bold tracking-wide text-gray-800 md:text-5xl">
-              <span className="absolute inset-0 text-gray-200 blur-[1px]" style={{ fontSize: '120%', top: '-10%' }}>
+            <div className="relative">
+              <motion.span 
+                className="absolute inset-0 font-display text-5xl font-bold tracking-wide text-gray-200 blur-[1px] md:text-6xl"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={isInView ? { opacity: 1, scale: 1 } : {}}
+                transition={{ duration: 0.8, delay: 0.2 }}
+              >
                 ABOUT ME
-              </span>
-              <span className="relative">About me</span>
-            </h2>
-            <p className="mt-4 font-body text-gray-500">
+              </motion.span>
+              <motion.h2 
+                className="relative font-display text-4xl font-bold tracking-wide text-gray-800 md:text-5xl"
+                initial={{ opacity: 0, y: 20 }}
+                animate={isInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.6, delay: 0.4 }}
+              >
+                About me
+              </motion.h2>
+            </div>
+            <motion.p 
+              className="mt-4 font-body text-gray-500"
+              initial={{ opacity: 0 }}
+              animate={isInView ? { opacity: 1 } : {}}
+              transition={{ duration: 0.6, delay: 0.6 }}
+            >
               Experience, technologies and background.
-            </p>
+            </motion.p>
           </motion.div>
 
           {/* Tabs navigation */}
@@ -69,15 +163,26 @@ const AboutSection = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="mx-auto mb-12 flex max-w-3xl items-center justify-center rounded-full bg-gray-100 p-1"
           >
-            <button className="rounded-full bg-primary px-8 py-3 font-body text-sm font-medium text-white transition-all">
-              ABOUT
-            </button>
-            <button className="px-8 py-3 font-body text-sm font-medium text-gray-600 transition-all hover:text-gray-900">
-              SKILL
-            </button>
-            <button className="px-8 py-3 font-body text-sm font-medium text-gray-600 transition-all hover:text-gray-900">
-              EDUCATION
-            </button>
+            {["about", "skill", "education"].map((tab) => (
+              <motion.button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`relative rounded-full px-8 py-3 font-body text-sm font-medium transition-all ${
+                  activeTab === tab ? "text-white" : "text-gray-600 hover:text-gray-900"
+                }`}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                {activeTab === tab && (
+                  <motion.div
+                    className="absolute inset-0 rounded-full bg-primary"
+                    layoutId="activeTab"
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                  />
+                )}
+                <span className="relative z-10">{tab.toUpperCase()}</span>
+              </motion.button>
+            ))}
           </motion.div>
 
           {/* Content */}
@@ -89,49 +194,77 @@ const AboutSection = () => {
               transition={{ duration: 0.6, delay: 0.3 }}
               className="mb-12 text-center"
             >
-              <h3 className="mb-2 font-serif text-2xl font-bold text-gray-800">
+              <motion.h3 
+                className="mb-2 font-serif text-2xl font-bold text-gray-800"
+                whileHover={{ scale: 1.02 }}
+              >
                 AI/ML Engineer & Full Stack Developer
-              </h3>
-              <p className="font-serif text-sm italic text-gray-500">
+              </motion.h3>
+              <motion.p 
+                className="font-serif text-sm italic text-gray-500"
+                initial={{ opacity: 0, x: -20 }}
+                animate={isInView ? { opacity: 1, x: 0 } : {}}
+                transition={{ duration: 0.6, delay: 0.5 }}
+              >
                 - AI, Machine Learning, Web, Mobile Application, Blockchain & Web3
-              </p>
-              <div className="mx-auto mt-6 max-w-3xl font-serif leading-relaxed text-gray-600">
+              </motion.p>
+              <motion.div 
+                className="mx-auto mt-6 max-w-3xl font-serif leading-relaxed text-gray-600"
+                initial={{ opacity: 0 }}
+                animate={isInView ? { opacity: 1 } : {}}
+                transition={{ duration: 0.8, delay: 0.6 }}
+              >
                 <p>
                   Results-driven <strong className="text-gray-800">AI/ML Engineer</strong> and{" "}
                   <strong className="text-gray-800">Full Stack Developer</strong> with over 6 years of expertise in
                   building intelligent, end-to-end software systems. I specialize in designing and deploying 
                   scalable web applications using modern technologies including React, Node.js, and Python-based frameworks.
                 </p>
-              </div>
+              </motion.div>
             </motion.div>
 
             {/* Skills grid */}
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.6, delay: 0.4 }}
+              variants={containerVariants}
+              initial="hidden"
+              animate={isInView ? "visible" : "hidden"}
               className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
             >
               {skills.map((skillGroup, i) => (
                 <motion.div
                   key={skillGroup.category}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={isInView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ duration: 0.5, delay: 0.5 + i * 0.1 }}
-                  className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
+                  variants={itemVariants}
+                  whileHover={{ 
+                    scale: 1.05, 
+                    boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
+                    y: -5,
+                  }}
+                  className="group rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-all cursor-pointer"
                 >
-                  <h4 className="mb-3 font-display text-sm tracking-wider text-primary">
+                  <motion.h4 
+                    className="mb-3 font-display text-sm tracking-wider text-primary"
+                    initial={{ x: -10, opacity: 0 }}
+                    animate={isInView ? { x: 0, opacity: 1 } : {}}
+                    transition={{ duration: 0.4, delay: 0.5 + i * 0.1 }}
+                  >
                     {skillGroup.category}
-                  </h4>
+                  </motion.h4>
                   <ul className="space-y-2">
-                    {skillGroup.items.map((skill) => (
-                      <li
+                    {skillGroup.items.map((skill, j) => (
+                      <motion.li
                         key={skill}
                         className="flex items-center gap-2 font-body text-sm text-gray-600"
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={isInView ? { opacity: 1, x: 0 } : {}}
+                        transition={{ duration: 0.3, delay: 0.6 + i * 0.1 + j * 0.05 }}
+                        whileHover={{ x: 5, color: "#1a1a1a" }}
                       >
-                        <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                        <motion.span 
+                          className="h-1.5 w-1.5 rounded-full bg-primary"
+                          whileHover={{ scale: 1.5 }}
+                        />
                         {skill}
-                      </li>
+                      </motion.li>
                     ))}
                   </ul>
                 </motion.div>
@@ -140,9 +273,9 @@ const AboutSection = () => {
 
             {/* Stats */}
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.6, delay: 0.8 }}
+              variants={containerVariants}
+              initial="hidden"
+              animate={isInView ? "visible" : "hidden"}
               className="mt-16 grid grid-cols-2 gap-8 md:grid-cols-4"
             >
               {[
@@ -151,14 +284,34 @@ const AboutSection = () => {
                 { value: "20+", label: "AI Solutions" },
                 { value: "100%", label: "Client Satisfaction" },
               ].map((stat, i) => (
-                <div key={i} className="text-center">
-                  <div className="font-display text-4xl font-bold text-primary md:text-5xl">
+                <motion.div 
+                  key={i} 
+                  className="text-center group cursor-pointer"
+                  variants={itemVariants}
+                  whileHover={{ scale: 1.1 }}
+                >
+                  <motion.div 
+                    className="font-display text-4xl font-bold text-primary md:text-5xl"
+                    initial={{ scale: 0 }}
+                    animate={isInView ? { scale: 1 } : {}}
+                    transition={{ 
+                      type: "spring", 
+                      stiffness: 200, 
+                      damping: 10, 
+                      delay: 0.8 + i * 0.1 
+                    }}
+                  >
                     {stat.value}
-                  </div>
-                  <div className="mt-2 font-body text-sm tracking-wider text-gray-500">
+                  </motion.div>
+                  <motion.div 
+                    className="mt-2 font-body text-sm tracking-wider text-gray-500 group-hover:text-gray-800 transition-colors"
+                    initial={{ opacity: 0 }}
+                    animate={isInView ? { opacity: 1 } : {}}
+                    transition={{ duration: 0.4, delay: 1 + i * 0.1 }}
+                  >
                     {stat.label}
-                  </div>
-                </div>
+                  </motion.div>
+                </motion.div>
               ))}
             </motion.div>
           </div>
