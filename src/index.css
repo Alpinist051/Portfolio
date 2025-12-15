@@ -16,10 +16,10 @@
     --popover: 230 30% 8%;
     --popover-foreground: 200 20% 95%;
 
-    /* Neon cyan primary */
-    --primary: 185 100% 50%;
-    --primary-foreground: 230 25% 5%;
-    --primary-glow: 185 100% 60%;
+    /* Dark gray primary */
+    --primary: 220 10% 35%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 220 10% 45%;
 
     /* Magenta accent */
     --secondary: 320 100% 60%;
@@ -38,7 +38,7 @@
 
     --border: 230 30% 20%;
     --input: 230 30% 15%;
-    --ring: 185 100% 50%;
+    --ring: 220 10% 35%;
 
     --radius: 0.5rem;
 
@@ -50,24 +50,24 @@
 
     /* Gradients */
     --gradient-space: linear-gradient(135deg, hsl(230 25% 5%) 0%, hsl(250 30% 10%) 50%, hsl(230 25% 5%) 100%);
-    --gradient-neon: linear-gradient(135deg, hsl(185 100% 50%) 0%, hsl(320 100% 60%) 100%);
+    --gradient-neon: linear-gradient(135deg, hsl(220 10% 35%) 0%, hsl(220 10% 50%) 100%);
     --gradient-paper: linear-gradient(180deg, hsl(40 30% 95%) 0%, hsl(35 25% 88%) 100%);
-    --gradient-glow: radial-gradient(ellipse at center, hsl(185 100% 50% / 0.3) 0%, transparent 70%);
+    --gradient-glow: radial-gradient(ellipse at center, hsl(220 10% 35% / 0.3) 0%, transparent 70%);
 
     /* Shadows */
-    --shadow-neon: 0 0 30px hsl(185 100% 50% / 0.4), 0 0 60px hsl(185 100% 50% / 0.2);
-    --shadow-magenta: 0 0 30px hsl(320 100% 60% / 0.4), 0 0 60px hsl(320 100% 60% / 0.2);
+    --shadow-neon: 0 0 30px hsl(220 10% 35% / 0.4), 0 0 60px hsl(220 10% 35% / 0.2);
+    --shadow-magenta: 0 0 30px hsl(220 10% 50% / 0.4), 0 0 60px hsl(220 10% 50% / 0.2);
     --shadow-paper: 0 4px 20px hsl(30 10% 15% / 0.15);
     --shadow-card: 0 8px 32px hsl(0 0% 0% / 0.4);
 
     --sidebar-background: 230 25% 5%;
     --sidebar-foreground: 200 20% 95%;
-    --sidebar-primary: 185 100% 50%;
-    --sidebar-primary-foreground: 230 25% 5%;
+    --sidebar-primary: 220 10% 35%;
+    --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 230 30% 15%;
     --sidebar-accent-foreground: 200 20% 95%;
     --sidebar-border: 230 30% 20%;
-    --sidebar-ring: 185 100% 50%;
+    --sidebar-ring: 220 10% 35%;
   }
 }
 
@@ -102,9 +102,9 @@
   /* Neon text effect */
   .text-neon {
     @apply text-primary;
-    text-shadow: 0 0 10px hsl(185 100% 50% / 0.8),
-                 0 0 20px hsl(185 100% 50% / 0.6),
-                 0 0 40px hsl(185 100% 50% / 0.4);
+    text-shadow: 0 0 10px hsl(220 10% 35% / 0.8),
+                 0 0 20px hsl(220 10% 35% / 0.6),
+                 0 0 40px hsl(220 10% 35% / 0.4);
   }
 
   .text-neon-magenta {
@@ -139,11 +139,11 @@
     position: absolute;
     inset: -2px;
     background: linear-gradient(90deg, 
-      hsl(185 100% 50%) 0%, 
-      hsl(320 100% 60%) 25%,
-      hsl(185 100% 50%) 50%,
-      hsl(320 100% 60%) 75%,
-      hsl(185 100% 50%) 100%
+      hsl(220 10% 35%) 0%, 
+      hsl(220 10% 50%) 25%,
+      hsl(220 10% 35%) 50%,
+      hsl(220 10% 50%) 75%,
+      hsl(220 10% 35%) 100%
     );
     background-size: 200% 100%;
     border-radius: inherit;
@@ -166,7 +166,7 @@
     @apply absolute inset-0 opacity-0 transition-opacity duration-500;
     background: radial-gradient(
       800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
-      hsl(185 100% 50% / 0.1),
+      hsl(220 10% 35% / 0.1),
       transparent 40%
     );
   }
@@ -178,8 +178,8 @@
   /* Space grid */
   .space-grid {
     background-image: 
-      linear-gradient(hsl(185 100% 50% / 0.03) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(185 100% 50% / 0.03) 1px, transparent 1px);
+      linear-gradient(hsl(220 10% 35% / 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(220 10% 35% / 0.03) 1px, transparent 1px);
     background-size: 50px 50px;
   }
 
@@ -314,6 +314,6 @@
 
 /* Selection */
 ::selection {
-  background: hsl(185 100% 50% / 0.3);
+  background: hsl(220 10% 35% / 0.3);
   color: hsl(200 20% 95%);
 }
