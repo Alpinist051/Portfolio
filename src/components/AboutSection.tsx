@@ -168,7 +168,7 @@ const AboutSection = () => {
                 AI/ML Engineer & Full Stack Developer
               </motion.h3>
               <motion.p 
-                className="font-serif text-sm italic text-gray-500"
+                className="font-serif text-sm italic text-gray-600"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.4 }}
@@ -224,7 +224,7 @@ const AboutSection = () => {
                       <item.icon className="h-5 w-5 text-gray-700" />
                     </motion.div>
                     <div>
-                      <p className="text-base text-gray-500 font-body">{item.label}</p>
+                      <p className="text-base text-gray-600 font-body">{item.label}</p>
                       <p className="font-display text-xl font-semibold text-gray-800">{item.value}</p>
                     </div>
                   </div>
@@ -389,7 +389,7 @@ const AboutSection = () => {
                       {edu.school}
                     </motion.p>
 
-                    <div className="flex flex-wrap items-center gap-4 mb-3 text-sm text-gray-500">
+                    <div className="flex flex-wrap items-center gap-4 mb-3 text-sm text-gray-600">
                       <span className="flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
                         {edu.period}
@@ -559,7 +559,7 @@ const AboutSection = () => {
               </motion.h2>
             </div>
             <motion.p 
-              className="mt-4 font-body text-gray-500"
+              className="mt-4 font-body text-gray-600"
               initial={{ opacity: 0 }}
               animate={isInView ? { opacity: 1 } : {}}
               transition={{ duration: 0.6, delay: 0.6 }}
@@ -573,7 +573,7 @@ const AboutSection = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="mx-auto mb-10 flex max-w-2xl items-center justify-center rounded-full bg-gray-100 p-1 border border-gray-200"
+            className="mx-auto mb-10 flex max-w-3xl items-center justify-center rounded-full bg-gray-100 p-1.5 border border-gray-200"
           >
             {(["about", "skill", "education"] as const).map((tab) => {
               const Icon = tabIcons[tab];
@@ -581,20 +581,20 @@ const AboutSection = () => {
                 <motion.button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`relative flex items-center gap-2 rounded-full px-5 py-2.5 font-body text-sm font-medium transition-all ${
-                    activeTab === tab ? "text-white" : "text-gray-600 hover:text-gray-900"
+                  className={`relative flex items-center gap-3 rounded-full px-8 py-3.5 font-body text-base font-medium transition-all ${
+                    activeTab === tab ? "text-white" : "text-gray-600 hover:text-gray-800"
                   }`}
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                 >
                   {activeTab === tab && (
                     <motion.div
-                      className="absolute inset-0 rounded-full bg-gray-800"
+                      className="absolute inset-0 rounded-full bg-gray-700"
                       layoutId="activeTab"
                       transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                     />
                   )}
-                  <Icon className="relative z-10 h-4 w-4" />
+                  <Icon className="relative z-10 h-5 w-5" />
                   <span className="relative z-10">{tab.toUpperCase()}</span>
                 </motion.button>
               );
@@ -637,7 +637,7 @@ const AboutSection = () => {
                   {stat.value}{stat.suffix}
                 </motion.div>
                 <motion.div 
-                  className="mt-2 font-body text-sm tracking-wider text-gray-500 group-hover:text-gray-800 transition-colors"
+                  className="mt-2 font-body text-sm tracking-wider text-gray-600 group-hover:text-gray-800 transition-colors"
                   initial={{ opacity: 0 }}
                   animate={statsInView ? { opacity: 1 } : {}}
                   transition={{ duration: 0.4, delay: 0.5 + i * 0.1 }}
