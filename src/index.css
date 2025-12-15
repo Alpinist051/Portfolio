@@ -330,6 +330,11 @@
   .backdrop-blur-space {
     backdrop-filter: blur(20px) saturate(180%);
   }
+
+  /* Radial gradient for depth */
+  .bg-gradient-radial {
+    background: radial-gradient(ellipse at center, var(--tw-gradient-stops));
+  }
 }
 
 /* Custom scrollbar - light mode */
