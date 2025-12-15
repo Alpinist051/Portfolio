@@ -209,15 +209,42 @@ const ProjectsSection = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="mb-16 text-center"
+          className="mb-16 flex flex-col items-center text-center"
         >
-          <span className="font-body text-sm tracking-[0.3em] text-secondary">PORTFOLIO</span>
-          <h2 className="mt-2 font-display text-3xl font-bold tracking-wider md:text-4xl">
-            FEATURED <span className="text-neon-magenta">PROJECTS</span>
-          </h2>
-          <p className="mx-auto mt-4 max-w-2xl font-body text-muted-foreground">
-            A curated selection of AI/ML solutions and full-stack applications
-            that showcase innovation and technical excellence.
+          {/* Icon */}
+          <div className="mb-2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              className="text-foreground"
+            >
+              <rect x="3" y="3" width="7" height="7" rx="1" />
+              <rect x="14" y="3" width="7" height="7" rx="1" />
+              <rect x="3" y="14" width="7" height="7" rx="1" />
+              <rect x="14" y="14" width="7" height="7" rx="1" />
+            </svg>
+          </div>
+          
+          {/* Vertical line */}
+          <div className="mb-4 h-8 w-px bg-foreground/60" />
+          
+          {/* Title with watermark effect */}
+          <div className="relative">
+            {/* Watermark text behind */}
+            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 select-none font-display text-5xl font-bold uppercase tracking-widest text-muted/30 md:text-7xl">
+              PROJECTS
+            </span>
+            {/* Main title */}
+            <h2 className="relative z-10 font-display text-3xl font-bold tracking-wider text-foreground md:text-4xl">
+              Projects
+            </h2>
+          </div>
+          
+          <p className="mx-auto mt-6 max-w-2xl font-body text-muted-foreground">
+            A curated selection of AI/ML solutions and full-stack applications.
           </p>
         </motion.div>
 
