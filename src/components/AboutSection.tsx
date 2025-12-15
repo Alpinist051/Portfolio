@@ -1,11 +1,50 @@
 import { motion, useInView, AnimatePresence } from "framer-motion";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { GraduationCap, Code2, User, Sparkles, MapPin, Calendar, Award } from "lucide-react";
+
+// CountUp hook
+const useCountUp = (end: number, duration: number = 2000, start: boolean = false) => {
+  const [count, setCount] = useState(0);
+  
+  useEffect(() => {
+    if (!start) return;
+    
+    let startTime: number;
+    let animationFrame: number;
+    
+    const animate = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / duration, 1);
+      
+      // Easing function for smooth animation
+      const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+      setCount(Math.floor(easeOutQuart * end));
+      
+      if (progress < 1) {
+        animationFrame = requestAnimationFrame(animate);
+      }
+    };
+    
+    animationFrame = requestAnimationFrame(animate);
+    
+    return () => cancelAnimationFrame(animationFrame);
+  }, [end, duration, start]);
+  
+  return count;
+};
 
 const AboutSection = () => {
   const ref = useRef(null);
+  const statsRef = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const statsInView = useInView(statsRef, { once: true, margin: "-50px" });
   const [activeTab, setActiveTab] = useState("about");
+
+  // CountUp values
+  const yearsCount = useCountUp(6, 2000, statsInView);
+  const projectsCount = useCountUp(50, 2000, statsInView);
+  const aiCount = useCountUp(20, 2000, statsInView);
+  const satisfactionCount = useCountUp(100, 2000, statsInView);
 
   const skills = [
     { category: "Frontend", items: ["React", "TypeScript", "Next.js", "Tailwind CSS"] },
@@ -64,26 +103,18 @@ const AboutSection = () => {
     },
   };
 
-  const glowVariants = {
-    animate: {
-      boxShadow: [
-        "0 0 20px rgba(0, 180, 216, 0.2)",
-        "0 0 40px rgba(0, 180, 216, 0.4)",
-        "0 0 20px rgba(0, 180, 216, 0.2)",
-      ],
-      transition: {
-        duration: 2,
-        repeat: Infinity,
-        ease: "easeInOut",
-      },
-    },
-  };
-
   const tabIcons = {
     about: User,
     skill: Code2,
     education: GraduationCap,
   };
+
+  const stats = [
+    { value: yearsCount, suffix: "+", label: "Years Experience" },
+    { value: projectsCount, suffix: "+", label: "Projects Delivered" },
+    { value: aiCount, suffix: "+", label: "AI Solutions" },
+    { value: satisfactionCount, suffix: "%", label: "Client Satisfaction" },
+  ];
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -91,36 +122,42 @@ const AboutSection = () => {
         return (
           <motion.div
             key="about"
-            initial={{ opacity: 0, x: -50 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 50 }}
-            transition={{ duration: 0.5 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
           >
             {/* Profile Summary */}
             <motion.div
-              className="mb-12 text-center"
+              className="mb-10 text-center"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
               <motion.div
-                className="mx-auto mb-6 relative w-32 h-32"
+                className="mx-auto mb-6 relative w-28 h-28"
                 whileHover={{ scale: 1.1 }}
               >
                 <motion.div
-                  className="absolute inset-0 rounded-full bg-gradient-to-r from-primary to-cyan-400"
-                  variants={glowVariants}
-                  animate="animate"
+                  className="absolute inset-0 rounded-full bg-gradient-to-r from-gray-700 to-gray-500"
+                  animate={{
+                    boxShadow: [
+                      "0 0 15px rgba(100, 100, 100, 0.2)",
+                      "0 0 25px rgba(100, 100, 100, 0.3)",
+                      "0 0 15px rgba(100, 100, 100, 0.2)",
+                    ],
+                  }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                 />
                 <div className="absolute inset-1 rounded-full bg-[#fafafa] flex items-center justify-center">
-                  <User className="w-16 h-16 text-primary" />
+                  <User className="w-14 h-14 text-gray-700" />
                 </div>
                 <motion.div
-                  className="absolute -top-2 -right-2"
+                  className="absolute -top-1 -right-1"
                   animate={{ rotate: 360 }}
                   transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
                 >
-                  <Sparkles className="w-6 h-6 text-primary" />
+                  <Sparkles className="w-5 h-5 text-amber-500" />
                 </motion.div>
               </motion.div>
 
@@ -155,7 +192,7 @@ const AboutSection = () => {
 
             {/* Profile highlights */}
             <motion.div
-              className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+              className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
               variants={containerVariants}
               initial="hidden"
               animate="visible"
@@ -164,31 +201,31 @@ const AboutSection = () => {
                 { icon: MapPin, label: "Location", value: "Singapore" },
                 { icon: Calendar, label: "Experience", value: "6+ Years" },
                 { icon: Award, label: "Specialization", value: "AI/ML & Full Stack" },
-              ].map((item, i) => (
+              ].map((item) => (
                 <motion.div
                   key={item.label}
                   variants={itemVariants}
                   whileHover={{ 
-                    scale: 1.05, 
-                    boxShadow: "0 20px 40px rgba(0,180,216,0.15)",
-                    y: -5,
+                    scale: 1.03, 
+                    boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
+                    y: -3,
                   }}
-                  className="group rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all cursor-pointer relative overflow-hidden"
+                  className="group rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all cursor-pointer relative overflow-hidden"
                 >
                   <motion.div
-                    className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute inset-0 bg-gradient-to-br from-gray-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"
                   />
                   <div className="relative z-10 flex items-center gap-4">
                     <motion.div
-                      className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10"
+                      className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-100"
                       whileHover={{ rotate: 360 }}
                       transition={{ duration: 0.5 }}
                     >
-                      <item.icon className="h-6 w-6 text-primary" />
+                      <item.icon className="h-5 w-5 text-gray-700" />
                     </motion.div>
                     <div>
                       <p className="text-xs text-gray-500 font-body">{item.label}</p>
-                      <p className="font-display text-lg font-semibold text-gray-800">{item.value}</p>
+                      <p className="font-display text-base font-semibold text-gray-800">{item.value}</p>
                     </div>
                   </div>
                 </motion.div>
@@ -201,74 +238,52 @@ const AboutSection = () => {
         return (
           <motion.div
             key="skill"
-            initial={{ opacity: 0, x: -50 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 50 }}
-            transition={{ duration: 0.5 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
           >
             {/* Skills grid */}
             <motion.div
               variants={containerVariants}
               initial="hidden"
               animate="visible"
-              className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
+              className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4"
             >
               {skills.map((skillGroup, i) => (
                 <motion.div
                   key={skillGroup.category}
                   variants={itemVariants}
                   whileHover={{ 
-                    scale: 1.05, 
-                    boxShadow: "0 20px 40px rgba(0,180,216,0.15)",
-                    y: -8,
+                    scale: 1.03, 
+                    boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
+                    y: -5,
                   }}
-                  className="group rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all cursor-pointer relative overflow-hidden"
+                  className="group rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all cursor-pointer relative overflow-hidden"
                 >
-                  {/* Animated background gradient */}
-                  <motion.div
-                    className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-cyan-500/10 opacity-0 group-hover:opacity-100"
-                    initial={{ rotate: 0 }}
-                    whileHover={{ rotate: 180 }}
-                    transition={{ duration: 1 }}
-                  />
-                  
-                  {/* Floating particles */}
-                  <motion.div
-                    className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary/30"
-                    animate={{ 
-                      y: [0, -10, 0],
-                      opacity: [0.3, 0.8, 0.3]
-                    }}
-                    transition={{ duration: 2, repeat: Infinity, delay: i * 0.2 }}
-                  />
-
                   <motion.h4 
-                    className="relative z-10 mb-4 font-display text-lg tracking-wider text-primary flex items-center gap-2"
+                    className="relative z-10 mb-3 font-display text-base tracking-wider text-gray-800 flex items-center gap-2"
                   >
                     <motion.span
-                      className="inline-block w-2 h-6 bg-primary rounded-full"
-                      animate={{ scaleY: [1, 1.5, 1] }}
+                      className="inline-block w-1.5 h-5 bg-primary rounded-full"
+                      animate={{ scaleY: [1, 1.3, 1] }}
                       transition={{ duration: 1.5, repeat: Infinity }}
                     />
                     {skillGroup.category}
                   </motion.h4>
-                  <ul className="relative z-10 space-y-3">
+                  <ul className="relative z-10 space-y-2.5">
                     {skillGroup.items.map((skill, j) => (
                       <motion.li
                         key={skill}
-                        className="flex items-center gap-3 font-body text-sm text-gray-600"
+                        className="flex items-center gap-2.5 font-body text-sm text-gray-600"
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.3, delay: 0.3 + i * 0.1 + j * 0.05 }}
-                        whileHover={{ x: 10, color: "#1a1a1a" }}
+                        whileHover={{ x: 8, color: "#1a1a1a" }}
                       >
                         <motion.span 
-                          className="h-2 w-2 rounded-full bg-primary"
-                          whileHover={{ scale: 2 }}
-                          animate={{ 
-                            boxShadow: ["0 0 0 0 rgba(0,180,216,0.4)", "0 0 0 6px rgba(0,180,216,0)", "0 0 0 0 rgba(0,180,216,0.4)"]
-                          }}
-                          transition={{ duration: 1.5, repeat: Infinity }}
+                          className="h-1.5 w-1.5 rounded-full bg-primary"
+                          whileHover={{ scale: 1.5 }}
                         />
                         {skill}
                       </motion.li>
@@ -280,7 +295,7 @@ const AboutSection = () => {
 
             {/* Skill progress bars */}
             <motion.div
-              className="mt-12 grid gap-6 sm:grid-cols-2"
+              className="mt-10 grid gap-5 sm:grid-cols-2"
               variants={containerVariants}
               initial="hidden"
               animate="visible"
@@ -298,11 +313,11 @@ const AboutSection = () => {
                 >
                   <div className="flex justify-between mb-2">
                     <span className="font-body text-sm text-gray-700">{skill.name}</span>
-                    <span className="font-display text-sm text-primary">{skill.level}%</span>
+                    <span className="font-display text-sm text-gray-800">{skill.level}%</span>
                   </div>
                   <div className="h-2 w-full rounded-full bg-gray-200 overflow-hidden">
                     <motion.div
-                      className="h-full rounded-full bg-gradient-to-r from-primary to-cyan-400"
+                      className="h-full rounded-full bg-gradient-to-r from-gray-700 to-gray-500"
                       initial={{ width: 0 }}
                       animate={{ width: `${skill.level}%` }}
                       transition={{ duration: 1.2, delay: 0.5 + i * 0.15, ease: "easeOut" }}
@@ -318,11 +333,11 @@ const AboutSection = () => {
         return (
           <motion.div
             key="education"
-            initial={{ opacity: 0, x: -50 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 50 }}
-            transition={{ duration: 0.5 }}
-            className="space-y-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+            className="space-y-6"
           >
             {education.map((edu, i) => (
               <motion.div
@@ -331,52 +346,42 @@ const AboutSection = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: i * 0.2 }}
                 whileHover={{ 
-                  scale: 1.02, 
-                  boxShadow: "0 25px 50px rgba(0,180,216,0.15)",
+                  scale: 1.01, 
+                  boxShadow: "0 15px 40px rgba(0,0,0,0.08)",
                 }}
-                className="group relative rounded-2xl border border-gray-200 bg-white p-8 shadow-sm overflow-hidden cursor-pointer"
+                className="group relative rounded-xl border border-gray-200 bg-white p-6 shadow-sm overflow-hidden cursor-pointer"
               >
                 {/* Animated corner accent */}
                 <motion.div
-                  className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-primary/20 to-transparent"
+                  className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-gray-100 to-transparent"
                   animate={{ 
-                    scale: [1, 1.2, 1],
-                    opacity: [0.5, 0.8, 0.5]
+                    scale: [1, 1.1, 1],
+                    opacity: [0.5, 0.7, 0.5]
                   }}
                   transition={{ duration: 3, repeat: Infinity }}
                 />
 
-                {/* Timeline dot */}
-                <motion.div
-                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-primary hidden lg:block"
-                  animate={{ 
-                    boxShadow: ["0 0 0 0 rgba(0,180,216,0.4)", "0 0 0 12px rgba(0,180,216,0)", "0 0 0 0 rgba(0,180,216,0.4)"]
-                  }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                />
-
-                <div className="flex flex-col lg:flex-row lg:items-start gap-6">
+                <div className="flex flex-col lg:flex-row lg:items-start gap-5">
                   {/* Icon */}
                   <motion.div
-                    className="flex h-16 w-16 items-center justify-center rounded-xl bg-primary/10 shrink-0"
+                    className="flex h-14 w-14 items-center justify-center rounded-xl bg-gray-100 shrink-0"
                     whileHover={{ rotate: 360 }}
                     transition={{ duration: 0.6 }}
                   >
-                    <GraduationCap className="h-8 w-8 text-primary" />
+                    <GraduationCap className="h-7 w-7 text-gray-700" />
                   </motion.div>
 
                   <div className="flex-1">
-                    <div className="flex flex-wrap items-center gap-3 mb-2">
+                    <div className="flex flex-wrap items-center gap-3 mb-1">
                       <motion.h4 
-                        className="font-display text-xl font-bold text-gray-800"
-                        whileHover={{ color: "#00b4d8" }}
+                        className="font-display text-lg font-bold text-gray-800"
                       >
                         {edu.degree}
                       </motion.h4>
                     </div>
                     
                     <motion.p 
-                      className="font-serif text-lg text-primary mb-2"
+                      className="font-serif text-base text-primary mb-2"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.3 }}
@@ -384,7 +389,7 @@ const AboutSection = () => {
                       {edu.school}
                     </motion.p>
 
-                    <div className="flex flex-wrap items-center gap-4 mb-4 text-sm text-gray-500">
+                    <div className="flex flex-wrap items-center gap-4 mb-3 text-sm text-gray-500">
                       <span className="flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
                         {edu.period}
@@ -395,7 +400,7 @@ const AboutSection = () => {
                       </span>
                     </div>
 
-                    <p className="font-body text-gray-600 mb-4 leading-relaxed">
+                    <p className="font-body text-sm text-gray-600 mb-3 leading-relaxed">
                       {edu.description}
                     </p>
 
@@ -407,8 +412,8 @@ const AboutSection = () => {
                           initial={{ opacity: 0, scale: 0 }}
                           animate={{ opacity: 1, scale: 1 }}
                           transition={{ delay: 0.5 + j * 0.1 }}
-                          whileHover={{ scale: 1.1, backgroundColor: "rgba(0,180,216,0.2)" }}
-                          className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-body text-primary"
+                          whileHover={{ scale: 1.05 }}
+                          className="inline-flex items-center gap-1 rounded-full border border-gray-300 bg-gray-50 px-3 py-1 text-xs font-body text-gray-700"
                         >
                           <Award className="w-3 h-3" />
                           {achievement}
@@ -430,24 +435,24 @@ const AboutSection = () => {
   return (
     <section id="about" className="relative overflow-hidden" ref={ref}>
       {/* Full width section */}
-      <div className="relative min-h-screen bg-[#fafafa]">
-        {/* Animated floating orbs */}
+      <div className="relative bg-[#fafafa]">
+        {/* Animated floating orbs - more subtle */}
         <div className="absolute inset-0 overflow-hidden">
-          {[...Array(8)].map((_, i) => (
+          {[...Array(6)].map((_, i) => (
             <motion.div
               key={i}
               className="absolute rounded-full"
               style={{
-                width: Math.random() * 200 + 100,
-                height: Math.random() * 200 + 100,
-                background: `radial-gradient(circle, rgba(0, 180, 216, ${0.05 + Math.random() * 0.08}) 0%, transparent 70%)`,
+                width: Math.random() * 150 + 80,
+                height: Math.random() * 150 + 80,
+                background: `radial-gradient(circle, rgba(150, 150, 150, ${0.03 + Math.random() * 0.04}) 0%, transparent 70%)`,
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
               }}
               animate={{
-                x: [0, Math.random() * 100 - 50, 0],
-                y: [0, Math.random() * 100 - 50, 0],
-                scale: [1, 1.3, 1],
+                x: [0, Math.random() * 60 - 30, 0],
+                y: [0, Math.random() * 60 - 30, 0],
+                scale: [1, 1.2, 1],
               }}
               transition={{
                 duration: Math.random() * 10 + 15,
@@ -458,35 +463,18 @@ const AboutSection = () => {
           ))}
         </div>
 
-        {/* Animated grid pattern */}
-        <div className="absolute inset-0 overflow-hidden opacity-[0.04]">
-          {[...Array(15)].map((_, i) => (
+        {/* Animated grid pattern - more subtle */}
+        <div className="absolute inset-0 overflow-hidden opacity-[0.02]">
+          {[...Array(10)].map((_, i) => (
             <motion.div
               key={`h-${i}`}
-              className="absolute h-px w-full bg-primary"
-              style={{ top: `${i * 7}%` }}
+              className="absolute h-px w-full bg-gray-600"
+              style={{ top: `${i * 10}%` }}
               animate={{ 
                 x: ["-100%", "100%"],
-                opacity: [0.3, 1, 0.3]
               }}
               transition={{
-                duration: 15 + i * 1.5,
-                repeat: Infinity,
-                ease: "linear",
-              }}
-            />
-          ))}
-          {[...Array(15)].map((_, i) => (
-            <motion.div
-              key={`v-${i}`}
-              className="absolute w-px h-full bg-primary"
-              style={{ left: `${i * 7}%` }}
-              animate={{ 
-                y: ["-100%", "100%"],
-                opacity: [0.3, 1, 0.3]
-              }}
-              transition={{
-                duration: 20 + i * 1.5,
+                duration: 20 + i * 2,
                 repeat: Infinity,
                 ease: "linear",
               }}
@@ -501,7 +489,7 @@ const AboutSection = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6 }}
-            className="mb-16 text-center"
+            className="mb-14 text-center"
           >
             {/* Animated Icon */}
             <motion.div 
@@ -513,18 +501,11 @@ const AboutSection = () => {
                 className="relative"
                 whileHover={{ scale: 1.2 }}
               >
-                <User className="h-8 w-8 text-primary" />
-                <motion.div
-                  className="absolute inset-0 rounded-full"
-                  animate={{ 
-                    boxShadow: ["0 0 0 0 rgba(0,180,216,0.4)", "0 0 0 15px rgba(0,180,216,0)", "0 0 0 0 rgba(0,180,216,0.4)"]
-                  }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                />
+                <User className="h-8 w-8 text-gray-700" />
               </motion.div>
             </motion.div>
             <motion.div 
-              className="mx-auto mb-2 h-8 w-px bg-primary/50"
+              className="mx-auto mb-2 h-8 w-px bg-gray-400"
               initial={{ scaleY: 0 }}
               animate={isInView ? { scaleY: 1 } : {}}
               transition={{ duration: 0.5, delay: 0.3 }}
@@ -563,7 +544,7 @@ const AboutSection = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="mx-auto mb-12 flex max-w-3xl items-center justify-center rounded-full bg-gray-100/80 backdrop-blur-sm p-1.5 border border-gray-200"
+            className="mx-auto mb-10 flex max-w-2xl items-center justify-center rounded-full bg-gray-100 p-1 border border-gray-200"
           >
             {(["about", "skill", "education"] as const).map((tab) => {
               const Icon = tabIcons[tab];
@@ -571,15 +552,15 @@ const AboutSection = () => {
                 <motion.button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`relative flex items-center gap-2 rounded-full px-6 py-3 font-body text-sm font-medium transition-all ${
+                  className={`relative flex items-center gap-2 rounded-full px-5 py-2.5 font-body text-sm font-medium transition-all ${
                     activeTab === tab ? "text-white" : "text-gray-600 hover:text-gray-900"
                   }`}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
                 >
                   {activeTab === tab && (
                     <motion.div
-                      className="absolute inset-0 rounded-full bg-gradient-to-r from-primary to-cyan-500"
+                      className="absolute inset-0 rounded-full bg-gray-800"
                       layoutId="activeTab"
                       transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                     />
@@ -591,48 +572,46 @@ const AboutSection = () => {
             })}
           </motion.div>
 
-          {/* Content with AnimatePresence */}
-          <AnimatePresence mode="wait">
-            {renderTabContent()}
-          </AnimatePresence>
+          {/* Fixed height content container */}
+          <div className="min-h-[520px]">
+            <AnimatePresence mode="wait">
+              {renderTabContent()}
+            </AnimatePresence>
+          </div>
 
-          {/* Stats */}
+          {/* Stats with CountUp */}
           <motion.div
+            ref={statsRef}
             variants={containerVariants}
             initial="hidden"
             animate={isInView ? "visible" : "hidden"}
-            className="mt-16 grid grid-cols-2 gap-8 md:grid-cols-4"
+            className="mt-14 grid grid-cols-2 gap-6 md:grid-cols-4"
           >
-            {[
-              { value: "6+", label: "Years Experience" },
-              { value: "50+", label: "Projects Delivered" },
-              { value: "20+", label: "AI Solutions" },
-              { value: "100%", label: "Client Satisfaction" },
-            ].map((stat, i) => (
+            {stats.map((stat, i) => (
               <motion.div 
                 key={i} 
                 className="text-center group cursor-pointer"
                 variants={itemVariants}
-                whileHover={{ scale: 1.1 }}
+                whileHover={{ scale: 1.08 }}
               >
                 <motion.div 
-                  className="font-display text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-cyan-400 md:text-5xl"
+                  className="font-display text-4xl font-bold text-primary md:text-5xl"
                   initial={{ scale: 0 }}
-                  animate={isInView ? { scale: 1 } : {}}
+                  animate={statsInView ? { scale: 1 } : {}}
                   transition={{ 
                     type: "spring", 
                     stiffness: 200, 
                     damping: 10, 
-                    delay: 0.8 + i * 0.1 
+                    delay: 0.3 + i * 0.1 
                   }}
                 >
-                  {stat.value}
+                  {stat.value}{stat.suffix}
                 </motion.div>
                 <motion.div 
-                  className="mt-2 font-body text-sm tracking-wider text-gray-500 group-hover:text-primary transition-colors"
+                  className="mt-2 font-body text-sm tracking-wider text-gray-500 group-hover:text-gray-800 transition-colors"
                   initial={{ opacity: 0 }}
-                  animate={isInView ? { opacity: 1 } : {}}
-                  transition={{ duration: 0.4, delay: 1 + i * 0.1 }}
+                  animate={statsInView ? { opacity: 1 } : {}}
+                  transition={{ duration: 0.4, delay: 0.5 + i * 0.1 }}
                 >
                   {stat.label}
                 </motion.div>
@@ -643,7 +622,7 @@ const AboutSection = () => {
 
         {/* Subtle paper texture overlay */}
         <div 
-          className="pointer-events-none absolute inset-0 opacity-30"
+          className="pointer-events-none absolute inset-0 opacity-20"
           style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E")`,
           }}
