@@ -119,6 +119,25 @@ const CertificationsSection = () => {
 
   return (
     <section id="certifications" className="relative overflow-hidden bg-[#fafafa] py-32" ref={ref}>
+      {/* Subtle dot pattern background */}
+      <div 
+        className="absolute inset-0 opacity-[0.4]"
+        style={{
+          backgroundImage: `radial-gradient(circle, #d1d5db 1px, transparent 1px)`,
+          backgroundSize: '24px 24px',
+        }}
+      />
+      {/* Cross pattern accent */}
+      <div 
+        className="absolute inset-0 opacity-[0.02]"
+        style={{
+          backgroundImage: `
+            linear-gradient(#9ca3af 1px, transparent 1px),
+            linear-gradient(90deg, #9ca3af 1px, transparent 1px)
+          `,
+          backgroundSize: '80px 80px',
+        }}
+      />
       {/* Book page curl effect */}
       <div className="pointer-events-none absolute left-0 top-0 h-full w-16 bg-gradient-to-r from-stone-300/50 via-stone-200/30 to-transparent" />
       <div className="pointer-events-none absolute left-0 top-0 h-full w-2 bg-gradient-to-r from-stone-400/40 to-stone-300/20" />

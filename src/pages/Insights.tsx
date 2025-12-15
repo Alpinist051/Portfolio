@@ -233,17 +233,37 @@ const InsightsPage = () => {
       <section className="relative pb-20 pt-32">
         {/* Background effects */}
         <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/5 to-background" />
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="pointer-events-none absolute left-1/4 top-20 h-96 w-96 rounded-full bg-primary/5 blur-3xl"
+        
+        {/* Subtle dot pattern background */}
+        <div 
+          className="absolute inset-0 opacity-[0.15]"
+          style={{
+            backgroundImage: `radial-gradient(circle, #6b7280 1px, transparent 1px)`,
+            backgroundSize: '24px 24px',
+          }}
         />
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="pointer-events-none absolute bottom-20 right-1/4 h-96 w-96 rounded-full bg-secondary/5 blur-3xl"
+        
+        {/* Diagonal lines accent */}
+        <div 
+          className="absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage: `repeating-linear-gradient(
+              -45deg,
+              #6b7280 0,
+              #6b7280 1px,
+              transparent 1px,
+              transparent 80px
+            )`,
+          }}
         />
+        
+        {/* Corner geometric accents */}
+        <div className="absolute left-0 top-32 h-64 w-64 opacity-[0.03]">
+          <div className="h-full w-full border-l-2 border-t-2 border-gray-500" />
+        </div>
+        <div className="absolute bottom-32 right-0 h-64 w-64 opacity-[0.03]">
+          <div className="h-full w-full border-b-2 border-r-2 border-gray-500" />
+        </div>
         
         {/* Animated grid pattern */}
         <div className="absolute inset-0 overflow-hidden opacity-[0.02]">
