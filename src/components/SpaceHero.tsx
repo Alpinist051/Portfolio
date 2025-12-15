@@ -4,73 +4,172 @@ import { useRef, useMemo } from "react";
 import * as THREE from "three";
 import { motion } from "framer-motion";
 
-// Floating holographic screen component
-function HoloScreen({ position, rotation, scale, color, content }: { 
+// Large holographic advertisement screen
+function AdScreen({ position, rotation, scale, color, content, subtext }: { 
   position: [number, number, number]; 
   rotation: [number, number, number];
   scale: number;
   color: string;
   content: string;
+  subtext?: string;
 }) {
   const meshRef = useRef<THREE.Mesh>(null);
+  const glowRef = useRef<THREE.Mesh>(null);
   
   useFrame((state) => {
     if (meshRef.current) {
-      meshRef.current.position.y += Math.sin(state.clock.elapsedTime + position[0]) * 0.001;
+      meshRef.current.position.y += Math.sin(state.clock.elapsedTime * 0.5 + position[0]) * 0.0008;
+    }
+    if (glowRef.current && glowRef.current.material instanceof THREE.MeshBasicMaterial) {
+      const pulse = Math.sin(state.clock.elapsedTime * 2) * 0.1 + 0.9;
+      glowRef.current.material.opacity = 0.15 * pulse;
     }
   });
 
   return (
-    <Float speed={1.5} rotationIntensity={0.2} floatIntensity={0.5}>
+    <Float speed={0.8} rotationIntensity={0.1} floatIntensity={0.3}>
       <group position={position} rotation={rotation}>
+        {/* Main screen */}
         <mesh ref={meshRef} scale={scale}>
-          <planeGeometry args={[2, 1.2]} />
+          <planeGeometry args={[3.5, 2]} />
           <meshStandardMaterial
             color={color}
             emissive={color}
-            emissiveIntensity={0.5}
+            emissiveIntensity={0.6}
             transparent
-            opacity={0.15}
+            opacity={0.12}
             side={THREE.DoubleSide}
           />
         </mesh>
         {/* Screen border glow */}
-        <mesh scale={scale}>
-          <planeGeometry args={[2.05, 1.25]} />
+        <mesh ref={glowRef} scale={scale}>
+          <planeGeometry args={[3.6, 2.1]} />
           <meshBasicMaterial
             color={color}
             transparent
-            opacity={0.3}
+            opacity={0.25}
             side={THREE.DoubleSide}
           />
         </mesh>
-        {/* Text on screen */}
+        {/* Inner glow */}
+        <mesh scale={scale * 0.95}>
+          <planeGeometry args={[3.4, 1.9]} />
+          <meshBasicMaterial
+            color={color}
+            transparent
+            opacity={0.05}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+        {/* Main text */}
         <Text
-          position={[0, 0, 0.01]}
-          fontSize={0.08 * scale}
+          position={[0, subtext ? 0.15 : 0, 0.02]}
+          fontSize={0.18 * scale}
           color={color}
           anchorX="center"
           anchorY="middle"
-          maxWidth={1.8 * scale}
+          maxWidth={3 * scale}
+          font="/fonts/orbitron.woff"
         >
           {content}
         </Text>
+        {/* Subtext */}
+        {subtext && (
+          <Text
+            position={[0, -0.25, 0.02]}
+            fontSize={0.08 * scale}
+            color={color}
+            anchorX="center"
+            anchorY="middle"
+            maxWidth={3 * scale}
+            fillOpacity={0.7}
+          >
+            {subtext}
+          </Text>
+        )}
+        {/* Decorative lines */}
+        <mesh position={[0, 0.85 * scale, 0.01]} scale={scale}>
+          <planeGeometry args={[2.5, 0.02]} />
+          <meshBasicMaterial color={color} transparent opacity={0.4} />
+        </mesh>
+        <mesh position={[0, -0.85 * scale, 0.01]} scale={scale}>
+          <planeGeometry args={[2.5, 0.02]} />
+          <meshBasicMaterial color={color} transparent opacity={0.4} />
+        </mesh>
       </group>
     </Float>
+  );
+}
+
+// 3D Human silhouette viewing the ads
+function HumanSilhouette() {
+  const groupRef = useRef<THREE.Group>(null);
+
+  useFrame((state) => {
+    if (groupRef.current) {
+      // Subtle breathing motion
+      groupRef.current.position.y = -2.8 + Math.sin(state.clock.elapsedTime * 0.8) * 0.03;
+      // Slight head movement as if looking at screens
+      groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.3) * 0.08;
+    }
+  });
+
+  return (
+    <group ref={groupRef} position={[0, -2.8, 2]}>
+      {/* Head */}
+      <mesh position={[0, 1.7, 0]}>
+        <sphereGeometry args={[0.2, 16, 16]} />
+        <meshStandardMaterial color="#0a0a15" emissive="#00d4ff" emissiveIntensity={0.05} />
+      </mesh>
+      {/* Neck */}
+      <mesh position={[0, 1.45, 0]}>
+        <cylinderGeometry args={[0.08, 0.1, 0.15, 8]} />
+        <meshStandardMaterial color="#0a0a15" emissive="#00d4ff" emissiveIntensity={0.03} />
+      </mesh>
+      {/* Torso */}
+      <mesh position={[0, 1, 0]}>
+        <boxGeometry args={[0.5, 0.7, 0.25]} />
+        <meshStandardMaterial color="#0a0a15" emissive="#00d4ff" emissiveIntensity={0.03} />
+      </mesh>
+      {/* Left shoulder */}
+      <mesh position={[-0.35, 1.25, 0]}>
+        <sphereGeometry args={[0.1, 8, 8]} />
+        <meshStandardMaterial color="#0a0a15" emissive="#00d4ff" emissiveIntensity={0.03} />
+      </mesh>
+      {/* Right shoulder */}
+      <mesh position={[0.35, 1.25, 0]}>
+        <sphereGeometry args={[0.1, 8, 8]} />
+        <meshStandardMaterial color="#0a0a15" emissive="#00d4ff" emissiveIntensity={0.03} />
+      </mesh>
+      {/* Left arm */}
+      <mesh position={[-0.4, 0.95, 0]} rotation={[0, 0, 0.15]}>
+        <cylinderGeometry args={[0.06, 0.05, 0.5, 8]} />
+        <meshStandardMaterial color="#0a0a15" emissive="#00d4ff" emissiveIntensity={0.03} />
+      </mesh>
+      {/* Right arm */}
+      <mesh position={[0.4, 0.95, 0]} rotation={[0, 0, -0.15]}>
+        <cylinderGeometry args={[0.06, 0.05, 0.5, 8]} />
+        <meshStandardMaterial color="#0a0a15" emissive="#00d4ff" emissiveIntensity={0.03} />
+      </mesh>
+      {/* Rim light effect */}
+      <pointLight position={[0, 1.5, -0.5]} intensity={0.3} color="#00d4ff" distance={2} />
+      <pointLight position={[-0.5, 1.5, 0]} intensity={0.15} color="#ff00aa" distance={1.5} />
+      <pointLight position={[0.5, 1.5, 0]} intensity={0.15} color="#00ff88" distance={1.5} />
+    </group>
   );
 }
 
 // Moving light particles
 function LightParticles() {
   const particlesRef = useRef<THREE.Points>(null);
-  const count = 200;
+  const count = 300;
 
   const positions = useMemo(() => {
     const pos = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * 30;
-      pos[i * 3 + 1] = (Math.random() - 0.5) * 30;
-      pos[i * 3 + 2] = (Math.random() - 0.5) * 30;
+      pos[i * 3] = (Math.random() - 0.5) * 40;
+      pos[i * 3 + 1] = (Math.random() - 0.5) * 40;
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 40;
     }
     return pos;
   }, []);
@@ -79,8 +178,8 @@ function LightParticles() {
     if (particlesRef.current) {
       const positions = particlesRef.current.geometry.attributes.position.array as Float32Array;
       for (let i = 0; i < count; i++) {
-        positions[i * 3 + 1] += Math.sin(state.clock.elapsedTime + i) * 0.002;
-        positions[i * 3] += Math.cos(state.clock.elapsedTime + i * 0.5) * 0.001;
+        positions[i * 3 + 1] += Math.sin(state.clock.elapsedTime + i) * 0.003;
+        positions[i * 3] += Math.cos(state.clock.elapsedTime + i * 0.5) * 0.002;
       }
       particlesRef.current.geometry.attributes.position.needsUpdate = true;
     }
@@ -95,10 +194,10 @@ function LightParticles() {
         />
       </bufferGeometry>
       <pointsMaterial
-        size={0.05}
+        size={0.06}
         color="#00d4ff"
         transparent
-        opacity={0.6}
+        opacity={0.5}
         sizeAttenuation
       />
     </points>
@@ -110,52 +209,67 @@ function CameraRig() {
   const { camera } = useThree();
   
   useFrame((state) => {
-    camera.position.x = Math.sin(state.clock.elapsedTime * 0.1) * 0.5;
-    camera.position.y = Math.cos(state.clock.elapsedTime * 0.1) * 0.3;
-    camera.lookAt(0, 0, 0);
+    camera.position.x = Math.sin(state.clock.elapsedTime * 0.08) * 0.8;
+    camera.position.y = Math.cos(state.clock.elapsedTime * 0.1) * 0.4 + 0.5;
+    camera.lookAt(0, 0, -2);
   });
 
   return null;
 }
 
 function Scene() {
+  // Larger, more prominent ads arranged around center and bottom
   const screens = [
-    { position: [-3, 1.5, -5] as [number, number, number], rotation: [0, 0.3, 0] as [number, number, number], scale: 1.2, color: "#00d4ff", content: "AI/ML SOLUTIONS" },
-    { position: [3, 2, -6] as [number, number, number], rotation: [0, -0.2, 0] as [number, number, number], scale: 1, color: "#ff00aa", content: "FULL STACK DEV" },
-    { position: [-2, -1, -4] as [number, number, number], rotation: [0.1, 0.2, 0] as [number, number, number], scale: 0.8, color: "#00ff88", content: "NEURAL NETWORKS" },
-    { position: [2.5, -0.5, -5] as [number, number, number], rotation: [-0.1, -0.3, 0] as [number, number, number], scale: 0.9, color: "#ffaa00", content: "DATA ENGINEERING" },
-    { position: [-4, 0, -7] as [number, number, number], rotation: [0, 0.4, 0] as [number, number, number], scale: 1.1, color: "#aa00ff", content: "CLOUD SYSTEMS" },
-    { position: [4, 1, -8] as [number, number, number], rotation: [0, -0.35, 0] as [number, number, number], scale: 1.3, color: "#00ffff", content: "LLM FINE-TUNING" },
-    { position: [0, 2.5, -6] as [number, number, number], rotation: [-0.2, 0, 0] as [number, number, number], scale: 0.7, color: "#ff6600", content: "RAG SYSTEMS" },
-    { position: [-1, -2, -5] as [number, number, number], rotation: [0.15, 0.1, 0] as [number, number, number], scale: 0.85, color: "#ff0066", content: "MULTI-AGENT AI" },
+    // Center main ads
+    { position: [0, 1, -8] as [number, number, number], rotation: [0, 0, 0] as [number, number, number], scale: 1.8, color: "#00d4ff", content: "AI/ML SOLUTIONS", subtext: "Neural Networks • Deep Learning • LLMs" },
+    { position: [-4, 0.5, -7] as [number, number, number], rotation: [0, 0.35, 0] as [number, number, number], scale: 1.5, color: "#ff00aa", content: "FULL STACK DEV", subtext: "React • Node.js • Cloud Architecture" },
+    { position: [4, 0.5, -7] as [number, number, number], rotation: [0, -0.35, 0] as [number, number, number], scale: 1.5, color: "#00ff88", content: "DATA SYSTEMS", subtext: "Pipelines • Analytics • Real-time Processing" },
+    
+    // Bottom row - larger immersive ads
+    { position: [-3, -1.5, -5] as [number, number, number], rotation: [0.1, 0.25, 0] as [number, number, number], scale: 1.3, color: "#ffaa00", content: "NEURAL NETWORKS", subtext: "Custom Model Architecture" },
+    { position: [0, -2, -6] as [number, number, number], rotation: [0.15, 0, 0] as [number, number, number], scale: 1.6, color: "#aa00ff", content: "MULTI-AGENT AI", subtext: "Autonomous Orchestration Systems" },
+    { position: [3, -1.5, -5] as [number, number, number], rotation: [0.1, -0.25, 0] as [number, number, number], scale: 1.3, color: "#ff6600", content: "RAG SYSTEMS", subtext: "Knowledge Base Integration" },
+    
+    // Side floating ads
+    { position: [-6, 1.5, -9] as [number, number, number], rotation: [0, 0.5, 0] as [number, number, number], scale: 1.2, color: "#00ffff", content: "LLM FINE-TUNING" },
+    { position: [6, 1.5, -9] as [number, number, number], rotation: [0, -0.5, 0] as [number, number, number], scale: 1.2, color: "#ff0066", content: "CLOUD SYSTEMS" },
+    
+    // Background distant ads
+    { position: [-5, 3, -12] as [number, number, number], rotation: [0, 0.3, 0.05] as [number, number, number], scale: 1.8, color: "#4488ff", content: "MLOPS PIPELINE" },
+    { position: [5, 3, -12] as [number, number, number], rotation: [0, -0.3, -0.05] as [number, number, number], scale: 1.8, color: "#88ff44", content: "KUBERNETES" },
+    { position: [0, 4, -14] as [number, number, number], rotation: [-0.1, 0, 0] as [number, number, number], scale: 2, color: "#ff44aa", content: "INNOVATION" },
   ];
 
   return (
     <>
       <CameraRig />
-      <ambientLight intensity={0.1} />
-      <pointLight position={[0, 0, 5]} intensity={0.5} color="#00d4ff" />
-      <pointLight position={[-5, 3, -5]} intensity={0.3} color="#ff00aa" />
-      <pointLight position={[5, -2, -5]} intensity={0.3} color="#00ff88" />
+      <ambientLight intensity={0.08} />
+      <pointLight position={[0, 2, 3]} intensity={0.6} color="#00d4ff" />
+      <pointLight position={[-5, 3, -5]} intensity={0.4} color="#ff00aa" />
+      <pointLight position={[5, -2, -5]} intensity={0.4} color="#00ff88" />
+      <pointLight position={[0, -3, 0]} intensity={0.3} color="#aa00ff" />
       
       <Stars
         radius={100}
         depth={50}
-        count={5000}
+        count={6000}
         factor={4}
         saturation={0}
         fade
-        speed={0.5}
+        speed={0.3}
       />
       
       <LightParticles />
       
+      {/* Human silhouette looking at ads */}
+      <HumanSilhouette />
+      
       {screens.map((screen, i) => (
-        <HoloScreen key={i} {...screen} />
+        <AdScreen key={i} {...screen} />
       ))}
 
-      {/* Central fog effect */}
-      <fog attach="fog" args={["#0a0a15", 5, 30]} />
+      {/* Atmospheric fog */}
+      <fog attach="fog" args={["#050510", 8, 35]} />
     </>
   );
 }
@@ -166,15 +280,18 @@ const SpaceHero = () => {
       {/* Three.js Canvas */}
       <div className="absolute inset-0">
         <Canvas
-          camera={{ position: [0, 0, 8], fov: 60 }}
+          camera={{ position: [0, 0, 10], fov: 65 }}
           gl={{ antialias: true, alpha: true }}
         >
           <Scene />
         </Canvas>
       </div>
 
-      {/* Overlay gradient */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/30 via-transparent to-background" />
+      {/* Vignette overlay */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(5,5,16,0.4)_70%,rgba(5,5,16,0.8)_100%)]" />
+
+      {/* Bottom gradient for content readability */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
 
       {/* Content overlay */}
       <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 text-center">
