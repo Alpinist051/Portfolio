@@ -127,10 +127,10 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
   const [progress, setProgress] = useState(0);
   const [isShaking, setIsShaking] = useState(false);
   const [shakeIntensity, setShakeIntensity] = useState(0);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const triggeredMilestones = useRef<Set<number>>(new Set());
 
   // Create squeak sound using Web Audio API
-  const playSqueak = () => {
+  const playSqueak = (intensity: number = 1) => {
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     
     // Create oscillator for squeak sound
@@ -140,52 +140,70 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
     oscillator.connect(gainNode);
     gainNode.connect(audioContext.destination);
     
-    // High-pitched squeak
-    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-    oscillator.frequency.exponentialRampToValueAtTime(2000, audioContext.currentTime + 0.1);
-    oscillator.frequency.exponentialRampToValueAtTime(600, audioContext.currentTime + 0.2);
-    oscillator.frequency.exponentialRampToValueAtTime(1500, audioContext.currentTime + 0.3);
+    // High-pitched squeak - adjust based on intensity
+    oscillator.frequency.setValueAtTime(600 + intensity * 200, audioContext.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(1500 + intensity * 500, audioContext.currentTime + 0.1);
+    oscillator.frequency.exponentialRampToValueAtTime(500 + intensity * 100, audioContext.currentTime + 0.2);
+    oscillator.frequency.exponentialRampToValueAtTime(1200 + intensity * 300, audioContext.currentTime + 0.3);
     
-    // Volume envelope
-    gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.3, audioContext.currentTime + 0.05);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+    // Volume envelope - louder for higher intensity
+    const baseVolume = 0.1 + intensity * 0.05;
+    gainNode.gain.setValueAtTime(baseVolume, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(baseVolume * 2, audioContext.currentTime + 0.05);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3 + intensity * 0.1);
     
     oscillator.type = 'sine';
     oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.4);
+    oscillator.stop(audioContext.currentTime + 0.3 + intensity * 0.1);
+  };
+
+  // Trigger shake at specific milestone
+  const triggerMilestoneShake = (milestone: number, intensity: number, duration: number) => {
+    if (triggeredMilestones.current.has(milestone)) return;
+    triggeredMilestones.current.add(milestone);
+    
+    setIsShaking(true);
+    setShakeIntensity(intensity);
+    playSqueak(intensity / 5);
+    
+    setTimeout(() => {
+      setIsShaking(false);
+      setShakeIntensity(0);
+    }, duration);
   };
 
   useEffect(() => {
     const interval = setInterval(() => {
       setProgress((prev) => {
-        // Start cinematic effects at 85%
-        if (prev >= 85 && prev < 100) {
-          if (!isShaking) {
-            setIsShaking(true);
-            playSqueak();
-          }
-          // Increase shake intensity as we approach 100%
-          setShakeIntensity(Math.min((prev - 85) / 15 * 12, 12));
+        const newProgress = prev + 2;
+        
+        // Milestone 1: Light shake at 35%
+        if (newProgress >= 34 && newProgress <= 38) {
+          triggerMilestoneShake(35, 4, 400);
         }
         
-        if (prev >= 100) {
+        // Milestone 2: Medium shake at 80%
+        if (newProgress >= 78 && newProgress <= 82) {
+          triggerMilestoneShake(80, 8, 500);
+        }
+        
+        // Final: Intense shake at 100%
+        if (newProgress >= 100) {
           clearInterval(interval);
-          // Final intense shake and squeak
-          setShakeIntensity(15);
-          playSqueak();
+          triggerMilestoneShake(100, 15, 600);
           setTimeout(() => {
             setIsShaking(false);
             onComplete();
-          }, 600);
+          }, 700);
           return 100;
         }
-        return prev + 2;
+        
+        return newProgress;
       });
     }, 100);
 
     return () => clearInterval(interval);
-  }, [onComplete, isShaking]);
+  }, [onComplete]);
 
   // Generate shake transform
   const shakeStyle = isShaking
