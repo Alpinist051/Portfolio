@@ -17,18 +17,23 @@ const Navigation = () => {
   }, []);
 
   const navItems = [
-    { href: "#about", label: "ABOUT" },
-    { href: "#projects", label: "PROJECTS" },
-    { href: "#certifications", label: "CERTS" },
-    { href: "#contact", label: "CONTACT" },
-    { href: "#insights", label: "INSIGHTS" },
+    { href: "#about", label: "ABOUT", isPage: false },
+    { href: "/projects", label: "PROJECTS", isPage: true },
+    { href: "#certifications", label: "CERTS", isPage: false },
+    { href: "#contact", label: "CONTACT", isPage: false },
+    { href: "/insights", label: "INSIGHTS", isPage: true },
   ];
 
-  const handleNavClick = (href: string) => {
-    if (location.pathname !== "/") {
-      window.location.href = "/" + href;
+  const handleNavClick = (item: { href: string; label: string; isPage: boolean }) => {
+    if (item.isPage) {
+      // Navigate to the page
+      window.location.href = item.href;
+    } else if (location.pathname !== "/") {
+      // If on another page and clicking anchor, go to home + anchor
+      window.location.href = "/" + item.href;
     } else {
-      const element = document.querySelector(href);
+      // On home page, scroll to section
+      const element = document.querySelector(item.href);
       if (element) {
         element.scrollIntoView({ behavior: "smooth" });
       }
@@ -66,7 +71,7 @@ const Navigation = () => {
           {navItems.map((item) => (
             <button
               key={item.href}
-              onClick={() => handleNavClick(item.href)}
+              onClick={() => handleNavClick(item)}
               className="group relative px-4 py-2 font-display text-xs tracking-wider text-muted-foreground transition-colors hover:text-foreground"
             >
               {item.label}
@@ -119,7 +124,7 @@ const Navigation = () => {
           {navItems.map((item) => (
             <button
               key={item.href}
-              onClick={() => handleNavClick(item.href)}
+              onClick={() => handleNavClick(item)}
               className="py-3 text-left font-display text-sm tracking-wider text-muted-foreground transition-colors hover:text-primary"
             >
               {item.label}
