@@ -436,6 +436,27 @@ const AboutSection = () => {
     <section id="about" className="relative overflow-hidden" ref={ref}>
       {/* Full width section */}
       <div className="relative bg-[#fafafa]">
+        {/* Subtle dot pattern background */}
+        <div 
+          className="absolute inset-0 opacity-[0.4]"
+          style={{
+            backgroundImage: `radial-gradient(circle, #d1d5db 1px, transparent 1px)`,
+            backgroundSize: '24px 24px',
+          }}
+        />
+        {/* Diagonal lines accent */}
+        <div 
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: `repeating-linear-gradient(
+              45deg,
+              #9ca3af 0,
+              #9ca3af 1px,
+              transparent 1px,
+              transparent 60px
+            )`,
+          }}
+        />
         {/* Animated floating orbs - more subtle */}
         <div className="absolute inset-0 overflow-hidden">
           {[...Array(6)].map((_, i) => (
