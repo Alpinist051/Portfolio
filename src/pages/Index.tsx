@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import LoadingScreen from "@/components/LoadingScreen";
 import Navigation from "@/components/Navigation";
 import SpaceHero from "@/components/SpaceHero";
@@ -12,6 +12,7 @@ import Footer from "@/components/Footer";
 
 const Index = () => {
   const [isLoading, setIsLoading] = useState(true);
+  const [showContent, setShowContent] = useState(false);
 
   useEffect(() => {
     // Prevent scroll during loading
@@ -19,6 +20,8 @@ const Index = () => {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "unset";
+      // Delay showing content for smooth transition
+      setTimeout(() => setShowContent(true), 100);
     }
 
     return () => {
@@ -35,7 +38,12 @@ const Index = () => {
       </AnimatePresence>
 
       {!isLoading && (
-        <main className="min-h-screen bg-background">
+        <motion.main 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: showContent ? 1 : 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="min-h-screen bg-background"
+        >
           <Navigation />
           <SpaceHero />
           <AboutSection />
@@ -44,7 +52,7 @@ const Index = () => {
           <ContactSection />
           <ToClientsSection />
           <Footer />
-        </main>
+        </motion.main>
       )}
     </>
   );
