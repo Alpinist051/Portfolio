@@ -148,7 +148,7 @@ const ProjectCard = ({ project, index }: { project: Project; index: number }) =>
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: index * 0.05 }}
-      className="group relative"
+      className="group relative h-full"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onMouseMove={handleMouseMove}
@@ -162,16 +162,10 @@ const ProjectCard = ({ project, index }: { project: Project; index: number }) =>
         }}
         transition={{ type: "spring", stiffness: 400, damping: 30 }}
         style={{ transformStyle: "preserve-3d" }}
-        className="relative overflow-hidden rounded-xl border border-border bg-card"
+        className="relative flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card"
       >
-        {project.featured && (
-          <div className="absolute right-4 top-4 z-20 rounded-full bg-primary/20 px-2 py-1">
-            <span className="font-display text-[10px] tracking-wider text-primary">FEATURED</span>
-          </div>
-        )}
-
         {/* Thumbnail Image */}
-        <div className="relative h-40 overflow-hidden">
+        <div className="relative h-48 w-full overflow-hidden">
           <motion.img
             src={project.image}
             alt={project.title}
@@ -181,6 +175,19 @@ const ProjectCard = ({ project, index }: { project: Project; index: number }) =>
           <motion.div
             className={`absolute inset-0 bg-gradient-to-br ${project.gradient} opacity-0 mix-blend-overlay transition-opacity duration-500 group-hover:opacity-40`}
           />
+          
+          {/* Category badge - positioned over image */}
+          <div className="absolute left-4 top-4 z-20 inline-block rounded-full border border-primary/30 bg-card/80 backdrop-blur-sm px-3 py-1">
+            <span className="font-display text-xs tracking-wider text-primary">
+              {project.category}
+            </span>
+          </div>
+          
+          {project.featured && (
+            <div className="absolute right-4 top-4 z-20 rounded-full bg-primary/20 backdrop-blur-sm px-2 py-1">
+              <span className="font-display text-[10px] tracking-wider text-primary">FEATURED</span>
+            </div>
+          )}
         </div>
 
         <motion.div
@@ -192,13 +199,7 @@ const ProjectCard = ({ project, index }: { project: Project; index: number }) =>
           }}
         />
 
-        <div className="relative z-10 p-6">
-          <div className="mb-4 inline-block rounded-full border border-primary/30 bg-primary/10 px-3 py-1">
-            <span className="font-display text-xs tracking-wider text-primary">
-              {project.category}
-            </span>
-          </div>
-
+        <div className="relative z-10 flex flex-1 flex-col p-6">
           <h3 className="relative mb-3 inline-block font-display text-lg font-bold tracking-wide text-foreground">
             {project.title}
             <motion.span
@@ -209,12 +210,12 @@ const ProjectCard = ({ project, index }: { project: Project; index: number }) =>
             />
           </h3>
 
-          <p className="mb-6 font-body text-sm leading-relaxed text-muted-foreground">
+          <p className="mb-6 flex-1 font-body text-sm leading-relaxed text-muted-foreground">
             {project.description}
           </p>
 
           <div className="flex flex-wrap gap-2">
-            {project.tech.map((tech, i) => (
+            {project.tech.map((tech) => (
               <span
                 key={tech}
                 className="rounded-md bg-muted px-2 py-1 font-body text-xs text-muted-foreground transition-colors group-hover:bg-primary/20 group-hover:text-primary"
