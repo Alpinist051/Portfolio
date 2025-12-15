@@ -215,32 +215,18 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
     };
   }, []);
 
-  // When reaching 100%, delay briefly with the final effect, then exit once.
+  // When reaching 100%, immediately transition to landing page
   useEffect(() => {
     if (progress !== 100 || isFinalEffect) return;
 
     setIsFinalEffect(true);
-    triggerMilestoneShake(100, 15, 5000);
+    setIsExiting(true);
+    playSqueak(3);
 
-    // Multiple squeaks during the 5 second effect
-    const squeakIntervals = [500, 1200, 2000, 2800, 3600, 4400];
-    squeakIntervals.forEach((delay, i) => {
-      setManagedTimeout(() => {
-        playSqueak(2 + i * 0.5);
-        setShakeIntensity(10 + Math.sin(delay / 500) * 5);
-      }, delay);
-    });
-
-    // After 5 seconds, smooth exit and complete
+    // Complete after exit animation
     setManagedTimeout(() => {
-      setIsShaking(false);
-      setShakeIntensity(0);
-      setIsExiting(true);
-
-      setManagedTimeout(() => {
-        onComplete();
-      }, 1000);
-    }, 5000);
+      onComplete();
+    }, 800);
   }, [progress, isFinalEffect, onComplete]);
 
   // Generate shake transform
