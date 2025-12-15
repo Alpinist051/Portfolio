@@ -11,8 +11,10 @@ import ToClientsSection from "@/components/ToClientsSection";
 import Footer from "@/components/Footer";
 
 const Index = () => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [showContent, setShowContent] = useState(false);
+  // Only show loading on initial page load/refresh, not on navigation
+  const hasLoaded = sessionStorage.getItem("hasLoaded");
+  const [isLoading, setIsLoading] = useState(!hasLoaded);
+  const [showContent, setShowContent] = useState(!!hasLoaded);
 
   useEffect(() => {
     // Prevent scroll during loading
@@ -20,6 +22,8 @@ const Index = () => {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "unset";
+      // Mark as loaded for this session
+      sessionStorage.setItem("hasLoaded", "true");
       // Delay showing content for smooth transition
       setTimeout(() => setShowContent(true), 100);
     }
