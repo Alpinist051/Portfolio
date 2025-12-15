@@ -234,36 +234,27 @@ const InsightsPage = () => {
         {/* Background effects */}
         <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/5 to-background" />
         
-        {/* Subtle dot pattern background */}
+        {/* Grid pattern background */}
         <div 
-          className="absolute inset-0 opacity-[0.15]"
+          className="absolute inset-0"
           style={{
-            backgroundImage: `radial-gradient(circle, #6b7280 1px, transparent 1px)`,
-            backgroundSize: '24px 24px',
-          }}
-        />
-        
-        {/* Diagonal lines accent */}
-        <div 
-          className="absolute inset-0 opacity-[0.04]"
-          style={{
-            backgroundImage: `repeating-linear-gradient(
-              -45deg,
-              #6b7280 0,
-              #6b7280 1px,
-              transparent 1px,
-              transparent 80px
-            )`,
+            backgroundImage: `
+              linear-gradient(rgba(100, 100, 100, 0.15) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(100, 100, 100, 0.15) 1px, transparent 1px)
+            `,
+            backgroundSize: '60px 60px',
           }}
         />
         
         {/* Corner geometric accents */}
-        <div className="absolute left-0 top-32 h-64 w-64 opacity-[0.03]">
-          <div className="h-full w-full border-l-2 border-t-2 border-gray-500" />
-        </div>
-        <div className="absolute bottom-32 right-0 h-64 w-64 opacity-[0.03]">
-          <div className="h-full w-full border-b-2 border-r-2 border-gray-500" />
-        </div>
+        <div className="absolute left-8 top-32 h-40 w-40 border-l-2 border-t-2 border-gray-500/30" />
+        <div className="absolute right-8 top-32 h-40 w-40 border-r-2 border-t-2 border-gray-500/30" />
+        <div className="absolute bottom-20 left-8 h-40 w-40 border-b-2 border-l-2 border-gray-500/30" />
+        <div className="absolute bottom-20 right-8 h-40 w-40 border-b-2 border-r-2 border-gray-500/30" />
+        
+        {/* Circle accents */}
+        <div className="absolute right-1/4 top-48 h-64 w-64 rounded-full border border-gray-500/10" />
+        <div className="absolute left-1/4 bottom-48 h-48 w-48 rounded-full border border-gray-500/10" />
         
         {/* Animated grid pattern */}
         <div className="absolute inset-0 overflow-hidden opacity-[0.02]">
