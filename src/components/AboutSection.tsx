@@ -436,24 +436,32 @@ const AboutSection = () => {
     <section id="about" className="relative overflow-hidden" ref={ref}>
       {/* Full width section */}
       <div className="relative bg-[#fafafa]">
-        {/* Subtle dot pattern background */}
+        {/* Grid pattern background */}
         <div 
-          className="absolute inset-0 opacity-[0.4]"
+          className="absolute inset-0"
           style={{
-            backgroundImage: `radial-gradient(circle, #d1d5db 1px, transparent 1px)`,
-            backgroundSize: '24px 24px',
+            backgroundImage: `
+              linear-gradient(rgba(200, 200, 200, 0.4) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(200, 200, 200, 0.4) 1px, transparent 1px)
+            `,
+            backgroundSize: '60px 60px',
           }}
         />
-        {/* Diagonal lines accent */}
+        {/* Corner geometric accents */}
+        <div className="absolute left-8 top-8 h-32 w-32 border-l-2 border-t-2 border-gray-300/60" />
+        <div className="absolute right-8 top-8 h-32 w-32 border-r-2 border-t-2 border-gray-300/60" />
+        <div className="absolute bottom-8 left-8 h-32 w-32 border-b-2 border-l-2 border-gray-300/60" />
+        <div className="absolute bottom-8 right-8 h-32 w-32 border-b-2 border-r-2 border-gray-300/60" />
+        {/* Subtle diagonal stripe */}
         <div 
-          className="absolute inset-0 opacity-[0.03]"
+          className="absolute inset-0 opacity-[0.08]"
           style={{
             backgroundImage: `repeating-linear-gradient(
-              45deg,
+              135deg,
               #9ca3af 0,
               #9ca3af 1px,
               transparent 1px,
-              transparent 60px
+              transparent 40px
             )`,
           }}
         />

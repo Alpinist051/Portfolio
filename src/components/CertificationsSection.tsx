@@ -119,25 +119,23 @@ const CertificationsSection = () => {
 
   return (
     <section id="certifications" className="relative overflow-hidden bg-[#fafafa] py-32" ref={ref}>
-      {/* Subtle dot pattern background */}
+      {/* Grid pattern background */}
       <div 
-        className="absolute inset-0 opacity-[0.4]"
-        style={{
-          backgroundImage: `radial-gradient(circle, #d1d5db 1px, transparent 1px)`,
-          backgroundSize: '24px 24px',
-        }}
-      />
-      {/* Cross pattern accent */}
-      <div 
-        className="absolute inset-0 opacity-[0.02]"
+        className="absolute inset-0"
         style={{
           backgroundImage: `
-            linear-gradient(#9ca3af 1px, transparent 1px),
-            linear-gradient(90deg, #9ca3af 1px, transparent 1px)
+            linear-gradient(rgba(200, 200, 200, 0.4) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(200, 200, 200, 0.4) 1px, transparent 1px)
           `,
-          backgroundSize: '80px 80px',
+          backgroundSize: '60px 60px',
         }}
       />
+      {/* Corner geometric accents */}
+      <div className="absolute left-8 top-8 h-24 w-24 border-l-2 border-t-2 border-gray-300/60" />
+      <div className="absolute right-8 bottom-8 h-24 w-24 border-b-2 border-r-2 border-gray-300/60" />
+      {/* Subtle circle accents */}
+      <div className="absolute right-20 top-40 h-48 w-48 rounded-full border border-gray-300/30" />
+      <div className="absolute left-20 bottom-40 h-32 w-32 rounded-full border border-gray-300/20" />
       {/* Book page curl effect */}
       <div className="pointer-events-none absolute left-0 top-0 h-full w-16 bg-gradient-to-r from-stone-300/50 via-stone-200/30 to-transparent" />
       <div className="pointer-events-none absolute left-0 top-0 h-full w-2 bg-gradient-to-r from-stone-400/40 to-stone-300/20" />
