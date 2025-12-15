@@ -11,6 +11,7 @@ interface Project {
   description: string;
   tech: string[];
   gradient: string;
+  image: string;
   featured?: boolean;
 }
 
@@ -22,6 +23,7 @@ const allProjects: Project[] = [
     description: "Custom retrieval-augmented generation system for enterprise knowledge bases with multi-source indexing and semantic search.",
     tech: ["Python", "LangChain", "Vector DB", "FastAPI"],
     gradient: "from-primary via-primary/50 to-accent",
+    image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=400&fit=crop",
     featured: true,
   },
   {
@@ -31,6 +33,7 @@ const allProjects: Project[] = [
     description: "Autonomous agent coordination platform for complex workflow automation with real-time monitoring and self-healing capabilities.",
     tech: ["CrewAI", "OpenAI", "React", "WebSocket"],
     gradient: "from-secondary via-secondary/50 to-accent",
+    image: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=600&h=400&fit=crop",
     featured: true,
   },
   {
@@ -40,6 +43,7 @@ const allProjects: Project[] = [
     description: "End-to-end infrastructure for training and deploying custom language models at scale with version control and A/B testing.",
     tech: ["PyTorch", "AWS SageMaker", "Docker", "MLflow"],
     gradient: "from-accent via-accent/50 to-primary",
+    image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600&h=400&fit=crop",
     featured: true,
   },
   {
@@ -49,6 +53,7 @@ const allProjects: Project[] = [
     description: "High-performance dashboard for processing millions of events with sub-second latency and interactive visualizations.",
     tech: ["React", "Node.js", "Kafka", "TimescaleDB"],
     gradient: "from-primary via-accent/50 to-secondary",
+    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&h=400&fit=crop",
   },
   {
     id: 5,
@@ -57,6 +62,7 @@ const allProjects: Project[] = [
     description: "Multi-modal content creation system with text, image, and video generation capabilities for marketing teams.",
     tech: ["GPT-4", "DALL-E", "Next.js", "Prisma"],
     gradient: "from-secondary via-primary/50 to-accent",
+    image: "https://images.unsplash.com/photo-1686191128892-3b37add4c844?w=600&h=400&fit=crop",
   },
   {
     id: 6,
@@ -65,6 +71,7 @@ const allProjects: Project[] = [
     description: "IaC solution automating entire cloud deployments with AI-driven cost optimization and security compliance.",
     tech: ["Terraform", "Kubernetes", "AWS", "Python"],
     gradient: "from-accent via-secondary/50 to-primary",
+    image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=400&fit=crop",
   },
   {
     id: 7,
@@ -73,6 +80,7 @@ const allProjects: Project[] = [
     description: "Enterprise chatbot framework with multi-language support, sentiment analysis, and CRM integration.",
     tech: ["Rasa", "Python", "PostgreSQL", "Redis"],
     gradient: "from-primary via-secondary/50 to-accent",
+    image: "https://images.unsplash.com/photo-1531746790731-6c087fecd65a?w=600&h=400&fit=crop",
   },
   {
     id: 8,
@@ -81,6 +89,7 @@ const allProjects: Project[] = [
     description: "Automated document processing with OCR, entity extraction, and intelligent classification for legal documents.",
     tech: ["Tesseract", "spaCy", "FastAPI", "MongoDB"],
     gradient: "from-secondary via-accent/50 to-primary",
+    image: "https://images.unsplash.com/photo-1568667256549-094345857637?w=600&h=400&fit=crop",
   },
   {
     id: 9,
@@ -89,6 +98,7 @@ const allProjects: Project[] = [
     description: "Machine learning system for predicting equipment failures using sensor data and reducing downtime by 40%.",
     tech: ["TensorFlow", "Apache Spark", "InfluxDB", "Grafana"],
     gradient: "from-accent via-primary/50 to-secondary",
+    image: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&h=400&fit=crop",
   },
   {
     id: 10,
@@ -97,6 +107,7 @@ const allProjects: Project[] = [
     description: "Personalized product recommendation system increasing conversion rates through collaborative filtering and deep learning.",
     tech: ["PyTorch", "Redis", "FastAPI", "PostgreSQL"],
     gradient: "from-primary via-accent/50 to-secondary",
+    image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&h=400&fit=crop",
   },
   {
     id: 11,
@@ -105,6 +116,7 @@ const allProjects: Project[] = [
     description: "Complete migration of monolithic application to microservices with service mesh and observability stack.",
     tech: ["Go", "gRPC", "Istio", "Prometheus"],
     gradient: "from-secondary via-primary/50 to-accent",
+    image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600&h=400&fit=crop",
   },
   {
     id: 12,
@@ -113,6 +125,7 @@ const allProjects: Project[] = [
     description: "Real-time defect detection system for manufacturing with 99.5% accuracy using custom trained models.",
     tech: ["YOLO", "OpenCV", "TensorRT", "C++"],
     gradient: "from-accent via-secondary/50 to-primary",
+    image: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&h=400&fit=crop",
   },
 ];
 
@@ -157,9 +170,18 @@ const ProjectCard = ({ project, index }: { project: Project; index: number }) =>
           </div>
         )}
 
-        <motion.div
-          className={`absolute inset-0 bg-gradient-to-br ${project.gradient} opacity-0 transition-opacity duration-500 group-hover:opacity-10`}
-        />
+        {/* Thumbnail Image */}
+        <div className="relative h-40 overflow-hidden">
+          <motion.img
+            src={project.image}
+            alt={project.title}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
+          <motion.div
+            className={`absolute inset-0 bg-gradient-to-br ${project.gradient} opacity-0 mix-blend-overlay transition-opacity duration-500 group-hover:opacity-40`}
+          />
+        </div>
 
         <motion.div
           className="pointer-events-none absolute inset-0"

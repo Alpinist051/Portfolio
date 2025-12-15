@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import ThemeToggle from "./ThemeToggle";
 
 const Navigation = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -81,16 +80,13 @@ const Navigation = () => {
           ))}
         </div>
 
-        {/* Status indicator & Theme Toggle */}
-        <div className="hidden items-center gap-4 md:flex">
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
-            </span>
-            <span className="font-body text-xs text-muted-foreground">Available</span>
-          </div>
-          <ThemeToggle />
+        {/* Status indicator */}
+        <div className="hidden items-center gap-2 md:flex">
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
+          </span>
+          <span className="font-body text-xs text-muted-foreground">Available</span>
         </div>
 
         {/* Mobile menu button */}
@@ -129,10 +125,6 @@ const Navigation = () => {
               {item.label}
             </button>
           ))}
-          <div className="mt-2 flex items-center justify-between border-t border-border pt-4">
-            <span className="font-body text-xs text-muted-foreground">Toggle theme</span>
-            <ThemeToggle />
-          </div>
         </div>
       </motion.div>
     </motion.nav>
