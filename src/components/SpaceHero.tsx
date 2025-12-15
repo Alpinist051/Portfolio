@@ -3,6 +3,7 @@ import { Float, Text, Billboard, Environment } from "@react-three/drei";
 import { useRef, useMemo, Suspense, forwardRef } from "react";
 import * as THREE from "three";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 
 // Curved screen that wraps around the viewer
 const CurvedScreen = forwardRef<THREE.Group, { 
@@ -311,12 +312,12 @@ const SpaceHero = () => {
               <span className="relative z-10">INITIATE CONTACT</span>
               <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-foreground/20 to-transparent transition-transform group-hover:translate-x-full" />
             </a>
-            <a
-              href="#projects"
+            <Link
+              to="/projects"
               className="rounded-lg border border-primary/50 bg-primary/10 px-8 py-3 font-display text-sm font-semibold tracking-wider text-primary transition-all hover:border-primary hover:bg-primary/20"
             >
               VIEW PROJECTS
-            </a>
+            </Link>
           </motion.div>
         </motion.div>
 
