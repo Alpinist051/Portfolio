@@ -1,32 +1,25 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Float, Text, Billboard, Environment } from "@react-three/drei";
-import { useRef, useMemo, Suspense } from "react";
+import { useRef, useMemo, Suspense, forwardRef } from "react";
 import * as THREE from "three";
 import { motion } from "framer-motion";
 
 // Curved screen that wraps around the viewer
-function CurvedScreen({ 
-  angle, 
-  color, 
-  content, 
-  subtext,
-  radius = 8,
-  height = 3
-}: { 
+const CurvedScreen = forwardRef<THREE.Group, { 
   angle: number;
   color: string;
   content: string;
   subtext?: string;
   radius?: number;
   height?: number;
-}) {
+}>(({ angle, color, content, subtext, radius = 8, height = 3 }, ref) => {
   const x = Math.sin(angle) * radius;
   const z = -Math.cos(angle) * radius;
   const rotationY = angle;
 
   return (
     <Float speed={0.5} rotationIntensity={0.02} floatIntensity={0.1}>
-      <group position={[x, 0, z]} rotation={[0, rotationY, 0]}>
+      <group ref={ref} position={[x, 0, z]} rotation={[0, rotationY, 0]}>
         {/* Screen panel */}
         <mesh>
           <planeGeometry args={[4, height]} />
@@ -98,27 +91,23 @@ function CurvedScreen({
       </group>
     </Float>
   );
-}
+});
+CurvedScreen.displayName = "CurvedScreen";
 
 // Bottom row screens
-function BottomScreen({ 
-  angle, 
-  color, 
-  content,
-  radius = 6
-}: { 
+const BottomScreen = forwardRef<THREE.Group, { 
   angle: number;
   color: string;
   content: string;
   radius?: number;
-}) {
+}>(({ angle, color, content, radius = 6 }, ref) => {
   const x = Math.sin(angle) * radius;
   const z = -Math.cos(angle) * radius;
   const rotationY = angle;
 
   return (
     <Float speed={0.6} rotationIntensity={0.03} floatIntensity={0.15}>
-      <group position={[x, -2.2, z]} rotation={[0.25, rotationY, 0]}>
+      <group ref={ref} position={[x, -2.2, z]} rotation={[0.25, rotationY, 0]}>
         <mesh>
           <planeGeometry args={[3, 1.8]} />
           <meshBasicMaterial color={color} transparent opacity={0.1} side={THREE.DoubleSide} />
@@ -136,12 +125,13 @@ function BottomScreen({
       </group>
     </Float>
   );
-}
+});
+BottomScreen.displayName = "BottomScreen";
 
 // Ambient floating particles in the dark room
-function RoomParticles() {
+const RoomParticles = forwardRef<THREE.Points>((_, ref) => {
   const count = 100;
-  const mesh = useRef<THREE.Points>(null);
+  const meshRef = useRef<THREE.Points>(null);
 
   const particles = useMemo(() => {
     const positions = new Float32Array(count * 3);
@@ -154,20 +144,21 @@ function RoomParticles() {
   }, []);
 
   useFrame((state) => {
-    if (mesh.current) {
-      mesh.current.rotation.y = state.clock.elapsedTime * 0.01;
+    if (meshRef.current) {
+      meshRef.current.rotation.y = state.clock.elapsedTime * 0.01;
     }
   });
 
   return (
-    <points ref={mesh}>
+    <points ref={meshRef}>
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" count={count} array={particles} itemSize={3} />
       </bufferGeometry>
       <pointsMaterial size={0.03} color="#00d4ff" transparent opacity={0.3} sizeAttenuation blending={THREE.AdditiveBlending} />
     </points>
   );
-}
+});
+RoomParticles.displayName = "RoomParticles";
 
 // Ground reflection
 function GroundPlane() {
