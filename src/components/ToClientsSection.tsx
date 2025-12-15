@@ -83,6 +83,24 @@ const ToClientsSection = () => {
 
   return (
     <section id="insights" className="relative overflow-hidden bg-[#fafafa] py-32" ref={ref}>
+      {/* Grid pattern background */}
+      <div 
+        className="absolute inset-0"
+        style={{
+          backgroundImage: `
+            linear-gradient(rgba(200, 200, 200, 0.4) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(200, 200, 200, 0.4) 1px, transparent 1px)
+          `,
+          backgroundSize: '60px 60px',
+        }}
+      />
+      {/* Corner geometric accents */}
+      <div className="absolute left-8 top-8 h-24 w-24 border-l-2 border-t-2 border-gray-300/60" />
+      <div className="absolute right-8 top-8 h-24 w-24 border-r-2 border-t-2 border-gray-300/60" />
+      <div className="absolute bottom-8 left-8 h-24 w-24 border-b-2 border-l-2 border-gray-300/60" />
+      <div className="absolute bottom-8 right-8 h-24 w-24 border-b-2 border-r-2 border-gray-300/60" />
+      {/* Circle accent */}
+      <div className="absolute right-1/4 top-20 h-40 w-40 rounded-full border border-gray-300/30" />
       {/* Book page curl effect */}
       <div className="pointer-events-none absolute left-0 top-0 h-full w-16 bg-gradient-to-r from-stone-300/50 via-stone-200/30 to-transparent" />
       <div className="pointer-events-none absolute left-0 top-0 h-full w-2 bg-gradient-to-r from-stone-400/40 to-stone-300/20" />
