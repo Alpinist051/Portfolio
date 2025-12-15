@@ -1,5 +1,127 @@
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { Points, PointMaterial } from "@react-three/drei";
+import * as THREE from "three";
+
+// 3D Starfield with rotating camera
+const StarField = () => {
+  const ref = useRef<THREE.Points>(null);
+  const cameraRef = useRef({ angle: 0 });
+
+  const positions = useMemo(() => {
+    const pos = new Float32Array(3000 * 3);
+    for (let i = 0; i < 3000; i++) {
+      const r = 50 + Math.random() * 100;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      pos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+      pos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+      pos[i * 3 + 2] = r * Math.cos(phi);
+    }
+    return pos;
+  }, []);
+
+  useFrame((state, delta) => {
+    if (ref.current) {
+      ref.current.rotation.x += delta * 0.02;
+      ref.current.rotation.y += delta * 0.03;
+    }
+    
+    // Rotate camera for immersive effect
+    cameraRef.current.angle += delta * 0.15;
+    state.camera.position.x = Math.sin(cameraRef.current.angle) * 3;
+    state.camera.position.y = Math.cos(cameraRef.current.angle * 0.5) * 2;
+    state.camera.position.z = 5 + Math.sin(cameraRef.current.angle * 0.3) * 2;
+    state.camera.lookAt(0, 0, 0);
+  });
+
+  return (
+    <Points ref={ref} positions={positions} stride={3} frustumCulled={false}>
+      <PointMaterial
+        transparent
+        color="#00d4ff"
+        size={0.15}
+        sizeAttenuation={true}
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+      />
+    </Points>
+  );
+};
+
+// Secondary colored stars for depth
+const ColoredStars = () => {
+  const ref = useRef<THREE.Points>(null);
+
+  const positions = useMemo(() => {
+    const pos = new Float32Array(500 * 3);
+    for (let i = 0; i < 500; i++) {
+      const r = 30 + Math.random() * 80;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      pos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+      pos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+      pos[i * 3 + 2] = r * Math.cos(phi);
+    }
+    return pos;
+  }, []);
+
+  useFrame((_, delta) => {
+    if (ref.current) {
+      ref.current.rotation.x -= delta * 0.01;
+      ref.current.rotation.z += delta * 0.02;
+    }
+  });
+
+  return (
+    <Points ref={ref} positions={positions} stride={3} frustumCulled={false}>
+      <PointMaterial
+        transparent
+        color="#ff00aa"
+        size={0.2}
+        sizeAttenuation={true}
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+      />
+    </Points>
+  );
+};
+
+// Nebula clouds
+const Nebula = () => {
+  const ref = useRef<THREE.Points>(null);
+
+  const positions = useMemo(() => {
+    const pos = new Float32Array(200 * 3);
+    for (let i = 0; i < 200; i++) {
+      pos[i * 3] = (Math.random() - 0.5) * 60;
+      pos[i * 3 + 1] = (Math.random() - 0.5) * 40;
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 60 - 30;
+    }
+    return pos;
+  }, []);
+
+  useFrame((_, delta) => {
+    if (ref.current) {
+      ref.current.rotation.y += delta * 0.005;
+    }
+  });
+
+  return (
+    <Points ref={ref} positions={positions} stride={3} frustumCulled={false}>
+      <PointMaterial
+        transparent
+        color="#6633ff"
+        size={1.5}
+        sizeAttenuation={true}
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+        opacity={0.3}
+      />
+    </Points>
+  );
+};
 
 const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
   const [progress, setProgress] = useState(0);
@@ -26,32 +148,20 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
       transition={{ duration: 0.8 }}
       className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background"
     >
-      {/* Background grid */}
-      <div className="absolute inset-0 space-grid opacity-50" />
-
-      {/* Floating particles */}
-      <div className="absolute inset-0 overflow-hidden">
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute h-1 w-1 rounded-full bg-primary"
-            initial={{
-              x: Math.random() * window.innerWidth,
-              y: Math.random() * window.innerHeight,
-              opacity: 0,
-            }}
-            animate={{
-              y: [null, Math.random() * window.innerHeight],
-              opacity: [0, 0.8, 0],
-            }}
-            transition={{
-              duration: 3 + Math.random() * 2,
-              repeat: Infinity,
-              delay: Math.random() * 2,
-            }}
-          />
-        ))}
+      {/* 3D Space Background */}
+      <div className="absolute inset-0">
+        <Canvas camera={{ position: [0, 0, 5], fov: 75 }}>
+          <color attach="background" args={["#050510"]} />
+          <fog attach="fog" args={["#050510", 50, 150]} />
+          <ambientLight intensity={0.1} />
+          <StarField />
+          <ColoredStars />
+          <Nebula />
+        </Canvas>
       </div>
+
+      {/* Overlay gradient for depth */}
+      <div className="absolute inset-0 bg-gradient-radial from-transparent via-background/30 to-background/80 pointer-events-none" />
 
       {/* Main content */}
       <div className="relative z-10 flex flex-col items-center gap-12">
@@ -86,7 +196,7 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
           </p>
 
           {/* Progress bar */}
-          <div className="relative h-1 w-64 overflow-hidden rounded-full bg-muted md:w-80">
+          <div className="relative h-1 w-64 overflow-hidden rounded-full bg-muted/50 backdrop-blur-sm md:w-80">
             <motion.div
               className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-primary via-secondary to-primary"
               style={{ width: `${progress}%` }}
@@ -132,12 +242,12 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
       </div>
 
       {/* Corner decorations */}
-      <div className="absolute left-8 top-8 font-display text-xs text-muted-foreground opacity-50">
+      <div className="absolute left-8 top-8 z-10 font-display text-xs text-muted-foreground opacity-50">
         <div>SYS.BOOT v2.4.1</div>
         <div className="text-primary">STATUS: ACTIVE</div>
       </div>
 
-      <div className="absolute bottom-8 right-8 text-right font-display text-xs text-muted-foreground opacity-50">
+      <div className="absolute bottom-8 right-8 z-10 text-right font-display text-xs text-muted-foreground opacity-50">
         <div>MATRIX.INIT</div>
         <div className="text-secondary">KERNEL: LOADED</div>
       </div>
