@@ -93,7 +93,7 @@ const AboutSection = () => {
         </div>
 
         {/* Main content area - wider padding */}
-        <div className="relative z-10 px-4 py-24 md:px-8 lg:px-16">
+        <div className="container relative z-10 mx-auto px-4 py-24">
           {/* Section header */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -182,7 +182,7 @@ const AboutSection = () => {
           </motion.div>
 
           {/* Content */}
-          <div className="mx-auto max-w-6xl">
+          <div>
             {/* Summary */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -224,7 +224,7 @@ const AboutSection = () => {
               variants={containerVariants}
               initial="hidden"
               animate={isInView ? "visible" : "hidden"}
-              className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 w-full max-w-6xl mx-auto"
+              className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
             >
               {skills.map((skillGroup, i) => (
                 <motion.div
