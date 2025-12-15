@@ -191,33 +191,9 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
           triggerMilestoneShake(80, 8, 500);
         }
         
-        // Final: Extended intense shake at 100% for 5 seconds
+        // Stop at 100
         if (newProgress >= 100) {
           clearInterval(interval);
-          setIsFinalEffect(true);
-          triggerMilestoneShake(100, 15, 5000);
-          
-          // Multiple squeaks during the 5 second effect
-          const squeakIntervals = [500, 1200, 2000, 2800, 3600, 4400];
-          squeakIntervals.forEach((delay, i) => {
-            setTimeout(() => {
-              playSqueak(2 + i * 0.5);
-              // Vary shake intensity during final effect
-              setShakeIntensity(10 + Math.sin(delay / 500) * 5);
-            }, delay);
-          });
-          
-          // After 5 seconds, smooth exit
-          setTimeout(() => {
-            setIsShaking(false);
-            setShakeIntensity(0);
-            setIsExiting(true);
-            // Wait for exit animation then complete
-            setTimeout(() => {
-              onComplete();
-            }, 1000);
-          }, 5000);
-          
           return 100;
         }
         
@@ -226,7 +202,34 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
     }, 100);
 
     return () => clearInterval(interval);
-  }, [onComplete]);
+  }, []);
+
+  // Trigger final effect immediately when progress hits 100
+  useEffect(() => {
+    if (progress === 100 && !isFinalEffect) {
+      setIsFinalEffect(true);
+      triggerMilestoneShake(100, 15, 5000);
+      
+      // Multiple squeaks during the 5 second effect
+      const squeakIntervals = [500, 1200, 2000, 2800, 3600, 4400];
+      squeakIntervals.forEach((delay, i) => {
+        setTimeout(() => {
+          playSqueak(2 + i * 0.5);
+          setShakeIntensity(10 + Math.sin(delay / 500) * 5);
+        }, delay);
+      });
+      
+      // After 5 seconds, smooth exit
+      setTimeout(() => {
+        setIsShaking(false);
+        setShakeIntensity(0);
+        setIsExiting(true);
+        setTimeout(() => {
+          onComplete();
+        }, 1000);
+      }, 5000);
+    }
+  }, [progress, isFinalEffect, onComplete]);
 
   // Generate shake transform
   const shakeStyle = isShaking
