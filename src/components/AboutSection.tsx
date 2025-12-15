@@ -176,7 +176,7 @@ const AboutSection = () => {
                 - AI, Machine Learning, Web, Mobile Application, Blockchain & Web3
               </motion.p>
               <motion.div 
-                className="mx-auto mt-6 max-w-3xl font-serif text-base leading-relaxed text-gray-600 md:text-lg"
+                className="mx-auto mt-6 max-w-3xl font-serif text-lg leading-relaxed text-gray-600 md:text-xl"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.5 }}
@@ -224,8 +224,8 @@ const AboutSection = () => {
                       <item.icon className="h-5 w-5 text-gray-700" />
                     </motion.div>
                     <div>
-                      <p className="text-sm text-gray-500 font-body">{item.label}</p>
-                      <p className="font-display text-lg font-semibold text-gray-800">{item.value}</p>
+                      <p className="text-base text-gray-500 font-body">{item.label}</p>
+                      <p className="font-display text-xl font-semibold text-gray-800">{item.value}</p>
                     </div>
                   </div>
                 </motion.div>
