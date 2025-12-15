@@ -6,6 +6,71 @@
 
 @layer base {
   :root {
+    /* Light mode - Clean professional */
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    /* Teal primary for light */
+    --primary: 185 80% 35%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 185 90% 45%;
+
+    /* Rose accent */
+    --secondary: 320 70% 50%;
+    --secondary-foreground: 0 0% 100%;
+    --secondary-glow: 320 80% 60%;
+
+    /* Light muted */
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 260 60% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 185 80% 35%;
+
+    --radius: 0.5rem;
+
+    /* Paper colors */
+    --paper: 40 30% 96%;
+    --paper-dark: 35 25% 90%;
+    --paper-text: 30 10% 20%;
+    --paper-border: 35 40% 80%;
+
+    /* Gradients */
+    --gradient-space: linear-gradient(135deg, hsl(210 40% 98%) 0%, hsl(220 30% 96%) 50%, hsl(210 40% 98%) 100%);
+    --gradient-neon: linear-gradient(135deg, hsl(185 80% 35%) 0%, hsl(320 70% 50%) 100%);
+    --gradient-paper: linear-gradient(180deg, hsl(40 30% 98%) 0%, hsl(35 25% 94%) 100%);
+    --gradient-glow: radial-gradient(ellipse at center, hsl(185 80% 35% / 0.15) 0%, transparent 70%);
+
+    /* Shadows */
+    --shadow-neon: 0 0 20px hsl(185 80% 35% / 0.2), 0 0 40px hsl(185 80% 35% / 0.1);
+    --shadow-magenta: 0 0 20px hsl(320 70% 50% / 0.2), 0 0 40px hsl(320 70% 50% / 0.1);
+    --shadow-paper: 0 4px 20px hsl(30 10% 15% / 0.08);
+    --shadow-card: 0 8px 32px hsl(0 0% 0% / 0.08);
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 185 80% 35%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 185 80% 35%;
+  }
+
+  .dark {
     /* Space dark theme */
     --background: 230 25% 5%;
     --foreground: 200 20% 95%;
@@ -39,8 +104,6 @@
     --border: 230 30% 20%;
     --input: 230 30% 15%;
     --ring: 185 100% 50%;
-
-    --radius: 0.5rem;
 
     /* Paper colors */
     --paper: 40 30% 92%;
@@ -269,26 +332,45 @@
   }
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar - light mode */
 ::-webkit-scrollbar {
   width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: hsl(230 25% 5%);
+  background: hsl(210 40% 96%);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(185 100% 50% / 0.3);
+  background: hsl(185 80% 35% / 0.3);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
+  background: hsl(185 80% 35% / 0.5);
+}
+
+/* Custom scrollbar - dark mode */
+.dark ::-webkit-scrollbar-track {
+  background: hsl(230 25% 5%);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: hsl(185 100% 50% / 0.3);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
   background: hsl(185 100% 50% / 0.5);
 }
 
-/* Selection */
+/* Selection - light mode */
 ::selection {
+  background: hsl(185 80% 35% / 0.3);
+  color: hsl(222 47% 11%);
+}
+
+/* Selection - dark mode */
+.dark ::selection {
   background: hsl(185 100% 50% / 0.3);
   color: hsl(200 20% 95%);
 }
