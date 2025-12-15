@@ -1,6 +1,6 @@
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Stars, Float, Text } from "@react-three/drei";
-import { useRef, useMemo } from "react";
+import { Stars, Float, Billboard, Text } from "@react-three/drei";
+import { useRef, useMemo, Suspense } from "react";
 import * as THREE from "three";
 import { motion } from "framer-motion";
 
@@ -13,89 +13,88 @@ function AdScreen({ position, rotation, scale, color, content, subtext }: {
   content: string;
   subtext?: string;
 }) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const glowRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null);
   
   useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.position.y += Math.sin(state.clock.elapsedTime * 0.5 + position[0]) * 0.0008;
-    }
-    if (glowRef.current && glowRef.current.material instanceof THREE.MeshBasicMaterial) {
-      const pulse = Math.sin(state.clock.elapsedTime * 2) * 0.1 + 0.9;
-      glowRef.current.material.opacity = 0.15 * pulse;
+    if (groupRef.current) {
+      groupRef.current.position.y += Math.sin(state.clock.elapsedTime * 0.5 + position[0]) * 0.0008;
     }
   });
 
   return (
     <Float speed={0.8} rotationIntensity={0.1} floatIntensity={0.3}>
-      <group position={position} rotation={rotation}>
-        {/* Main screen */}
-        <mesh ref={meshRef} scale={scale}>
-          <planeGeometry args={[3.5, 2]} />
-          <meshStandardMaterial
-            color={color}
-            emissive={color}
-            emissiveIntensity={0.6}
-            transparent
-            opacity={0.12}
-            side={THREE.DoubleSide}
-          />
-        </mesh>
-        {/* Screen border glow */}
-        <mesh ref={glowRef} scale={scale}>
-          <planeGeometry args={[3.6, 2.1]} />
+      <group ref={groupRef} position={position} rotation={rotation}>
+        {/* Main screen background */}
+        <mesh scale={scale}>
+          <planeGeometry args={[4, 2.2]} />
           <meshBasicMaterial
             color={color}
             transparent
-            opacity={0.25}
+            opacity={0.15}
             side={THREE.DoubleSide}
           />
         </mesh>
-        {/* Inner glow */}
+        {/* Screen border */}
+        <mesh scale={scale}>
+          <planeGeometry args={[4.1, 2.3]} />
+          <meshBasicMaterial
+            color={color}
+            transparent
+            opacity={0.4}
+            side={THREE.DoubleSide}
+            wireframe
+          />
+        </mesh>
+        {/* Glowing core */}
         <mesh scale={scale * 0.95}>
-          <planeGeometry args={[3.4, 1.9]} />
+          <planeGeometry args={[3.8, 2]} />
           <meshBasicMaterial
             color={color}
             transparent
-            opacity={0.05}
+            opacity={0.08}
             side={THREE.DoubleSide}
           />
         </mesh>
         {/* Main text */}
-        <Text
-          position={[0, subtext ? 0.15 : 0, 0.02]}
-          fontSize={0.18 * scale}
-          color={color}
-          anchorX="center"
-          anchorY="middle"
-          maxWidth={3 * scale}
-          font="/fonts/orbitron.woff"
-        >
-          {content}
-        </Text>
-        {/* Subtext */}
-        {subtext && (
+        <Billboard>
           <Text
-            position={[0, -0.25, 0.02]}
-            fontSize={0.08 * scale}
+            position={[0, subtext ? 0.2 : 0, 0.1]}
+            fontSize={0.3 * scale}
             color={color}
             anchorX="center"
             anchorY="middle"
-            maxWidth={3 * scale}
-            fillOpacity={0.7}
+            maxWidth={3.5 * scale}
           >
-            {subtext}
+            {content}
           </Text>
+        </Billboard>
+        {/* Subtext */}
+        {subtext && (
+          <Billboard>
+            <Text
+              position={[0, -0.35, 0.1]}
+              fontSize={0.12 * scale}
+              color={color}
+              anchorX="center"
+              anchorY="middle"
+              maxWidth={3.5 * scale}
+            >
+              {subtext}
+            </Text>
+          </Billboard>
         )}
-        {/* Decorative lines */}
-        <mesh position={[0, 0.85 * scale, 0.01]} scale={scale}>
-          <planeGeometry args={[2.5, 0.02]} />
-          <meshBasicMaterial color={color} transparent opacity={0.4} />
+        {/* Top line decoration */}
+        <mesh position={[0, 0.95 * scale, 0.05]} scale={scale}>
+          <planeGeometry args={[3, 0.03]} />
+          <meshBasicMaterial color={color} transparent opacity={0.6} />
         </mesh>
-        <mesh position={[0, -0.85 * scale, 0.01]} scale={scale}>
-          <planeGeometry args={[2.5, 0.02]} />
-          <meshBasicMaterial color={color} transparent opacity={0.4} />
+        {/* Bottom line decoration */}
+        <mesh position={[0, -0.95 * scale, 0.05]} scale={scale}>
+          <planeGeometry args={[3, 0.03]} />
+          <meshBasicMaterial color={color} transparent opacity={0.6} />
         </mesh>
+        {/* Point light for glow */}
+        <pointLight position={[0, 0, 1]} intensity={0.5} color={color} distance={5} />
       </group>
     </Float>
   );
@@ -107,169 +106,163 @@ function HumanSilhouette() {
 
   useFrame((state) => {
     if (groupRef.current) {
-      // Subtle breathing motion
-      groupRef.current.position.y = -2.8 + Math.sin(state.clock.elapsedTime * 0.8) * 0.03;
-      // Slight head movement as if looking at screens
-      groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.3) * 0.08;
+      groupRef.current.position.y = -1.5 + Math.sin(state.clock.elapsedTime * 0.8) * 0.02;
+      groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.3) * 0.05;
     }
   });
 
   return (
-    <group ref={groupRef} position={[0, -2.8, 2]}>
+    <group ref={groupRef} position={[0, -1.5, 4]}>
       {/* Head */}
-      <mesh position={[0, 1.7, 0]}>
-        <sphereGeometry args={[0.2, 16, 16]} />
-        <meshStandardMaterial color="#0a0a15" emissive="#00d4ff" emissiveIntensity={0.05} />
+      <mesh position={[0, 1.6, 0]}>
+        <sphereGeometry args={[0.18, 16, 16]} />
+        <meshStandardMaterial color="#080812" emissive="#00d4ff" emissiveIntensity={0.15} />
       </mesh>
       {/* Neck */}
-      <mesh position={[0, 1.45, 0]}>
-        <cylinderGeometry args={[0.08, 0.1, 0.15, 8]} />
-        <meshStandardMaterial color="#0a0a15" emissive="#00d4ff" emissiveIntensity={0.03} />
+      <mesh position={[0, 1.38, 0]}>
+        <cylinderGeometry args={[0.07, 0.09, 0.12, 8]} />
+        <meshStandardMaterial color="#080812" emissive="#00d4ff" emissiveIntensity={0.1} />
       </mesh>
       {/* Torso */}
-      <mesh position={[0, 1, 0]}>
-        <boxGeometry args={[0.5, 0.7, 0.25]} />
-        <meshStandardMaterial color="#0a0a15" emissive="#00d4ff" emissiveIntensity={0.03} />
+      <mesh position={[0, 0.95, 0]}>
+        <boxGeometry args={[0.45, 0.6, 0.22]} />
+        <meshStandardMaterial color="#080812" emissive="#00d4ff" emissiveIntensity={0.1} />
       </mesh>
-      {/* Left shoulder */}
-      <mesh position={[-0.35, 1.25, 0]}>
-        <sphereGeometry args={[0.1, 8, 8]} />
-        <meshStandardMaterial color="#0a0a15" emissive="#00d4ff" emissiveIntensity={0.03} />
+      {/* Shoulders */}
+      <mesh position={[-0.32, 1.18, 0]}>
+        <sphereGeometry args={[0.09, 8, 8]} />
+        <meshStandardMaterial color="#080812" emissive="#ff00aa" emissiveIntensity={0.1} />
       </mesh>
-      {/* Right shoulder */}
-      <mesh position={[0.35, 1.25, 0]}>
-        <sphereGeometry args={[0.1, 8, 8]} />
-        <meshStandardMaterial color="#0a0a15" emissive="#00d4ff" emissiveIntensity={0.03} />
+      <mesh position={[0.32, 1.18, 0]}>
+        <sphereGeometry args={[0.09, 8, 8]} />
+        <meshStandardMaterial color="#080812" emissive="#00ff88" emissiveIntensity={0.1} />
       </mesh>
-      {/* Left arm */}
-      <mesh position={[-0.4, 0.95, 0]} rotation={[0, 0, 0.15]}>
-        <cylinderGeometry args={[0.06, 0.05, 0.5, 8]} />
-        <meshStandardMaterial color="#0a0a15" emissive="#00d4ff" emissiveIntensity={0.03} />
+      {/* Arms */}
+      <mesh position={[-0.38, 0.88, 0]} rotation={[0, 0, 0.12]}>
+        <cylinderGeometry args={[0.05, 0.045, 0.45, 8]} />
+        <meshStandardMaterial color="#080812" emissive="#ff00aa" emissiveIntensity={0.08} />
       </mesh>
-      {/* Right arm */}
-      <mesh position={[0.4, 0.95, 0]} rotation={[0, 0, -0.15]}>
-        <cylinderGeometry args={[0.06, 0.05, 0.5, 8]} />
-        <meshStandardMaterial color="#0a0a15" emissive="#00d4ff" emissiveIntensity={0.03} />
+      <mesh position={[0.38, 0.88, 0]} rotation={[0, 0, -0.12]}>
+        <cylinderGeometry args={[0.05, 0.045, 0.45, 8]} />
+        <meshStandardMaterial color="#080812" emissive="#00ff88" emissiveIntensity={0.08} />
       </mesh>
-      {/* Rim light effect */}
-      <pointLight position={[0, 1.5, -0.5]} intensity={0.3} color="#00d4ff" distance={2} />
-      <pointLight position={[-0.5, 1.5, 0]} intensity={0.15} color="#ff00aa" distance={1.5} />
-      <pointLight position={[0.5, 1.5, 0]} intensity={0.15} color="#00ff88" distance={1.5} />
+      {/* Rim lights */}
+      <pointLight position={[0, 1.5, -0.4]} intensity={0.8} color="#00d4ff" distance={2} />
+      <pointLight position={[-0.4, 1.3, 0.2]} intensity={0.4} color="#ff00aa" distance={1.5} />
+      <pointLight position={[0.4, 1.3, 0.2]} intensity={0.4} color="#00ff88" distance={1.5} />
     </group>
   );
 }
 
-// Moving light particles
-function LightParticles() {
-  const particlesRef = useRef<THREE.Points>(null);
-  const count = 300;
+// Floating particles
+function FloatingParticles() {
+  const count = 200;
+  const mesh = useRef<THREE.Points>(null);
 
-  const positions = useMemo(() => {
-    const pos = new Float32Array(count * 3);
+  const particles = useMemo(() => {
+    const positions = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * 40;
-      pos[i * 3 + 1] = (Math.random() - 0.5) * 40;
-      pos[i * 3 + 2] = (Math.random() - 0.5) * 40;
+      positions[i * 3] = (Math.random() - 0.5) * 50;
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 50;
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 50;
     }
-    return pos;
+    return positions;
   }, []);
 
   useFrame((state) => {
-    if (particlesRef.current) {
-      const positions = particlesRef.current.geometry.attributes.position.array as Float32Array;
-      for (let i = 0; i < count; i++) {
-        positions[i * 3 + 1] += Math.sin(state.clock.elapsedTime + i) * 0.003;
-        positions[i * 3] += Math.cos(state.clock.elapsedTime + i * 0.5) * 0.002;
-      }
-      particlesRef.current.geometry.attributes.position.needsUpdate = true;
+    if (mesh.current) {
+      mesh.current.rotation.y = state.clock.elapsedTime * 0.02;
+      mesh.current.rotation.x = state.clock.elapsedTime * 0.01;
     }
   });
 
   return (
-    <points ref={particlesRef}>
+    <points ref={mesh}>
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
-          args={[positions, 3]}
+          count={count}
+          array={particles}
+          itemSize={3}
         />
       </bufferGeometry>
       <pointsMaterial
-        size={0.06}
+        size={0.08}
         color="#00d4ff"
         transparent
-        opacity={0.5}
+        opacity={0.6}
         sizeAttenuation
+        blending={THREE.AdditiveBlending}
       />
     </points>
   );
 }
 
-// Camera animation
-function CameraRig() {
+// Camera subtle movement
+function CameraAnimation() {
   const { camera } = useThree();
   
   useFrame((state) => {
-    camera.position.x = Math.sin(state.clock.elapsedTime * 0.08) * 0.8;
-    camera.position.y = Math.cos(state.clock.elapsedTime * 0.1) * 0.4 + 0.5;
-    camera.lookAt(0, 0, -2);
+    camera.position.x = Math.sin(state.clock.elapsedTime * 0.1) * 0.5;
+    camera.position.y = Math.cos(state.clock.elapsedTime * 0.08) * 0.3;
+    camera.lookAt(0, 0, 0);
   });
 
   return null;
 }
 
 function Scene() {
-  // Larger, more prominent ads arranged around center and bottom
   const screens = [
-    // Center main ads
-    { position: [0, 1, -8] as [number, number, number], rotation: [0, 0, 0] as [number, number, number], scale: 1.8, color: "#00d4ff", content: "AI/ML SOLUTIONS", subtext: "Neural Networks • Deep Learning • LLMs" },
-    { position: [-4, 0.5, -7] as [number, number, number], rotation: [0, 0.35, 0] as [number, number, number], scale: 1.5, color: "#ff00aa", content: "FULL STACK DEV", subtext: "React • Node.js • Cloud Architecture" },
-    { position: [4, 0.5, -7] as [number, number, number], rotation: [0, -0.35, 0] as [number, number, number], scale: 1.5, color: "#00ff88", content: "DATA SYSTEMS", subtext: "Pipelines • Analytics • Real-time Processing" },
+    // Main center ads - large and prominent
+    { position: [0, 1.5, -6] as [number, number, number], rotation: [0, 0, 0] as [number, number, number], scale: 1.4, color: "#00d4ff", content: "AI/ML SOLUTIONS", subtext: "Neural Networks • Deep Learning • LLMs" },
+    { position: [-4, 0.8, -5] as [number, number, number], rotation: [0, 0.4, 0] as [number, number, number], scale: 1.2, color: "#ff00aa", content: "FULL STACK", subtext: "React • Node.js • Cloud" },
+    { position: [4, 0.8, -5] as [number, number, number], rotation: [0, -0.4, 0] as [number, number, number], scale: 1.2, color: "#00ff88", content: "DATA SYSTEMS", subtext: "Pipelines • Analytics" },
     
-    // Bottom row - larger immersive ads
-    { position: [-3, -1.5, -5] as [number, number, number], rotation: [0.1, 0.25, 0] as [number, number, number], scale: 1.3, color: "#ffaa00", content: "NEURAL NETWORKS", subtext: "Custom Model Architecture" },
-    { position: [0, -2, -6] as [number, number, number], rotation: [0.15, 0, 0] as [number, number, number], scale: 1.6, color: "#aa00ff", content: "MULTI-AGENT AI", subtext: "Autonomous Orchestration Systems" },
-    { position: [3, -1.5, -5] as [number, number, number], rotation: [0.1, -0.25, 0] as [number, number, number], scale: 1.3, color: "#ff6600", content: "RAG SYSTEMS", subtext: "Knowledge Base Integration" },
+    // Bottom row - immersive
+    { position: [-2.5, -1.2, -4] as [number, number, number], rotation: [0.15, 0.2, 0] as [number, number, number], scale: 1.1, color: "#ffaa00", content: "NEURAL NETS" },
+    { position: [0, -1.8, -5] as [number, number, number], rotation: [0.2, 0, 0] as [number, number, number], scale: 1.3, color: "#aa00ff", content: "MULTI-AGENT AI", subtext: "Autonomous Systems" },
+    { position: [2.5, -1.2, -4] as [number, number, number], rotation: [0.15, -0.2, 0] as [number, number, number], scale: 1.1, color: "#ff6600", content: "RAG SYSTEMS" },
     
-    // Side floating ads
-    { position: [-6, 1.5, -9] as [number, number, number], rotation: [0, 0.5, 0] as [number, number, number], scale: 1.2, color: "#00ffff", content: "LLM FINE-TUNING" },
-    { position: [6, 1.5, -9] as [number, number, number], rotation: [0, -0.5, 0] as [number, number, number], scale: 1.2, color: "#ff0066", content: "CLOUD SYSTEMS" },
-    
-    // Background distant ads
-    { position: [-5, 3, -12] as [number, number, number], rotation: [0, 0.3, 0.05] as [number, number, number], scale: 1.8, color: "#4488ff", content: "MLOPS PIPELINE" },
-    { position: [5, 3, -12] as [number, number, number], rotation: [0, -0.3, -0.05] as [number, number, number], scale: 1.8, color: "#88ff44", content: "KUBERNETES" },
-    { position: [0, 4, -14] as [number, number, number], rotation: [-0.1, 0, 0] as [number, number, number], scale: 2, color: "#ff44aa", content: "INNOVATION" },
+    // Far background
+    { position: [-6, 2.5, -10] as [number, number, number], rotation: [0, 0.35, 0] as [number, number, number], scale: 1.5, color: "#4488ff", content: "MLOPS" },
+    { position: [6, 2.5, -10] as [number, number, number], rotation: [0, -0.35, 0] as [number, number, number], scale: 1.5, color: "#88ff44", content: "KUBERNETES" },
+    { position: [0, 3.5, -12] as [number, number, number], rotation: [-0.1, 0, 0] as [number, number, number], scale: 1.8, color: "#ff44aa", content: "INNOVATION" },
   ];
 
   return (
     <>
-      <CameraRig />
-      <ambientLight intensity={0.08} />
-      <pointLight position={[0, 2, 3]} intensity={0.6} color="#00d4ff" />
-      <pointLight position={[-5, 3, -5]} intensity={0.4} color="#ff00aa" />
-      <pointLight position={[5, -2, -5]} intensity={0.4} color="#00ff88" />
-      <pointLight position={[0, -3, 0]} intensity={0.3} color="#aa00ff" />
+      <CameraAnimation />
       
+      {/* Lighting */}
+      <ambientLight intensity={0.15} />
+      <pointLight position={[0, 5, 5]} intensity={1} color="#00d4ff" />
+      <pointLight position={[-5, 2, 0]} intensity={0.6} color="#ff00aa" />
+      <pointLight position={[5, 2, 0]} intensity={0.6} color="#00ff88" />
+      
+      {/* Stars background */}
       <Stars
-        radius={100}
-        depth={50}
-        count={6000}
-        factor={4}
+        radius={80}
+        depth={60}
+        count={4000}
+        factor={5}
         saturation={0}
         fade
-        speed={0.3}
+        speed={0.5}
       />
       
-      <LightParticles />
+      {/* Floating particles */}
+      <FloatingParticles />
       
-      {/* Human silhouette looking at ads */}
+      {/* Human silhouette */}
       <HumanSilhouette />
       
+      {/* Ad screens */}
       {screens.map((screen, i) => (
         <AdScreen key={i} {...screen} />
       ))}
 
-      {/* Atmospheric fog */}
-      <fog attach="fog" args={["#050510", 8, 35]} />
+      {/* Fog for depth */}
+      <fog attach="fog" args={["#050510", 6, 25]} />
     </>
   );
 }
@@ -280,18 +273,17 @@ const SpaceHero = () => {
       {/* Three.js Canvas */}
       <div className="absolute inset-0">
         <Canvas
-          camera={{ position: [0, 0, 10], fov: 65 }}
+          camera={{ position: [0, 0, 8], fov: 60 }}
           gl={{ antialias: true, alpha: true }}
         >
-          <Scene />
+          <Suspense fallback={null}>
+            <Scene />
+          </Suspense>
         </Canvas>
       </div>
 
-      {/* Vignette overlay */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(5,5,16,0.4)_70%,rgba(5,5,16,0.8)_100%)]" />
-
-      {/* Bottom gradient for content readability */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+      {/* Vignette */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(5,5,16,0.5)_60%,rgba(5,5,16,0.9)_100%)]" />
 
       {/* Content overlay */}
       <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 text-center">
@@ -329,8 +321,7 @@ const SpaceHero = () => {
             transition={{ delay: 1.2 }}
             className="mx-auto mb-8 max-w-2xl font-body text-lg text-muted-foreground md:text-xl"
           >
-            6+ years crafting intelligent systems, from neural networks to scalable full-stack solutions. 
-            Transforming complex problems into elegant, production-ready applications.
+            6+ years crafting intelligent systems, from neural networks to scalable full-stack solutions.
           </motion.p>
 
           <motion.div
@@ -373,7 +364,7 @@ const SpaceHero = () => {
         </motion.div>
       </div>
 
-      {/* Scanlines overlay */}
+      {/* Scanlines */}
       <div className="scanlines pointer-events-none absolute inset-0" />
     </section>
   );
