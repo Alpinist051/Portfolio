@@ -9,6 +9,7 @@ interface Project {
   description: string;
   tech: string[];
   gradient: string;
+  image: string;
 }
 
 const projects: Project[] = [
@@ -19,6 +20,7 @@ const projects: Project[] = [
     description: "Custom retrieval-augmented generation system for enterprise knowledge bases with multi-source indexing.",
     tech: ["Python", "LangChain", "Vector DB", "FastAPI"],
     gradient: "from-primary via-primary/50 to-accent",
+    image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=400&h=200&fit=crop",
   },
   {
     id: 2,
@@ -27,6 +29,7 @@ const projects: Project[] = [
     description: "Autonomous agent coordination platform for complex workflow automation with real-time monitoring.",
     tech: ["CrewAI", "OpenAI", "React", "WebSocket"],
     gradient: "from-secondary via-secondary/50 to-accent",
+    image: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=400&h=200&fit=crop",
   },
   {
     id: 3,
@@ -35,6 +38,7 @@ const projects: Project[] = [
     description: "End-to-end infrastructure for training and deploying custom language models at scale.",
     tech: ["PyTorch", "AWS SageMaker", "Docker", "MLflow"],
     gradient: "from-accent via-accent/50 to-primary",
+    image: "https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=400&h=200&fit=crop",
   },
   {
     id: 4,
@@ -43,6 +47,7 @@ const projects: Project[] = [
     description: "High-performance dashboard for processing millions of events with sub-second latency.",
     tech: ["React", "Node.js", "Kafka", "TimescaleDB"],
     gradient: "from-primary via-accent/50 to-secondary",
+    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=200&fit=crop",
   },
   {
     id: 5,
@@ -51,6 +56,7 @@ const projects: Project[] = [
     description: "Multi-modal content creation system with text, image, and video generation capabilities.",
     tech: ["GPT-4", "DALL-E", "Next.js", "Prisma"],
     gradient: "from-secondary via-primary/50 to-accent",
+    image: "https://images.unsplash.com/photo-1684369175833-4b445ad6bfb5?w=400&h=200&fit=crop",
   },
   {
     id: 6,
@@ -59,6 +65,7 @@ const projects: Project[] = [
     description: "IaC solution automating entire cloud deployments with AI-driven optimization.",
     tech: ["Terraform", "Kubernetes", "AWS", "Python"],
     gradient: "from-accent via-secondary/50 to-primary",
+    image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400&h=200&fit=crop",
   },
 ];
 
@@ -80,7 +87,7 @@ const ProjectCard = ({ project, index }: { project: Project; index: number }) =>
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.6, delay: index * 0.1 }}
-      className="group relative"
+      className="group relative h-full"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onMouseMove={handleMouseMove}
@@ -95,8 +102,30 @@ const ProjectCard = ({ project, index }: { project: Project; index: number }) =>
         }}
         transition={{ type: "spring", stiffness: 400, damping: 30 }}
         style={{ transformStyle: "preserve-3d" }}
-        className="relative overflow-hidden rounded-xl border border-border bg-card"
+        className="relative flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card"
       >
+        {/* Thumbnail Image */}
+        <div className="relative h-48 w-full overflow-hidden">
+          <img 
+            src={project.image} 
+            alt={project.title}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+          />
+          <div className={`absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent opacity-60`} />
+          
+          {/* Category badge - positioned over image */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+            className="absolute left-4 top-4 inline-block rounded-full border border-primary/30 bg-card/80 backdrop-blur-sm px-3 py-1"
+          >
+            <span className="font-display text-xs tracking-wider text-primary">
+              {project.category}
+            </span>
+          </motion.div>
+        </div>
+
         {/* Gradient overlay on hover */}
         <motion.div
           className={`absolute inset-0 bg-gradient-to-br ${project.gradient} opacity-0 transition-opacity duration-500 group-hover:opacity-10`}
@@ -113,21 +142,9 @@ const ProjectCard = ({ project, index }: { project: Project; index: number }) =>
         />
 
         {/* Content */}
-        <div className="relative z-10 p-6 md:p-8">
-          {/* Category badge */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-            className="mb-4 inline-block rounded-full border border-primary/30 bg-primary/10 px-3 py-1"
-          >
-            <span className="font-display text-xs tracking-wider text-primary">
-              {project.category}
-            </span>
-          </motion.div>
-
+        <div className="relative z-10 flex flex-1 flex-col p-6">
           {/* Title with underline animation */}
-          <h3 className="relative mb-3 inline-block font-display text-xl font-bold tracking-wide text-foreground md:text-2xl">
+          <h3 className="relative mb-3 inline-block font-display text-xl font-bold tracking-wide text-foreground">
             {project.title}
             <motion.span
               className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-primary to-secondary"
@@ -137,50 +154,52 @@ const ProjectCard = ({ project, index }: { project: Project; index: number }) =>
             />
           </h3>
 
-          <p className="mb-6 font-body text-sm leading-relaxed text-muted-foreground md:text-base">
+          <p className="mb-6 flex-1 font-body text-sm leading-relaxed text-muted-foreground">
             {project.description}
           </p>
 
-          {/* Tech stack */}
-          <div className="flex flex-wrap gap-2">
-            {project.tech.map((tech, i) => (
-              <motion.span
-                key={tech}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.1 * i }}
-                className="rounded-md bg-muted px-2 py-1 font-body text-xs text-muted-foreground transition-colors group-hover:bg-primary/20 group-hover:text-primary"
-              >
-                {tech}
-              </motion.span>
-            ))}
-          </div>
+          {/* Tech stack and arrow */}
+          <div className="flex items-end justify-between gap-4">
+            <div className="flex flex-wrap gap-2">
+              {project.tech.map((tech, i) => (
+                <motion.span
+                  key={tech}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.1 * i }}
+                  className="rounded-md bg-muted px-2 py-1 font-body text-xs text-muted-foreground transition-colors group-hover:bg-primary/20 group-hover:text-primary"
+                >
+                  {tech}
+                </motion.span>
+              ))}
+            </div>
 
-          {/* Arrow indicator */}
-          <motion.div
-            className="absolute bottom-6 right-6 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background"
-            animate={{
-              scale: isHovered ? 1.1 : 1,
-              borderColor: isHovered ? "hsl(185 100% 50%)" : "hsl(var(--border))",
-            }}
-          >
-            <motion.svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-muted-foreground transition-colors group-hover:text-primary"
-              animate={{ x: isHovered ? 2 : 0, y: isHovered ? -2 : 0 }}
+            {/* Arrow indicator */}
+            <motion.div
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-background"
+              animate={{
+                scale: isHovered ? 1.1 : 1,
+                borderColor: isHovered ? "hsl(185 100% 50%)" : "hsl(var(--border))",
+              }}
             >
-              <line x1="7" y1="17" x2="17" y2="7" />
-              <polyline points="7 7 17 7 17 17" />
-            </motion.svg>
-          </motion.div>
+              <motion.svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-muted-foreground transition-colors group-hover:text-primary"
+                animate={{ x: isHovered ? 2 : 0, y: isHovered ? -2 : 0 }}
+              >
+                <line x1="7" y1="17" x2="17" y2="7" />
+                <polyline points="7 7 17 7 17 17" />
+              </motion.svg>
+            </motion.div>
+          </div>
         </div>
 
         {/* Bottom gradient line */}
