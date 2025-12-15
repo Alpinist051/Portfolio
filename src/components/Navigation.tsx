@@ -1,11 +1,12 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const Navigation = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -25,12 +26,20 @@ const Navigation = () => {
   ];
 
   const handleNavClick = (item: { href: string; label: string; isPage: boolean }) => {
+    setIsMobileMenuOpen(false);
+    
     if (item.isPage) {
-      // Navigate to the page
-      window.location.href = item.href;
+      // Navigate to the page using React Router
+      navigate(item.href);
     } else if (location.pathname !== "/") {
-      // If on another page and clicking anchor, go to home + anchor
-      window.location.href = "/" + item.href;
+      // If on another page and clicking anchor, go to home first then scroll
+      navigate("/");
+      setTimeout(() => {
+        const element = document.querySelector(item.href);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 100);
     } else {
       // On home page, scroll to section
       const element = document.querySelector(item.href);
@@ -38,7 +47,6 @@ const Navigation = () => {
         element.scrollIntoView({ behavior: "smooth" });
       }
     }
-    setIsMobileMenuOpen(false);
   };
 
   return (
@@ -68,21 +76,37 @@ const Navigation = () => {
 
         {/* Desktop Navigation */}
         <div className="hidden items-center gap-1 md:flex">
-          {navItems.map((item) => (
-            <button
-              key={item.href}
-              onClick={() => handleNavClick(item)}
-              className="group relative px-4 py-2 font-display text-xs tracking-wider text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {item.label}
-              <motion.span
-                className="absolute bottom-1 left-4 right-4 h-px bg-primary"
-                initial={{ scaleX: 0 }}
-                whileHover={{ scaleX: 1 }}
-                transition={{ duration: 0.2 }}
-              />
-            </button>
-          ))}
+          {navItems.map((item) =>
+            item.isPage ? (
+              <Link
+                key={item.href}
+                to={item.href}
+                className="group relative px-4 py-2 font-display text-xs tracking-wider text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {item.label}
+                <motion.span
+                  className="absolute bottom-1 left-4 right-4 h-px bg-primary"
+                  initial={{ scaleX: 0 }}
+                  whileHover={{ scaleX: 1 }}
+                  transition={{ duration: 0.2 }}
+                />
+              </Link>
+            ) : (
+              <button
+                key={item.href}
+                onClick={() => handleNavClick(item)}
+                className="group relative px-4 py-2 font-display text-xs tracking-wider text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {item.label}
+                <motion.span
+                  className="absolute bottom-1 left-4 right-4 h-px bg-primary"
+                  initial={{ scaleX: 0 }}
+                  whileHover={{ scaleX: 1 }}
+                  transition={{ duration: 0.2 }}
+                />
+              </button>
+            )
+          )}
         </div>
 
         {/* Status indicator */}
@@ -121,15 +145,26 @@ const Navigation = () => {
         className="overflow-hidden bg-background/95 backdrop-blur-lg md:hidden"
       >
         <div className="container mx-auto flex flex-col gap-2 px-4 py-4">
-          {navItems.map((item) => (
-            <button
-              key={item.href}
-              onClick={() => handleNavClick(item)}
-              className="py-3 text-left font-display text-sm tracking-wider text-muted-foreground transition-colors hover:text-primary"
-            >
-              {item.label}
-            </button>
-          ))}
+          {navItems.map((item) =>
+            item.isPage ? (
+              <Link
+                key={item.href}
+                to={item.href}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="py-3 text-left font-display text-sm tracking-wider text-muted-foreground transition-colors hover:text-primary"
+              >
+                {item.label}
+              </Link>
+            ) : (
+              <button
+                key={item.href}
+                onClick={() => handleNavClick(item)}
+                className="py-3 text-left font-display text-sm tracking-wider text-muted-foreground transition-colors hover:text-primary"
+              >
+                {item.label}
+              </button>
+            )
+          )}
         </div>
       </motion.div>
     </motion.nav>
