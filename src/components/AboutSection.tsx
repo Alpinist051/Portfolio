@@ -46,58 +46,54 @@ const AboutSection = () => {
 
   return (
     <section id="about" className="relative overflow-hidden" ref={ref}>
-      {/* Book page with curl effect */}
+      {/* Full width section */}
       <div className="relative min-h-screen bg-[#fafafa]">
-        {/* Animated background particles */}
+        {/* Animated floating orbs */}
         <div className="absolute inset-0 overflow-hidden">
-          {[...Array(20)].map((_, i) => (
+          {[...Array(6)].map((_, i) => (
             <motion.div
               key={i}
-              className="absolute h-2 w-2 rounded-full bg-primary/10"
-              initial={{ 
-                x: Math.random() * 100 + "%", 
-                y: Math.random() * 100 + "%",
-                scale: Math.random() * 0.5 + 0.5,
+              className="absolute rounded-full"
+              style={{
+                width: Math.random() * 200 + 100,
+                height: Math.random() * 200 + 100,
+                background: `radial-gradient(circle, rgba(139, 105, 20, ${0.05 + Math.random() * 0.05}) 0%, transparent 70%)`,
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
               }}
               animate={{
-                y: [null, "-20%", null],
-                opacity: [0.3, 0.6, 0.3],
+                x: [0, Math.random() * 100 - 50, 0],
+                y: [0, Math.random() * 100 - 50, 0],
+                scale: [1, 1.2, 1],
               }}
               transition={{
-                duration: Math.random() * 5 + 5,
+                duration: Math.random() * 10 + 15,
                 repeat: Infinity,
                 ease: "easeInOut",
-                delay: Math.random() * 2,
               }}
             />
           ))}
         </div>
 
-        {/* Page curl effect - left side */}
-        <motion.div 
-          className="absolute left-0 top-0 h-full w-24 md:w-40 lg:w-56 overflow-hidden"
-          initial={{ x: -100, opacity: 0 }}
-          animate={isInView ? { x: 0, opacity: 1 } : {}}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-        >
-          <div 
-            className="absolute inset-0"
-            style={{
-              background: 'linear-gradient(135deg, #d4a853 0%, #b8942d 30%, #8b6914 60%, #6b4f0f 100%)',
-              clipPath: 'polygon(0 0, 100% 0, 30% 100%, 0 100%)',
-            }}
-          />
-          {/* Shadow under the curl */}
-          <div 
-            className="absolute right-0 top-0 h-full w-16"
-            style={{
-              background: 'linear-gradient(to right, rgba(0,0,0,0.15), transparent)',
-            }}
-          />
-        </motion.div>
+        {/* Moving grid lines */}
+        <div className="absolute inset-0 overflow-hidden opacity-[0.03]">
+          {[...Array(10)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute h-px w-full bg-gray-800"
+              style={{ top: `${i * 10}%` }}
+              animate={{ x: ["-100%", "100%"] }}
+              transition={{
+                duration: 20 + i * 2,
+                repeat: Infinity,
+                ease: "linear",
+              }}
+            />
+          ))}
+        </div>
 
-        {/* Main content area */}
-        <div className="relative z-10 px-8 py-24 md:px-16 lg:px-32">
+        {/* Main content area - wider padding */}
+        <div className="relative z-10 px-4 py-24 md:px-8 lg:px-16">
           {/* Section header */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -186,7 +182,7 @@ const AboutSection = () => {
           </motion.div>
 
           {/* Content */}
-          <div className="mx-auto max-w-4xl">
+          <div className="mx-auto max-w-6xl">
             {/* Summary */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -228,7 +224,7 @@ const AboutSection = () => {
               variants={containerVariants}
               initial="hidden"
               animate={isInView ? "visible" : "hidden"}
-              className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
+              className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 w-full max-w-6xl mx-auto"
             >
               {skills.map((skillGroup, i) => (
                 <motion.div
