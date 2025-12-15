@@ -130,31 +130,38 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
   const [isFinalEffect, setIsFinalEffect] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
   const triggeredMilestones = useRef<Set<number>>(new Set());
+  const timeoutsRef = useRef<number[]>([]);
+
+  const setManagedTimeout = (fn: () => void, ms: number) => {
+    const id = window.setTimeout(fn, ms);
+    timeoutsRef.current.push(id);
+    return id;
+  };
 
   // Create squeak sound using Web Audio API
   const playSqueak = (intensity: number = 1) => {
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    
+
     // Create oscillator for squeak sound
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
-    
+
     oscillator.connect(gainNode);
     gainNode.connect(audioContext.destination);
-    
+
     // High-pitched squeak - adjust based on intensity
     oscillator.frequency.setValueAtTime(600 + intensity * 200, audioContext.currentTime);
     oscillator.frequency.exponentialRampToValueAtTime(1500 + intensity * 500, audioContext.currentTime + 0.1);
     oscillator.frequency.exponentialRampToValueAtTime(500 + intensity * 100, audioContext.currentTime + 0.2);
     oscillator.frequency.exponentialRampToValueAtTime(1200 + intensity * 300, audioContext.currentTime + 0.3);
-    
+
     // Volume envelope - louder for higher intensity
     const baseVolume = 0.1 + intensity * 0.05;
     gainNode.gain.setValueAtTime(baseVolume, audioContext.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(baseVolume * 2, audioContext.currentTime + 0.05);
     gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3 + intensity * 0.1);
-    
-    oscillator.type = 'sine';
+
+    oscillator.type = "sine";
     oscillator.start(audioContext.currentTime);
     oscillator.stop(audioContext.currentTime + 0.3 + intensity * 0.1);
   };
@@ -163,12 +170,12 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
   const triggerMilestoneShake = (milestone: number, intensity: number, duration: number) => {
     if (triggeredMilestones.current.has(milestone)) return;
     triggeredMilestones.current.add(milestone);
-    
+
     setIsShaking(true);
     setShakeIntensity(intensity);
     playSqueak(intensity / 5);
-    
-    setTimeout(() => {
+
+    setManagedTimeout(() => {
       if (milestone !== 100) {
         setIsShaking(false);
         setShakeIntensity(0);
@@ -177,58 +184,63 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
   };
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    const interval = window.setInterval(() => {
       setProgress((prev) => {
         const newProgress = prev + 2;
-        
+
         // Milestone 1: Light shake at 35%
         if (newProgress >= 34 && newProgress <= 38) {
           triggerMilestoneShake(35, 4, 400);
         }
-        
+
         // Milestone 2: Medium shake at 80%
         if (newProgress >= 78 && newProgress <= 82) {
           triggerMilestoneShake(80, 8, 500);
         }
-        
+
         // Stop at 100
         if (newProgress >= 100) {
-          clearInterval(interval);
+          window.clearInterval(interval);
           return 100;
         }
-        
+
         return newProgress;
       });
     }, 100);
 
-    return () => clearInterval(interval);
+    return () => {
+      window.clearInterval(interval);
+      timeoutsRef.current.forEach((id) => window.clearTimeout(id));
+      timeoutsRef.current = [];
+    };
   }, []);
 
-  // Trigger final effect immediately when progress hits 100
+  // When reaching 100%, delay briefly with the final effect, then exit once.
   useEffect(() => {
-    if (progress === 100 && !isFinalEffect) {
-      setIsFinalEffect(true);
-      triggerMilestoneShake(100, 15, 5000);
-      
-      // Multiple squeaks during the 5 second effect
-      const squeakIntervals = [500, 1200, 2000, 2800, 3600, 4400];
-      squeakIntervals.forEach((delay, i) => {
-        setTimeout(() => {
-          playSqueak(2 + i * 0.5);
-          setShakeIntensity(10 + Math.sin(delay / 500) * 5);
-        }, delay);
-      });
-      
-      // After 5 seconds, smooth exit
-      setTimeout(() => {
-        setIsShaking(false);
-        setShakeIntensity(0);
-        setIsExiting(true);
-        setTimeout(() => {
-          onComplete();
-        }, 1000);
-      }, 5000);
-    }
+    if (progress !== 100 || isFinalEffect) return;
+
+    setIsFinalEffect(true);
+    triggerMilestoneShake(100, 15, 5000);
+
+    // Multiple squeaks during the 5 second effect
+    const squeakIntervals = [500, 1200, 2000, 2800, 3600, 4400];
+    squeakIntervals.forEach((delay, i) => {
+      setManagedTimeout(() => {
+        playSqueak(2 + i * 0.5);
+        setShakeIntensity(10 + Math.sin(delay / 500) * 5);
+      }, delay);
+    });
+
+    // After 5 seconds, smooth exit and complete
+    setManagedTimeout(() => {
+      setIsShaking(false);
+      setShakeIntensity(0);
+      setIsExiting(true);
+
+      setManagedTimeout(() => {
+        onComplete();
+      }, 1000);
+    }, 5000);
   }, [progress, isFinalEffect, onComplete]);
 
   // Generate shake transform
@@ -241,10 +253,10 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
   return (
     <motion.div
       initial={{ opacity: 1, scale: 1 }}
-      animate={{ 
-        opacity: isExiting ? 0 : 1, 
+      animate={{
+        opacity: isExiting ? 0 : 1,
         scale: isExiting ? 1.1 : 1,
-        filter: isExiting ? "blur(10px)" : "blur(0px)"
+        filter: isExiting ? "blur(10px)" : "blur(0px)",
       }}
       transition={{ duration: isExiting ? 1 : 0.8, ease: "easeInOut" }}
       className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background overflow-hidden"
