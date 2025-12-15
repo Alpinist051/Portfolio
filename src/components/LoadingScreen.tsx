@@ -127,6 +127,8 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
   const [progress, setProgress] = useState(0);
   const [isShaking, setIsShaking] = useState(false);
   const [shakeIntensity, setShakeIntensity] = useState(0);
+  const [isFinalEffect, setIsFinalEffect] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
   const triggeredMilestones = useRef<Set<number>>(new Set());
 
   // Create squeak sound using Web Audio API
@@ -167,8 +169,10 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
     playSqueak(intensity / 5);
     
     setTimeout(() => {
-      setIsShaking(false);
-      setShakeIntensity(0);
+      if (milestone !== 100) {
+        setIsShaking(false);
+        setShakeIntensity(0);
+      }
     }, duration);
   };
 
@@ -187,14 +191,33 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
           triggerMilestoneShake(80, 8, 500);
         }
         
-        // Final: Intense shake at 100%
+        // Final: Extended intense shake at 100% for 5 seconds
         if (newProgress >= 100) {
           clearInterval(interval);
-          triggerMilestoneShake(100, 15, 600);
+          setIsFinalEffect(true);
+          triggerMilestoneShake(100, 15, 5000);
+          
+          // Multiple squeaks during the 5 second effect
+          const squeakIntervals = [500, 1200, 2000, 2800, 3600, 4400];
+          squeakIntervals.forEach((delay, i) => {
+            setTimeout(() => {
+              playSqueak(2 + i * 0.5);
+              // Vary shake intensity during final effect
+              setShakeIntensity(10 + Math.sin(delay / 500) * 5);
+            }, delay);
+          });
+          
+          // After 5 seconds, smooth exit
           setTimeout(() => {
             setIsShaking(false);
-            onComplete();
-          }, 700);
+            setShakeIntensity(0);
+            setIsExiting(true);
+            // Wait for exit animation then complete
+            setTimeout(() => {
+              onComplete();
+            }, 1000);
+          }, 5000);
+          
           return 100;
         }
         
@@ -214,9 +237,13 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
 
   return (
     <motion.div
-      initial={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.8 }}
+      initial={{ opacity: 1, scale: 1 }}
+      animate={{ 
+        opacity: isExiting ? 0 : 1, 
+        scale: isExiting ? 1.1 : 1,
+        filter: isExiting ? "blur(10px)" : "blur(0px)"
+      }}
+      transition={{ duration: isExiting ? 1 : 0.8, ease: "easeInOut" }}
       className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background overflow-hidden"
       style={shakeStyle}
     >
