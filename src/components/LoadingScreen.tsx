@@ -144,6 +144,160 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
     crackOsc.stop(audioContext.currentTime + 0.15);
   };
 
+  // Create ethereal whisper sound effect
+  const playWhisper = () => {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const duration = 0.8 + Math.random() * 0.4;
+    
+    // Create filtered noise for whisper
+    const bufferSize = audioContext.sampleRate * duration;
+    const noiseBuffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+    
+    for (let i = 0; i < bufferSize; i++) {
+      const envelope = Math.sin((i / bufferSize) * Math.PI);
+      output[i] = (Math.random() * 2 - 1) * envelope * 0.3;
+    }
+    
+    const noiseSource = audioContext.createBufferSource();
+    noiseSource.buffer = noiseBuffer;
+    
+    // Band-pass filter for breathy whisper
+    const bandPass = audioContext.createBiquadFilter();
+    bandPass.type = 'bandpass';
+    bandPass.frequency.setValueAtTime(800 + Math.random() * 400, audioContext.currentTime);
+    bandPass.Q.value = 2;
+    
+    // Add modulation for eerie effect
+    const lfo = audioContext.createOscillator();
+    const lfoGain = audioContext.createGain();
+    lfo.frequency.value = 3 + Math.random() * 4;
+    lfoGain.gain.value = 200;
+    lfo.connect(lfoGain);
+    lfoGain.connect(bandPass.frequency);
+    
+    const gainNode = audioContext.createGain();
+    gainNode.gain.setValueAtTime(0.08, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+    
+    // Stereo panning for immersion
+    const panner = audioContext.createStereoPanner();
+    panner.pan.value = (Math.random() - 0.5) * 1.5;
+    
+    noiseSource.connect(bandPass);
+    bandPass.connect(gainNode);
+    gainNode.connect(panner);
+    panner.connect(audioContext.destination);
+    
+    lfo.start();
+    noiseSource.start();
+    noiseSource.stop(audioContext.currentTime + duration);
+    lfo.stop(audioContext.currentTime + duration);
+  };
+
+  // Create synthetic voice announcement effect
+  const playVoiceEffect = (type: 'startup' | 'milestone' | 'complete') => {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    
+    const frequencies = {
+      startup: [200, 300, 400, 350],
+      milestone: [250, 400, 350, 450],
+      complete: [300, 450, 500, 600, 500, 400]
+    };
+    
+    const durations = {
+      startup: 0.15,
+      milestone: 0.12,
+      complete: 0.18
+    };
+    
+    const freqs = frequencies[type];
+    const noteDuration = durations[type];
+    
+    freqs.forEach((freq, index) => {
+      const osc = audioContext.createOscillator();
+      const osc2 = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      const filter = audioContext.createBiquadFilter();
+      
+      // Main tone
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, audioContext.currentTime + index * noteDuration);
+      
+      // Harmonic for richness
+      osc2.type = 'triangle';
+      osc2.frequency.setValueAtTime(freq * 1.5, audioContext.currentTime + index * noteDuration);
+      
+      // Formant-like filter
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(freq * 2, audioContext.currentTime + index * noteDuration);
+      filter.Q.value = 5;
+      
+      const startTime = audioContext.currentTime + index * noteDuration;
+      gainNode.gain.setValueAtTime(0, startTime);
+      gainNode.gain.linearRampToValueAtTime(0.12, startTime + 0.02);
+      gainNode.gain.linearRampToValueAtTime(0.08, startTime + noteDuration * 0.5);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + noteDuration);
+      
+      osc.connect(filter);
+      osc2.connect(filter);
+      filter.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      osc.start(startTime);
+      osc2.start(startTime);
+      osc.stop(startTime + noteDuration);
+      osc2.stop(startTime + noteDuration);
+    });
+    
+    // Add robotic vocoder effect
+    const vocoderDuration = freqs.length * noteDuration + 0.3;
+    const noiseBuffer = audioContext.createBuffer(1, audioContext.sampleRate * vocoderDuration, audioContext.sampleRate);
+    const noiseData = noiseBuffer.getChannelData(0);
+    
+    for (let i = 0; i < noiseData.length; i++) {
+      noiseData[i] = (Math.random() * 2 - 1) * 0.02;
+    }
+    
+    const noiseSource = audioContext.createBufferSource();
+    noiseSource.buffer = noiseBuffer;
+    
+    const vocoderFilter = audioContext.createBiquadFilter();
+    vocoderFilter.type = 'bandpass';
+    vocoderFilter.frequency.setValueAtTime(2000, audioContext.currentTime);
+    vocoderFilter.Q.value = 10;
+    
+    const vocoderGain = audioContext.createGain();
+    vocoderGain.gain.setValueAtTime(0.03, audioContext.currentTime);
+    vocoderGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + vocoderDuration);
+    
+    noiseSource.connect(vocoderFilter);
+    vocoderFilter.connect(vocoderGain);
+    vocoderGain.connect(audioContext.destination);
+    
+    noiseSource.start();
+    noiseSource.stop(audioContext.currentTime + vocoderDuration);
+  };
+
+  // Ambient whisper effect
+  useEffect(() => {
+    const whisperInterval = setInterval(() => {
+      if (Math.random() > 0.6) {
+        playWhisper();
+      }
+    }, 2500);
+    
+    // Initial startup voice
+    const startupTimeout = setTimeout(() => {
+      playVoiceEffect('startup');
+    }, 500);
+    
+    return () => {
+      clearInterval(whisperInterval);
+      clearTimeout(startupTimeout);
+    };
+  }, []);
+
   // Random lightning effect with thunder
   useEffect(() => {
     const triggerLightning = () => {
@@ -216,6 +370,7 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
     setIsShaking(true);
     setShakeIntensity(intensity);
     playSqueak(intensity / 5);
+    playVoiceEffect('milestone');
 
     setManagedTimeout(() => {
       if (milestone !== 100) {
@@ -271,6 +426,7 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
     // Dramatic completion flash sequence
     setCompletionFlash(true);
     playThunder(1.5); // Big thunder for completion
+    playVoiceEffect('complete'); // Completion voice announcement
     
     setTimeout(() => {
       setCompletionFlash(false);
