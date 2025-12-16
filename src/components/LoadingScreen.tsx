@@ -99,7 +99,7 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
   // Create thunder sound using Web Audio API
   const playThunder = (intensity: number = 1) => {
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    
+    audioContext.resume(); // Ensure context is running
     // Create noise buffer for thunder rumble
     const bufferSize = audioContext.sampleRate * (0.5 + intensity * 0.3);
     const noiseBuffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
@@ -147,6 +147,7 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
   // Create ethereal whisper sound effect
   const playWhisper = () => {
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    audioContext.resume(); // Ensure context is running
     const duration = 0.8 + Math.random() * 0.4;
     
     // Create filtered noise for whisper
@@ -156,7 +157,7 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
     
     for (let i = 0; i < bufferSize; i++) {
       const envelope = Math.sin((i / bufferSize) * Math.PI);
-      output[i] = (Math.random() * 2 - 1) * envelope * 0.3;
+      output[i] = (Math.random() * 2 - 1) * envelope * 0.5;
     }
     
     const noiseSource = audioContext.createBufferSource();
@@ -177,7 +178,7 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
     lfoGain.connect(bandPass.frequency);
     
     const gainNode = audioContext.createGain();
-    gainNode.gain.setValueAtTime(0.08, audioContext.currentTime);
+    gainNode.gain.setValueAtTime(0.35, audioContext.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
     
     // Stereo panning for immersion
@@ -198,6 +199,7 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
   // Create synthetic voice announcement effect
   const playVoiceEffect = (type: 'startup' | 'milestone' | 'complete') => {
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    audioContext.resume(); // Ensure context is running
     
     const frequencies = {
       startup: [200, 300, 400, 350],
@@ -235,8 +237,8 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
       
       const startTime = audioContext.currentTime + index * noteDuration;
       gainNode.gain.setValueAtTime(0, startTime);
-      gainNode.gain.linearRampToValueAtTime(0.12, startTime + 0.02);
-      gainNode.gain.linearRampToValueAtTime(0.08, startTime + noteDuration * 0.5);
+      gainNode.gain.linearRampToValueAtTime(0.4, startTime + 0.02);
+      gainNode.gain.linearRampToValueAtTime(0.3, startTime + noteDuration * 0.5);
       gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + noteDuration);
       
       osc.connect(filter);
@@ -256,7 +258,7 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
     const noiseData = noiseBuffer.getChannelData(0);
     
     for (let i = 0; i < noiseData.length; i++) {
-      noiseData[i] = (Math.random() * 2 - 1) * 0.02;
+      noiseData[i] = (Math.random() * 2 - 1) * 0.1;
     }
     
     const noiseSource = audioContext.createBufferSource();
@@ -268,7 +270,7 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
     vocoderFilter.Q.value = 10;
     
     const vocoderGain = audioContext.createGain();
-    vocoderGain.gain.setValueAtTime(0.03, audioContext.currentTime);
+    vocoderGain.gain.setValueAtTime(0.15, audioContext.currentTime);
     vocoderGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + vocoderDuration);
     
     noiseSource.connect(vocoderFilter);
@@ -337,6 +339,7 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
   // Create squeak sound using Web Audio API
   const playSqueak = (intensity: number = 1) => {
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    audioContext.resume(); // Ensure context is running
 
     // Create oscillator for squeak sound
     const oscillator = audioContext.createOscillator();
