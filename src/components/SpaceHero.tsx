@@ -1,4 +1,4 @@
-import { Suspense, useRef, useMemo } from "react";
+import { Suspense, useRef, useMemo, useEffect } from "react";
 import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
 import { useGLTF, Environment } from "@react-three/drei";
 import * as THREE from "three";
@@ -8,68 +8,60 @@ import faceImage from "@/assets/scientist-hero.png";
 // 3D Human model with face decal
 const HumanModel = () => {
   const groupRef = useRef<THREE.Group>(null);
-  const jawRef = useRef<THREE.Object3D>(null);
+  const mixerRef = useRef<THREE.AnimationMixer | null>(null);
   
-  // Load realistic human model from ReadyPlayer.me (business suit avatar)
-  const { scene } = useGLTF('https://models.readyplayer.me/64f6c7b1e136a6c847c6c8d3.glb');
+  // Load local model
+  const { scene, animations } = useGLTF('/models/human.glb');
   
   // Load face texture
   const faceTexture = useLoader(THREE.TextureLoader, faceImage);
   
-  // Clone the scene to avoid mutation issues
+  // Clone and setup the scene
   const clonedScene = useMemo(() => {
     const clone = scene.clone();
-    
-    // Find the head mesh and apply face texture
     clone.traverse((child) => {
       if (child instanceof THREE.Mesh) {
-        // Apply face texture to head/face meshes
-        if (child.name.toLowerCase().includes('head') || 
-            child.name.toLowerCase().includes('face') ||
-            child.name.toLowerCase().includes('wolf3d_head')) {
-          const material = child.material as THREE.MeshStandardMaterial;
-          if (material) {
-            material.map = faceTexture;
-            material.needsUpdate = true;
-          }
-        }
-        
-        // Store jaw reference for animation
-        if (child.name.toLowerCase().includes('jaw') || 
-            child.name.toLowerCase().includes('teeth')) {
-          jawRef.current = child;
-        }
+        child.castShadow = true;
+        child.receiveShadow = true;
       }
     });
-    
     return clone;
-  }, [scene, faceTexture]);
+  }, [scene]);
   
-  // Breathing and talking animation
-  useFrame((state) => {
-    if (groupRef.current) {
-      // Subtle breathing
-      groupRef.current.scale.y = 1 + Math.sin(state.clock.elapsedTime * 0.6) * 0.005;
-      groupRef.current.position.y = -1 + Math.sin(state.clock.elapsedTime * 0.6) * 0.01;
+  // Setup animations
+  useEffect(() => {
+    if (animations.length > 0) {
+      mixerRef.current = new THREE.AnimationMixer(clonedScene);
+      const action = mixerRef.current.clipAction(animations[0]);
+      action.play();
     }
+    return () => {
+      mixerRef.current?.stopAllAction();
+    };
+  }, [animations, clonedScene]);
+  
+  // Animation loop
+  useFrame((state, delta) => {
+    // Update animation mixer
+    mixerRef.current?.update(delta);
     
-    // Jaw/talking animation
-    if (jawRef.current) {
-      jawRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 4) * 0.05;
+    if (groupRef.current) {
+      // Subtle idle movement
+      groupRef.current.position.y = -1.5 + Math.sin(state.clock.elapsedTime * 0.5) * 0.02;
     }
   });
 
   return (
-    <group ref={groupRef} position={[0, -1, 0]} scale={[1.8, 1.8, 1.8]}>
+    <group ref={groupRef} position={[0, -1.5, 0]} scale={[1.2, 1.2, 1.2]}>
       <primitive object={clonedScene} />
       
-      {/* Face decal overlay */}
-      <mesh position={[0, 1.65, 0.12]} rotation={[0, 0, 0]}>
-        <planeGeometry args={[0.22, 0.28]} />
+      {/* Face decal overlay on head */}
+      <mesh position={[0, 1.7, 0.15]} rotation={[0, 0, 0]}>
+        <planeGeometry args={[0.35, 0.45]} />
         <meshBasicMaterial 
           map={faceTexture} 
           transparent 
-          opacity={0.95}
+          opacity={0.92}
           depthWrite={false}
         />
       </mesh>
@@ -84,14 +76,13 @@ const RotatingCamera = () => {
   useFrame((state) => {
     const time = state.clock.elapsedTime;
     const radius = 4;
-    const rotationSpeed = 0.15;
+    const rotationSpeed = 0.12;
     
-    // Smooth orbital camera movement
-    camera.position.x = Math.sin(time * rotationSpeed) * radius * 0.5;
-    camera.position.z = 3 + Math.cos(time * rotationSpeed) * radius * 0.2;
-    camera.position.y = 1.5 + Math.sin(time * 0.25) * 0.15;
+    camera.position.x = Math.sin(time * rotationSpeed) * radius * 0.4;
+    camera.position.z = 3.5 + Math.cos(time * rotationSpeed) * radius * 0.15;
+    camera.position.y = 0.8 + Math.sin(time * 0.2) * 0.1;
     
-    camera.lookAt(0, 1, 0);
+    camera.lookAt(0, 0.5, 0);
   });
   
   return null;
@@ -221,11 +212,6 @@ const Particles = () => {
   useFrame((state) => {
     if (particlesRef.current) {
       particlesRef.current.rotation.y = state.clock.elapsedTime * 0.015;
-      const positions = particlesRef.current.geometry.attributes.position.array as Float32Array;
-      for (let i = 0; i < particleCount; i++) {
-        positions[i * 3 + 1] += Math.sin(state.clock.elapsedTime * 0.5 + i * 0.1) * 0.001;
-      }
-      particlesRef.current.geometry.attributes.position.needsUpdate = true;
     }
   });
   
@@ -253,7 +239,7 @@ const Particles = () => {
 // Reflective floor
 const Floor = () => {
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1, 0]} receiveShadow>
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.5, 0]} receiveShadow>
       <planeGeometry args={[30, 30]} />
       <meshStandardMaterial 
         color="#030305"
@@ -268,8 +254,8 @@ const Floor = () => {
 const Loader = () => {
   return (
     <mesh>
-      <sphereGeometry args={[0.5, 16, 16]} />
-      <meshBasicMaterial color="#ffffff" wireframe />
+      <sphereGeometry args={[0.3, 16, 16]} />
+      <meshBasicMaterial color="#00d4ff" wireframe />
     </mesh>
   );
 };
@@ -279,7 +265,7 @@ const SpaceHero = () => {
     <section className="relative h-screen w-full overflow-hidden bg-[#020205]">
       <Canvas
         shadows
-        camera={{ position: [0, 1.5, 4], fov: 45 }}
+        camera={{ position: [0, 0.8, 4], fov: 45 }}
         className="absolute inset-0"
         gl={{ antialias: true, alpha: true }}
       >
@@ -320,6 +306,6 @@ const SpaceHero = () => {
 };
 
 // Preload the model
-useGLTF.preload('https://models.readyplayer.me/64f6c7b1e136a6c847c6c8d3.glb');
+useGLTF.preload('/models/human.glb');
 
 export default SpaceHero;
