@@ -10,8 +10,26 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="relative border-t border-border/50 bg-card/50">
-      <div className="container mx-auto px-4 py-12">
+    <footer className="relative border-t border-border/50 bg-card/50 overflow-hidden">
+      {/* Elegant background elements */}
+      <div className="pointer-events-none absolute inset-0">
+        {/* Large gradient orb - top right */}
+        <div className="absolute -top-32 -right-32 h-64 w-64 rounded-full bg-primary/5 blur-3xl" />
+        {/* Medium gradient orb - bottom left */}
+        <div className="absolute -bottom-24 -left-24 h-48 w-48 rounded-full bg-primary/8 blur-2xl" />
+        {/* Subtle accent orb - center */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-96 w-96 rounded-full bg-gradient-to-br from-primary/3 to-transparent blur-3xl" />
+        {/* Mesh grid pattern */}
+        <div 
+          className="absolute inset-0 opacity-[0.02]"
+          style={{
+            backgroundImage: `linear-gradient(hsl(var(--primary)) 1px, transparent 1px),
+                              linear-gradient(90deg, hsl(var(--primary)) 1px, transparent 1px)`,
+            backgroundSize: '60px 60px'
+          }}
+        />
+      </div>
+      <div className="container relative mx-auto px-4 py-12">
         <div className="grid gap-8 md:grid-cols-3">
           {/* Brand */}
           <div>
