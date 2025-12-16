@@ -1,5 +1,5 @@
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Float, Text, Billboard, Environment } from "@react-three/drei";
+import { Float, Text, Billboard } from "@react-three/drei";
 import { useRef, useMemo, Suspense, forwardRef } from "react";
 import * as THREE from "three";
 import { motion } from "framer-motion";
@@ -211,8 +211,7 @@ function Scene() {
         <BottomScreen key={i} {...screen} />
       ))}
 
-      {/* Environment for reflections */}
-      <Environment preset="night" />
+      {/* Simple ambient environment */}
       
       {/* Fog for atmosphere */}
       <fog attach="fog" args={["#020205", 5, 25]} />
