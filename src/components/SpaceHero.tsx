@@ -1,172 +1,87 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import scientistImage from "@/assets/scientist-hero.png";
 
 const SpaceHero = () => {
   return (
     <section className="relative h-screen w-full overflow-hidden bg-[#020205]">
       {/* Spotlight beams */}
       <div className="pointer-events-none absolute inset-0">
-        {/* Main center spotlight */}
-        <div 
-          className="absolute left-1/2 top-0 h-full w-[500px] -translate-x-1/2"
+        {/* Main center spotlight from above */}
+        <motion.div 
+          className="absolute left-1/2 top-0 h-full w-[600px] -translate-x-1/2"
+          animate={{ opacity: [0.6, 0.8, 0.6] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
           style={{
-            background: 'linear-gradient(180deg, rgba(255,248,240,0.15) 0%, rgba(255,248,240,0.05) 30%, transparent 70%)',
-            clipPath: 'polygon(40% 0%, 60% 0%, 75% 100%, 25% 100%)',
+            background: 'linear-gradient(180deg, rgba(255,250,245,0.2) 0%, rgba(255,250,245,0.08) 40%, transparent 75%)',
+            clipPath: 'polygon(42% 0%, 58% 0%, 72% 100%, 28% 100%)',
           }}
         />
         
-        {/* Left magenta spotlight */}
-        <div 
-          className="absolute left-[20%] top-0 h-full w-[400px] -translate-x-1/2"
+        {/* Left magenta accent light */}
+        <motion.div 
+          className="absolute left-[15%] top-0 h-full w-[350px]"
+          animate={{ opacity: [0.4, 0.6, 0.4] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
           style={{
-            background: 'linear-gradient(180deg, rgba(255,0,170,0.2) 0%, rgba(255,0,170,0.08) 40%, transparent 80%)',
-            clipPath: 'polygon(35% 0%, 65% 0%, 80% 100%, 20% 100%)',
+            background: 'linear-gradient(180deg, rgba(255,0,170,0.25) 0%, rgba(255,0,170,0.1) 50%, transparent 85%)',
+            clipPath: 'polygon(30% 0%, 70% 0%, 85% 100%, 15% 100%)',
           }}
         />
         
-        {/* Right cyan spotlight */}
-        <div 
-          className="absolute right-[20%] top-0 h-full w-[400px] translate-x-1/2"
+        {/* Right cyan accent light */}
+        <motion.div 
+          className="absolute right-[15%] top-0 h-full w-[350px]"
+          animate={{ opacity: [0.4, 0.6, 0.4] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
           style={{
-            background: 'linear-gradient(180deg, rgba(0,212,255,0.2) 0%, rgba(0,212,255,0.08) 40%, transparent 80%)',
-            clipPath: 'polygon(35% 0%, 65% 0%, 80% 100%, 20% 100%)',
+            background: 'linear-gradient(180deg, rgba(0,212,255,0.25) 0%, rgba(0,212,255,0.1) 50%, transparent 85%)',
+            clipPath: 'polygon(30% 0%, 70% 0%, 85% 100%, 15% 100%)',
           }}
         />
       </div>
 
-      {/* Human silhouette with glow */}
+      {/* Scientist Image */}
       <div className="pointer-events-none absolute inset-0 flex items-end justify-center">
-        <div className="relative mb-0 h-[75%] w-[280px]">
-          {/* Rim light glow - left magenta */}
-          <motion.div 
-            className="absolute inset-0"
-            animate={{ opacity: [0.4, 0.6, 0.4] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            style={{
-              background: 'linear-gradient(90deg, rgba(255,0,170,0.4) 0%, transparent 30%)',
-              filter: 'blur(20px)',
-            }}
-          />
-          
-          {/* Rim light glow - right cyan */}
-          <motion.div 
-            className="absolute inset-0"
-            animate={{ opacity: [0.4, 0.6, 0.4] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
-            style={{
-              background: 'linear-gradient(-90deg, rgba(0,212,255,0.4) 0%, transparent 30%)',
-              filter: 'blur(20px)',
-            }}
-          />
-          
-          {/* Top light glow */}
-          <motion.div 
-            className="absolute -top-10 left-1/2 h-32 w-32 -translate-x-1/2"
-            animate={{ opacity: [0.5, 0.8, 0.5] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            style={{
-              background: 'radial-gradient(circle, rgba(255,248,240,0.5) 0%, transparent 70%)',
-              filter: 'blur(15px)',
-            }}
-          />
-          
-          {/* Human silhouette */}
-          <svg 
-            viewBox="0 0 200 500" 
-            className="absolute inset-0 h-full w-full"
-            style={{ filter: 'drop-shadow(0 0 30px rgba(255,248,240,0.2))' }}
-          >
-            {/* Head */}
-            <ellipse cx="100" cy="35" rx="28" ry="32" fill="#0a0a12" />
-            
-            {/* Neck */}
-            <rect x="88" y="65" width="24" height="25" fill="#0a0a12" />
-            
-            {/* Shoulders & Torso */}
-            <path 
-              d="M 40 90 Q 50 85 100 85 Q 150 85 160 90 L 155 95 Q 155 180 145 200 L 140 220 Q 130 280 120 300 L 80 300 Q 70 280 60 220 L 55 200 Q 45 180 45 95 Z" 
-              fill="#0a0a12"
-            />
-            
-            {/* Left Arm */}
-            <path 
-              d="M 40 95 Q 25 100 20 130 Q 15 160 18 200 Q 20 230 25 250 L 35 250 Q 38 230 36 200 Q 34 170 40 140 Q 45 115 50 100 Z" 
-              fill="#0a0a12"
-            />
-            
-            {/* Right Arm */}
-            <path 
-              d="M 160 95 Q 175 100 180 130 Q 185 160 182 200 Q 180 230 175 250 L 165 250 Q 162 230 164 200 Q 166 170 160 140 Q 155 115 150 100 Z" 
-              fill="#0a0a12"
-            />
-            
-            {/* Left Leg */}
-            <path 
-              d="M 75 300 Q 70 350 68 400 Q 66 450 70 500 L 95 500 Q 92 450 90 400 Q 88 350 90 300 Z" 
-              fill="#0a0a12"
-            />
-            
-            {/* Right Leg */}
-            <path 
-              d="M 125 300 Q 130 350 132 400 Q 134 450 130 500 L 105 500 Q 108 450 110 400 Q 112 350 110 300 Z" 
-              fill="#0a0a12"
-            />
-            
-            {/* Highlight edges - left side (magenta tint) */}
-            <path 
-              d="M 40 95 Q 25 100 20 130 Q 15 160 18 200 Q 20 230 25 250" 
-              stroke="rgba(255,0,170,0.5)" 
-              strokeWidth="2" 
-              fill="none"
-            />
-            <path 
-              d="M 40 90 Q 45 180 55 200 L 60 220 Q 70 280 75 300 Q 70 350 68 400 Q 66 450 70 500" 
-              stroke="rgba(255,0,170,0.4)" 
-              strokeWidth="2" 
-              fill="none"
-            />
-            <ellipse cx="100" cy="35" rx="28" ry="32" stroke="rgba(255,0,170,0.3)" strokeWidth="2" fill="none" 
-              style={{ clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)' }}
-            />
-            
-            {/* Highlight edges - right side (cyan tint) */}
-            <path 
-              d="M 160 95 Q 175 100 180 130 Q 185 160 182 200 Q 180 230 175 250" 
-              stroke="rgba(0,212,255,0.5)" 
-              strokeWidth="2" 
-              fill="none"
-            />
-            <path 
-              d="M 160 90 Q 155 180 145 200 L 140 220 Q 130 280 125 300 Q 130 350 132 400 Q 134 450 130 500" 
-              stroke="rgba(0,212,255,0.4)" 
-              strokeWidth="2" 
-              fill="none"
-            />
-            
-            {/* Top highlight */}
-            <ellipse cx="100" cy="20" rx="15" ry="8" fill="rgba(255,248,240,0.15)" />
-          </svg>
-          
-          {/* Floor reflection */}
+        <motion.div 
+          className="relative h-[85%] w-auto"
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 0.3 }}
+        >
+          {/* Glow effects around the image */}
           <div 
-            className="absolute -bottom-20 left-1/2 h-24 w-[200px] -translate-x-1/2"
+            className="absolute inset-0 -z-10"
             style={{
-              background: 'radial-gradient(ellipse at center, rgba(255,248,240,0.1) 0%, transparent 70%)',
+              background: 'radial-gradient(ellipse at center top, rgba(255,250,245,0.15) 0%, transparent 50%)',
+              filter: 'blur(40px)',
+              transform: 'scale(1.3)',
             }}
           />
-        </div>
+          
+          {/* The scientist image */}
+          <img 
+            src={scientistImage} 
+            alt="Professional Scientist"
+            className="h-full w-auto object-contain"
+            style={{
+              filter: 'drop-shadow(0 0 60px rgba(255,250,245,0.2)) drop-shadow(-20px 0 40px rgba(255,0,170,0.15)) drop-shadow(20px 0 40px rgba(0,212,255,0.15))',
+            }}
+          />
+          
+          {/* Floor reflection glow */}
+          <div 
+            className="absolute -bottom-10 left-1/2 h-20 w-[300px] -translate-x-1/2"
+            style={{
+              background: 'radial-gradient(ellipse at center, rgba(255,250,245,0.15) 0%, transparent 70%)',
+              filter: 'blur(20px)',
+            }}
+          />
+        </motion.div>
       </div>
-
-      {/* Floor glow */}
-      <div 
-        className="pointer-events-none absolute bottom-0 left-0 right-0 h-32"
-        style={{
-          background: 'linear-gradient(0deg, rgba(10,10,18,0.8) 0%, transparent 100%)',
-        }}
-      />
 
       {/* Vignette */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(2,2,5,0.8)_80%,rgba(2,2,5,1)_100%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(2,2,5,0.7)_65%,rgba(2,2,5,0.95)_100%)]" />
 
       {/* Content overlay */}
       <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 text-center">
