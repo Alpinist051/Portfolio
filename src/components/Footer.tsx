@@ -1,4 +1,52 @@
 import { motion } from "framer-motion";
+import { useMemo } from "react";
+
+// Floating particle component
+const FloatingParticle = ({ delay, duration, x, size }: { delay: number; duration: number; x: number; size: number }) => (
+  <motion.div
+    className="absolute rounded-full bg-primary/30"
+    style={{
+      width: size,
+      height: size,
+      left: `${x}%`,
+      bottom: -10,
+    }}
+    animate={{
+      y: [0, -300, -400],
+      opacity: [0, 0.8, 0],
+      scale: [0.5, 1, 0.3],
+    }}
+    transition={{
+      duration,
+      delay,
+      repeat: Infinity,
+      ease: "easeOut",
+    }}
+  />
+);
+
+// Glowing line component
+const GlowingLine = ({ x1, y1, x2, y2, delay }: { x1: string; y1: string; x2: string; y2: string; delay: number }) => (
+  <motion.div
+    className="absolute h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent"
+    style={{
+      left: x1,
+      top: y1,
+      width: `calc(${x2} - ${x1})`,
+      transformOrigin: "left",
+    }}
+    animate={{
+      opacity: [0.1, 0.5, 0.1],
+      scaleX: [0.8, 1, 0.8],
+    }}
+    transition={{
+      duration: 4,
+      delay,
+      repeat: Infinity,
+      ease: "easeInOut",
+    }}
+  />
+);
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -9,23 +57,141 @@ const Footer = () => {
     { name: "Twitter", href: "#", icon: "M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" },
   ];
 
+  // Generate floating particles
+  const particles = useMemo(() => 
+    Array.from({ length: 12 }, (_, i) => ({
+      id: i,
+      delay: i * 0.8,
+      duration: 6 + Math.random() * 4,
+      x: 5 + (i * 8) + Math.random() * 5,
+      size: 2 + Math.random() * 3,
+    })), []
+  );
+
   return (
     <footer className="relative border-t border-border/50 bg-card/50 overflow-hidden">
-      {/* Elegant background elements */}
+      {/* Elegant animated background */}
       <div className="pointer-events-none absolute inset-0">
-        {/* Large gradient orb - top right */}
-        <div className="absolute -top-32 -right-32 h-64 w-64 rounded-full bg-primary/5 blur-3xl" />
-        {/* Medium gradient orb - bottom left */}
-        <div className="absolute -bottom-24 -left-24 h-48 w-48 rounded-full bg-primary/8 blur-2xl" />
-        {/* Subtle accent orb - center */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-96 w-96 rounded-full bg-gradient-to-br from-primary/3 to-transparent blur-3xl" />
+        {/* Aurora gradient waves */}
+        <motion.div
+          className="absolute inset-0 opacity-30"
+          style={{
+            background: `
+              radial-gradient(ellipse 80% 50% at 20% 100%, hsl(var(--primary) / 0.15) 0%, transparent 50%),
+              radial-gradient(ellipse 60% 40% at 80% 100%, hsl(var(--primary) / 0.1) 0%, transparent 50%),
+              radial-gradient(ellipse 100% 60% at 50% 120%, hsl(var(--primary) / 0.08) 0%, transparent 60%)
+            `,
+          }}
+          animate={{
+            opacity: [0.2, 0.35, 0.2],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+
+        {/* Animated gradient orbs */}
+        <motion.div
+          className="absolute -bottom-20 -left-20 h-80 w-80 rounded-full bg-primary/10 blur-3xl"
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.1, 0.2, 0.1],
+            x: [0, 30, 0],
+          }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        <motion.div
+          className="absolute -bottom-10 right-1/4 h-60 w-60 rounded-full bg-primary/8 blur-3xl"
+          animate={{
+            scale: [1.1, 1, 1.1],
+            opacity: [0.08, 0.15, 0.08],
+            x: [0, -20, 0],
+          }}
+          transition={{
+            duration: 8,
+            delay: 2,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        <motion.div
+          className="absolute -top-10 right-0 h-48 w-48 rounded-full bg-primary/5 blur-2xl"
+          animate={{
+            scale: [1, 1.3, 1],
+            opacity: [0.05, 0.1, 0.05],
+          }}
+          transition={{
+            duration: 12,
+            delay: 4,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+
+        {/* Floating particles */}
+        {particles.map((particle) => (
+          <FloatingParticle key={particle.id} {...particle} />
+        ))}
+
+        {/* Glowing horizontal lines */}
+        <GlowingLine x1="5%" y1="30%" x2="35%" y2="30%" delay={0} />
+        <GlowingLine x1="65%" y1="25%" x2="95%" y2="25%" delay={2} />
+        <GlowingLine x1="20%" y1="70%" x2="45%" y2="70%" delay={1} />
+        <GlowingLine x1="55%" y1="75%" x2="85%" y2="75%" delay={3} />
+
+        {/* Circuit-like corner accents */}
+        <svg className="absolute bottom-0 left-0 h-32 w-32 opacity-20" viewBox="0 0 100 100">
+          <motion.path
+            d="M0 100 L0 60 L20 60 L20 40 L40 40"
+            stroke="hsl(var(--primary))"
+            strokeWidth="1"
+            fill="none"
+            initial={{ pathLength: 0, opacity: 0 }}
+            animate={{ pathLength: 1, opacity: [0.2, 0.5, 0.2] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <motion.circle
+            cx="40"
+            cy="40"
+            r="3"
+            fill="hsl(var(--primary))"
+            animate={{ opacity: [0.3, 0.8, 0.3], scale: [0.8, 1.2, 0.8] }}
+            transition={{ duration: 2, repeat: Infinity, delay: 1 }}
+          />
+        </svg>
+        <svg className="absolute bottom-0 right-0 h-32 w-32 opacity-20" viewBox="0 0 100 100">
+          <motion.path
+            d="M100 100 L100 50 L80 50 L80 30 L60 30"
+            stroke="hsl(var(--primary))"
+            strokeWidth="1"
+            fill="none"
+            initial={{ pathLength: 0, opacity: 0 }}
+            animate={{ pathLength: 1, opacity: [0.2, 0.5, 0.2] }}
+            transition={{ duration: 4, delay: 2, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <motion.circle
+            cx="60"
+            cy="30"
+            r="3"
+            fill="hsl(var(--primary))"
+            animate={{ opacity: [0.3, 0.8, 0.3], scale: [0.8, 1.2, 0.8] }}
+            transition={{ duration: 2, repeat: Infinity, delay: 3 }}
+          />
+        </svg>
+
         {/* Mesh grid pattern */}
         <div 
-          className="absolute inset-0 opacity-[0.02]"
+          className="absolute inset-0 opacity-[0.015]"
           style={{
             backgroundImage: `linear-gradient(hsl(var(--primary)) 1px, transparent 1px),
                               linear-gradient(90deg, hsl(var(--primary)) 1px, transparent 1px)`,
-            backgroundSize: '60px 60px'
+            backgroundSize: '50px 50px'
           }}
         />
       </div>
