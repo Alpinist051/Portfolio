@@ -114,35 +114,69 @@ const Navigation = () => {
 
         {/* Desktop Navigation */}
         <div className="hidden items-center gap-1 md:flex">
-          {navItems.map((item) =>
+          {navItems.map((item, index) =>
             item.isPage ? (
-              <Link
+              <motion.div
                 key={item.href}
-                to={item.href}
-                className="group relative px-4 py-2 font-display text-xs tracking-wider text-muted-foreground transition-colors hover:text-foreground"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 + index * 0.1 }}
               >
-                {item.label}
-                <motion.span
-                  className="absolute bottom-1 left-4 right-4 h-px bg-primary"
-                  initial={{ scaleX: 0 }}
-                  whileHover={{ scaleX: 1 }}
-                  transition={{ duration: 0.2 }}
-                />
-              </Link>
+                <Link
+                  to={item.href}
+                  className="group relative flex items-center px-4 py-2"
+                >
+                  {/* Background glow on hover */}
+                  <span className="absolute inset-0 rounded-lg bg-primary/0 transition-all duration-300 group-hover:bg-primary/10 group-hover:shadow-[0_0_15px_hsl(var(--primary)/0.2)]" />
+                  {/* Left accent line */}
+                  <span className="absolute left-1 top-1/2 h-0 w-px -translate-y-1/2 bg-primary transition-all duration-300 group-hover:h-4" />
+                  {/* Text */}
+                  <span className="relative font-display text-xs tracking-wider text-muted-foreground transition-all duration-300 group-hover:text-primary group-hover:drop-shadow-[0_0_8px_hsl(var(--primary)/0.5)]">
+                    {item.label}
+                  </span>
+                  {/* Bottom line animation */}
+                  <motion.span
+                    className="absolute bottom-1 left-4 right-4 h-px bg-gradient-to-r from-transparent via-primary to-transparent"
+                    initial={{ scaleX: 0, opacity: 0 }}
+                    whileHover={{ scaleX: 1, opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                  />
+                  {/* Corner dots on hover */}
+                  <span className="absolute top-1 right-1 h-1 w-1 rounded-full bg-primary/0 transition-all duration-300 group-hover:bg-primary/60" />
+                  <span className="absolute bottom-1 left-1 h-1 w-1 rounded-full bg-primary/0 transition-all duration-300 group-hover:bg-primary/60" />
+                </Link>
+              </motion.div>
             ) : (
-              <button
+              <motion.div
                 key={item.href}
-                onClick={() => handleNavClick(item)}
-                className="group relative px-4 py-2 font-display text-xs tracking-wider text-muted-foreground transition-colors hover:text-foreground"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 + index * 0.1 }}
               >
-                {item.label}
-                <motion.span
-                  className="absolute bottom-1 left-4 right-4 h-px bg-primary"
-                  initial={{ scaleX: 0 }}
-                  whileHover={{ scaleX: 1 }}
-                  transition={{ duration: 0.2 }}
-                />
-              </button>
+                <button
+                  onClick={() => handleNavClick(item)}
+                  className="group relative flex items-center px-4 py-2"
+                >
+                  {/* Background glow on hover */}
+                  <span className="absolute inset-0 rounded-lg bg-primary/0 transition-all duration-300 group-hover:bg-primary/10 group-hover:shadow-[0_0_15px_hsl(var(--primary)/0.2)]" />
+                  {/* Left accent line */}
+                  <span className="absolute left-1 top-1/2 h-0 w-px -translate-y-1/2 bg-primary transition-all duration-300 group-hover:h-4" />
+                  {/* Text */}
+                  <span className="relative font-display text-xs tracking-wider text-muted-foreground transition-all duration-300 group-hover:text-primary group-hover:drop-shadow-[0_0_8px_hsl(var(--primary)/0.5)]">
+                    {item.label}
+                  </span>
+                  {/* Bottom line animation */}
+                  <motion.span
+                    className="absolute bottom-1 left-4 right-4 h-px bg-gradient-to-r from-transparent via-primary to-transparent"
+                    initial={{ scaleX: 0, opacity: 0 }}
+                    whileHover={{ scaleX: 1, opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                  />
+                  {/* Corner dots on hover */}
+                  <span className="absolute top-1 right-1 h-1 w-1 rounded-full bg-primary/0 transition-all duration-300 group-hover:bg-primary/60" />
+                  <span className="absolute bottom-1 left-1 h-1 w-1 rounded-full bg-primary/0 transition-all duration-300 group-hover:bg-primary/60" />
+                </button>
+              </motion.div>
             )
           )}
         </div>
