@@ -62,10 +62,10 @@ const CertificationCard = ({ cert, index }: { cert: Certification; index: number
       viewport={{ once: true }}
       transition={{ duration: 0.6, delay: index * 0.1 }}
       whileHover={{ y: -5, transition: { duration: 0.2 } }}
-      className="group relative"
+      className="group relative h-full"
     >
       {/* Paper card */}
-      <div className="relative overflow-hidden rounded-lg border border-stone-200 bg-white p-6 shadow-md transition-shadow hover:shadow-lg">
+      <div className="relative flex h-full flex-col overflow-hidden rounded-lg border border-stone-200 bg-white p-6 shadow-md transition-shadow hover:shadow-lg">
         {/* Decorative stamp */}
         <motion.div
           initial={{ opacity: 0, scale: 0, rotate: -20 }}
@@ -80,13 +80,13 @@ const CertificationCard = ({ cert, index }: { cert: Certification; index: number
         </motion.div>
 
         {/* Content */}
-        <div className="relative z-10 pr-16">
+        <div className="relative z-10 flex flex-1 flex-col pr-16">
           <h3 className="mb-2 font-serif text-lg font-semibold text-stone-800 transition-colors group-hover:text-amber-700 md:text-xl">
             {cert.title}
           </h3>
           <p className="mb-3 font-body text-sm text-stone-600">{cert.issuer}</p>
-          
-          <div className="flex items-center gap-4 border-t border-stone-200 pt-3">
+
+          <div className="mt-auto flex items-center gap-4 border-t border-stone-200 pt-3">
             <div>
               <span className="font-body text-xs text-stone-400">Issued</span>
               <p className="font-serif text-sm font-medium text-stone-700">{cert.date}</p>
@@ -181,7 +181,7 @@ const CertificationsSection = () => {
         </motion.div>
 
         {/* Certifications grid */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid auto-rows-fr gap-6 md:grid-cols-2 lg:grid-cols-3">
           {certifications.map((cert, index) => (
             <CertificationCard key={cert.id} cert={cert} index={index} />
           ))}
