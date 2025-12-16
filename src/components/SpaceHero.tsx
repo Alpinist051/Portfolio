@@ -1,417 +1,157 @@
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Float, Text, Billboard, Environment } from "@react-three/drei";
-import { useRef, useMemo, Suspense, forwardRef } from "react";
+import { Float, Text, Billboard, MeshReflectorMaterial } from "@react-three/drei";
+import { useRef, useMemo, Suspense } from "react";
 import * as THREE from "three";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
-// Detailed 3D Scientist Character
-const ScientistModel = () => {
-  const groupRef = useRef<THREE.Group>(null);
+// Elegant Stage Floor with reflections
+const StageFloor = () => {
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2, 0]} receiveShadow>
+      <planeGeometry args={[40, 30]} />
+      <MeshReflectorMaterial
+        blur={[300, 100]}
+        resolution={1024}
+        mixBlur={1}
+        mixStrength={50}
+        roughness={0.7}
+        depthScale={1.2}
+        minDepthThreshold={0.4}
+        maxDepthThreshold={1.4}
+        color="#0a0a0f"
+        metalness={0.8}
+        mirror={0.5}
+      />
+    </mesh>
+  );
+};
+
+// Stage Curtains
+const Curtain = ({ position, rotation = [0, 0, 0], color = "#1a0a15" }: { 
+  position: [number, number, number]; 
+  rotation?: [number, number, number];
+  color?: string;
+}) => {
+  const meshRef = useRef<THREE.Mesh>(null);
   
-  // Subtle breathing animation
   useFrame((state) => {
-    if (groupRef.current) {
-      groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 0.8) * 0.02 - 1.2;
-      groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.3) * 0.02;
+    if (meshRef.current) {
+      // Subtle curtain movement
+      meshRef.current.position.x = position[0] + Math.sin(state.clock.elapsedTime * 0.3) * 0.02;
     }
   });
 
   return (
-    <group ref={groupRef} position={[0, -1.2, 2]} scale={1.1}>
-      {/* Head */}
-      <mesh position={[0, 1.65, 0]}>
-        <sphereGeometry args={[0.22, 32, 32]} />
-        <meshStandardMaterial color="#d4a574" roughness={0.7} metalness={0.1} />
-      </mesh>
-      
-      {/* Hair - dark brown, styled back */}
-      <mesh position={[0, 1.78, -0.05]}>
-        <sphereGeometry args={[0.2, 32, 32, 0, Math.PI * 2, 0, Math.PI * 0.6]} />
-        <meshStandardMaterial color="#1a1209" roughness={0.9} />
-      </mesh>
-      <mesh position={[0, 1.72, -0.12]}>
-        <boxGeometry args={[0.35, 0.1, 0.15]} />
-        <meshStandardMaterial color="#1a1209" roughness={0.9} />
-      </mesh>
-      {/* Side hair */}
-      <mesh position={[-0.18, 1.68, -0.02]}>
-        <boxGeometry args={[0.06, 0.15, 0.18]} />
-        <meshStandardMaterial color="#1a1209" roughness={0.9} />
-      </mesh>
-      <mesh position={[0.18, 1.68, -0.02]}>
-        <boxGeometry args={[0.06, 0.15, 0.18]} />
-        <meshStandardMaterial color="#1a1209" roughness={0.9} />
-      </mesh>
-      
-      {/* Ears */}
-      <mesh position={[-0.22, 1.65, 0]}>
-        <sphereGeometry args={[0.04, 16, 16]} />
-        <meshStandardMaterial color="#d4a574" roughness={0.7} />
-      </mesh>
-      <mesh position={[0.22, 1.65, 0]}>
-        <sphereGeometry args={[0.04, 16, 16]} />
-        <meshStandardMaterial color="#d4a574" roughness={0.7} />
-      </mesh>
-      
-      {/* Glasses frame */}
-      <mesh position={[-0.08, 1.68, 0.18]}>
-        <torusGeometry args={[0.06, 0.008, 16, 32]} />
-        <meshStandardMaterial color="#1a1a1a" metalness={0.8} roughness={0.2} />
-      </mesh>
-      <mesh position={[0.08, 1.68, 0.18]}>
-        <torusGeometry args={[0.06, 0.008, 16, 32]} />
-        <meshStandardMaterial color="#1a1a1a" metalness={0.8} roughness={0.2} />
-      </mesh>
-      {/* Glasses lenses */}
-      <mesh position={[-0.08, 1.68, 0.19]}>
-        <circleGeometry args={[0.055, 32]} />
-        <meshStandardMaterial color="#87ceeb" transparent opacity={0.3} metalness={0.9} roughness={0.1} />
-      </mesh>
-      <mesh position={[0.08, 1.68, 0.19]}>
-        <circleGeometry args={[0.055, 32]} />
-        <meshStandardMaterial color="#87ceeb" transparent opacity={0.3} metalness={0.9} roughness={0.1} />
-      </mesh>
-      {/* Glasses bridge */}
-      <mesh position={[0, 1.68, 0.18]}>
-        <boxGeometry args={[0.04, 0.01, 0.01]} />
-        <meshStandardMaterial color="#1a1a1a" metalness={0.8} roughness={0.2} />
-      </mesh>
-      {/* Glasses arms */}
-      <mesh position={[-0.16, 1.68, 0.08]} rotation={[0, 0.3, 0]}>
-        <boxGeometry args={[0.12, 0.008, 0.008]} />
-        <meshStandardMaterial color="#1a1a1a" metalness={0.8} roughness={0.2} />
-      </mesh>
-      <mesh position={[0.16, 1.68, 0.08]} rotation={[0, -0.3, 0]}>
-        <boxGeometry args={[0.12, 0.008, 0.008]} />
-        <meshStandardMaterial color="#1a1a1a" metalness={0.8} roughness={0.2} />
-      </mesh>
-      
-      {/* Neck */}
-      <mesh position={[0, 1.4, 0]}>
-        <cylinderGeometry args={[0.08, 0.1, 0.15, 16]} />
-        <meshStandardMaterial color="#d4a574" roughness={0.7} />
-      </mesh>
-      
-      {/* Lab coat - torso */}
-      <mesh position={[0, 1.05, 0]}>
-        <cylinderGeometry args={[0.22, 0.28, 0.6, 16]} />
-        <meshStandardMaterial color="#f0f0f0" roughness={0.6} />
-      </mesh>
-      
-      {/* Lab coat collar */}
-      <mesh position={[-0.1, 1.3, 0.08]} rotation={[0.3, 0.2, 0.4]}>
-        <boxGeometry args={[0.12, 0.15, 0.03]} />
-        <meshStandardMaterial color="#f5f5f5" roughness={0.6} />
-      </mesh>
-      <mesh position={[0.1, 1.3, 0.08]} rotation={[0.3, -0.2, -0.4]}>
-        <boxGeometry args={[0.12, 0.15, 0.03]} />
-        <meshStandardMaterial color="#f5f5f5" roughness={0.6} />
-      </mesh>
-      
-      {/* Shirt underneath - visible at neck */}
-      <mesh position={[0, 1.28, 0.06]}>
-        <boxGeometry args={[0.12, 0.08, 0.02]} />
-        <meshStandardMaterial color="#2563eb" roughness={0.5} />
-      </mesh>
-      
-      {/* Lab coat lower part */}
-      <mesh position={[0, 0.55, 0]}>
-        <cylinderGeometry args={[0.28, 0.32, 0.5, 16]} />
-        <meshStandardMaterial color="#f0f0f0" roughness={0.6} />
-      </mesh>
-      
-      {/* Lab coat tail/back */}
-      <mesh position={[0, 0.2, -0.1]}>
-        <boxGeometry args={[0.5, 0.6, 0.08]} />
-        <meshStandardMaterial color="#e8e8e8" roughness={0.6} />
-      </mesh>
-      
-      {/* Pocket on lab coat */}
-      <mesh position={[-0.15, 1, 0.22]}>
-        <boxGeometry args={[0.1, 0.12, 0.02]} />
-        <meshStandardMaterial color="#e0e0e0" roughness={0.7} />
-      </mesh>
-      {/* Pen in pocket */}
-      <mesh position={[-0.15, 1.05, 0.24]}>
-        <cylinderGeometry args={[0.008, 0.008, 0.08, 8]} />
-        <meshStandardMaterial color="#1a1aff" roughness={0.3} metalness={0.5} />
-      </mesh>
-      
-      {/* ID badge */}
-      <mesh position={[0.18, 1.1, 0.23]}>
-        <boxGeometry args={[0.06, 0.08, 0.01]} />
-        <meshStandardMaterial color="#ffffff" roughness={0.5} />
-      </mesh>
-      <mesh position={[0.18, 1.15, 0.23]}>
-        <cylinderGeometry args={[0.015, 0.015, 0.02, 8]} />
-        <meshStandardMaterial color="#c0c0c0" metalness={0.8} roughness={0.2} />
-      </mesh>
-      
-      {/* Arms - left */}
-      <group position={[-0.32, 1.15, 0]} rotation={[0.1, 0, 0.15]}>
-        <mesh position={[0, -0.15, 0]}>
-          <cylinderGeometry args={[0.07, 0.06, 0.35, 12]} />
-          <meshStandardMaterial color="#f0f0f0" roughness={0.6} />
-        </mesh>
-        <mesh position={[0, -0.4, 0.05]} rotation={[0.3, 0, 0]}>
-          <cylinderGeometry args={[0.055, 0.05, 0.3, 12]} />
-          <meshStandardMaterial color="#f0f0f0" roughness={0.6} />
-        </mesh>
-        {/* Hand */}
-        <mesh position={[0, -0.58, 0.12]}>
-          <sphereGeometry args={[0.045, 16, 16]} />
-          <meshStandardMaterial color="#d4a574" roughness={0.7} />
-        </mesh>
-      </group>
-      
-      {/* Arms - right */}
-      <group position={[0.32, 1.15, 0]} rotation={[0.1, 0, -0.15]}>
-        <mesh position={[0, -0.15, 0]}>
-          <cylinderGeometry args={[0.07, 0.06, 0.35, 12]} />
-          <meshStandardMaterial color="#f0f0f0" roughness={0.6} />
-        </mesh>
-        <mesh position={[0, -0.4, 0.05]} rotation={[0.3, 0, 0]}>
-          <cylinderGeometry args={[0.055, 0.05, 0.3, 12]} />
-          <meshStandardMaterial color="#f0f0f0" roughness={0.6} />
-        </mesh>
-        {/* Hand */}
-        <mesh position={[0, -0.58, 0.12]}>
-          <sphereGeometry args={[0.045, 16, 16]} />
-          <meshStandardMaterial color="#d4a574" roughness={0.7} />
-        </mesh>
-      </group>
-      
-      {/* Pants */}
-      <mesh position={[-0.1, 0.05, 0]}>
-        <cylinderGeometry args={[0.1, 0.09, 0.5, 12]} />
-        <meshStandardMaterial color="#1a1a2e" roughness={0.8} />
-      </mesh>
-      <mesh position={[0.1, 0.05, 0]}>
-        <cylinderGeometry args={[0.1, 0.09, 0.5, 12]} />
-        <meshStandardMaterial color="#1a1a2e" roughness={0.8} />
-      </mesh>
-      
-      {/* Lower legs */}
-      <mesh position={[-0.1, -0.35, 0]}>
-        <cylinderGeometry args={[0.08, 0.07, 0.4, 12]} />
-        <meshStandardMaterial color="#1a1a2e" roughness={0.8} />
-      </mesh>
-      <mesh position={[0.1, -0.35, 0]}>
-        <cylinderGeometry args={[0.08, 0.07, 0.4, 12]} />
-        <meshStandardMaterial color="#1a1a2e" roughness={0.8} />
-      </mesh>
-      
-      {/* Shoes */}
-      <mesh position={[-0.1, -0.6, 0.03]}>
-        <boxGeometry args={[0.1, 0.06, 0.18]} />
-        <meshStandardMaterial color="#0a0a0a" roughness={0.5} metalness={0.3} />
-      </mesh>
-      <mesh position={[0.1, -0.6, 0.03]}>
-        <boxGeometry args={[0.1, 0.06, 0.18]} />
-        <meshStandardMaterial color="#0a0a0a" roughness={0.5} metalness={0.3} />
-      </mesh>
-    </group>
+    <mesh ref={meshRef} position={position} rotation={rotation} castShadow>
+      <planeGeometry args={[8, 12, 20, 40]} />
+      <meshStandardMaterial 
+        color={color} 
+        roughness={0.9} 
+        metalness={0.1}
+        side={THREE.DoubleSide}
+      />
+    </mesh>
   );
 };
 
-// Exhibition Hall Environment
-const ExhibitionHall = () => {
+// Stage Spotlight
+const StageSpotlight = ({ position, target, color, intensity = 2 }: {
+  position: [number, number, number];
+  target: [number, number, number];
+  color: string;
+  intensity?: number;
+}) => {
+  const lightRef = useRef<THREE.SpotLight>(null);
+  
   return (
     <group>
-      {/* Floor - polished dark surface */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.8, 0]} receiveShadow>
-        <planeGeometry args={[50, 50]} />
-        <meshStandardMaterial 
-          color="#0a0a12" 
-          metalness={0.95} 
-          roughness={0.15}
-        />
+      {/* Spotlight fixture */}
+      <mesh position={position}>
+        <cylinderGeometry args={[0.15, 0.25, 0.4, 16]} />
+        <meshStandardMaterial color="#1a1a1a" metalness={0.9} roughness={0.2} />
       </mesh>
-      
-      {/* Ceiling */}
-      <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 8, 0]}>
-        <planeGeometry args={[50, 50]} />
-        <meshStandardMaterial color="#050508" roughness={1} />
+      {/* The light */}
+      <spotLight
+        ref={lightRef}
+        position={position}
+        target-position={target}
+        angle={0.35}
+        penumbra={0.8}
+        intensity={intensity}
+        color={color}
+        castShadow
+        shadow-mapSize={[1024, 1024]}
+      />
+      {/* Light cone visualization */}
+      <mesh position={position}>
+        <coneGeometry args={[0.1, 0.3, 16, 1, true]} />
+        <meshBasicMaterial color={color} transparent opacity={0.3} side={THREE.DoubleSide} />
       </mesh>
-      
-      {/* Back wall */}
-      <mesh position={[0, 3, -12]}>
-        <planeGeometry args={[50, 15]} />
-        <meshStandardMaterial color="#080810" roughness={0.9} />
-      </mesh>
-      
-      {/* Side walls */}
-      <mesh position={[-15, 3, 0]} rotation={[0, Math.PI / 2, 0]}>
-        <planeGeometry args={[30, 15]} />
-        <meshStandardMaterial color="#060610" roughness={0.9} />
-      </mesh>
-      <mesh position={[15, 3, 0]} rotation={[0, -Math.PI / 2, 0]}>
-        <planeGeometry args={[30, 15]} />
-        <meshStandardMaterial color="#060610" roughness={0.9} />
-      </mesh>
-      
-      {/* Exhibition display stands */}
-      {[-6, -3, 0, 3, 6].map((x, i) => (
-        <group key={i} position={[x, -1.3, -6]}>
-          <mesh>
-            <cylinderGeometry args={[0.4, 0.5, 1, 16]} />
-            <meshStandardMaterial color="#101018" metalness={0.7} roughness={0.3} />
-          </mesh>
-          <pointLight 
-            position={[0, 1, 0]} 
-            intensity={0.3} 
-            color={["#ff00aa", "#00ff88", "#00d4ff", "#ffaa00", "#aa00ff"][i]} 
-            distance={3} 
-          />
-        </group>
-      ))}
     </group>
   );
 };
 
-// Curved screen that wraps around the viewer
-const CurvedScreen = forwardRef<THREE.Group, { 
-  angle: number;
-  color: string;
-  content: string;
-  subtext?: string;
-  radius?: number;
-  height?: number;
-}>(({ angle, color, content, subtext, radius = 8, height = 3 }, ref) => {
-  const x = Math.sin(angle) * radius;
-  const z = -Math.cos(angle) * radius;
-  const rotationY = angle;
-
+// Elegant Arch Frame
+const StageArch = () => {
   return (
-    <Float speed={0.5} rotationIntensity={0.02} floatIntensity={0.1}>
-      <group ref={ref} position={[x, 0, z]} rotation={[0, rotationY, 0]}>
-        {/* Screen panel */}
-        <mesh>
-          <planeGeometry args={[4, height]} />
-          <meshBasicMaterial
-            color={color}
-            transparent
-            opacity={0.12}
-            side={THREE.DoubleSide}
-          />
-        </mesh>
-        {/* Border glow */}
-        <mesh position={[0, 0, -0.01]}>
-          <planeGeometry args={[4.1, height + 0.1]} />
-          <meshBasicMaterial
-            color={color}
-            transparent
-            opacity={0.3}
-            side={THREE.DoubleSide}
-          />
-        </mesh>
-        {/* Inner content area */}
-        <mesh position={[0, 0, 0.01]}>
-          <planeGeometry args={[3.8, height - 0.2]} />
-          <meshBasicMaterial
-            color={color}
-            transparent
-            opacity={0.06}
-            side={THREE.DoubleSide}
-          />
-        </mesh>
-        {/* Text content */}
-        <Billboard>
-          <Text
-            position={[0, subtext ? 0.3 : 0, 0.1]}
-            fontSize={0.4}
-            color={color}
-            anchorX="center"
-            anchorY="middle"
-            maxWidth={3.5}
-          >
-            {content}
-          </Text>
-        </Billboard>
-        {subtext && (
-          <Billboard>
-            <Text
-              position={[0, -0.3, 0.1]}
-              fontSize={0.15}
-              color={color}
-              anchorX="center"
-              anchorY="middle"
-              maxWidth={3.5}
-            >
-              {subtext}
-            </Text>
-          </Billboard>
-        )}
-        {/* Horizontal lines */}
-        <mesh position={[0, height / 2 - 0.15, 0.02]}>
-          <planeGeometry args={[3.5, 0.02]} />
-          <meshBasicMaterial color={color} transparent opacity={0.5} />
-        </mesh>
-        <mesh position={[0, -height / 2 + 0.15, 0.02]}>
-          <planeGeometry args={[3.5, 0.02]} />
-          <meshBasicMaterial color={color} transparent opacity={0.5} />
-        </mesh>
-        {/* Screen glow light */}
-        <pointLight position={[0, 0, 2]} intensity={0.8} color={color} distance={6} />
-      </group>
-    </Float>
+    <group position={[0, 3, -8]}>
+      {/* Main arch top */}
+      <mesh position={[0, 4, 0]}>
+        <boxGeometry args={[18, 1.5, 0.8]} />
+        <meshStandardMaterial color="#0d0d12" metalness={0.6} roughness={0.4} />
+      </mesh>
+      {/* Decorative trim */}
+      <mesh position={[0, 3.1, 0.3]}>
+        <boxGeometry args={[17, 0.15, 0.3]} />
+        <meshStandardMaterial color="#c9a227" metalness={0.9} roughness={0.2} />
+      </mesh>
+      {/* Left pillar */}
+      <mesh position={[-8.5, -1, 0]}>
+        <boxGeometry args={[1, 10, 0.8]} />
+        <meshStandardMaterial color="#0d0d12" metalness={0.6} roughness={0.4} />
+      </mesh>
+      {/* Right pillar */}
+      <mesh position={[8.5, -1, 0]}>
+        <boxGeometry args={[1, 10, 0.8]} />
+        <meshStandardMaterial color="#0d0d12" metalness={0.6} roughness={0.4} />
+      </mesh>
+      {/* Gold accents on pillars */}
+      <mesh position={[-8.5, 3.5, 0.3]}>
+        <boxGeometry args={[0.8, 0.2, 0.3]} />
+        <meshStandardMaterial color="#c9a227" metalness={0.9} roughness={0.2} />
+      </mesh>
+      <mesh position={[8.5, 3.5, 0.3]}>
+        <boxGeometry args={[0.8, 0.2, 0.3]} />
+        <meshStandardMaterial color="#c9a227" metalness={0.9} roughness={0.2} />
+      </mesh>
+    </group>
   );
-});
-CurvedScreen.displayName = "CurvedScreen";
+};
 
-// Bottom row screens
-const BottomScreen = forwardRef<THREE.Group, { 
-  angle: number;
-  color: string;
-  content: string;
-  radius?: number;
-}>(({ angle, color, content, radius = 6 }, ref) => {
-  const x = Math.sin(angle) * radius;
-  const z = -Math.cos(angle) * radius;
-  const rotationY = angle;
-
-  return (
-    <Float speed={0.6} rotationIntensity={0.03} floatIntensity={0.15}>
-      <group ref={ref} position={[x, -2.2, z]} rotation={[0.25, rotationY, 0]}>
-        <mesh>
-          <planeGeometry args={[3, 1.8]} />
-          <meshBasicMaterial color={color} transparent opacity={0.1} side={THREE.DoubleSide} />
-        </mesh>
-        <mesh position={[0, 0, -0.01]}>
-          <planeGeometry args={[3.1, 1.9]} />
-          <meshBasicMaterial color={color} transparent opacity={0.25} side={THREE.DoubleSide} />
-        </mesh>
-        <Billboard>
-          <Text position={[0, 0, 0.1]} fontSize={0.28} color={color} anchorX="center" anchorY="middle">
-            {content}
-          </Text>
-        </Billboard>
-        <pointLight position={[0, 0, 1.5]} intensity={0.5} color={color} distance={4} />
-      </group>
-    </Float>
-  );
-});
-BottomScreen.displayName = "BottomScreen";
-
-// Ambient floating particles in the dark room
-const RoomParticles = forwardRef<THREE.Points>((_, ref) => {
-  const count = 150;
+// Floating light particles for atmosphere
+const StageParticles = () => {
+  const count = 80;
   const meshRef = useRef<THREE.Points>(null);
 
   const particles = useMemo(() => {
     const positions = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
-      positions[i * 3] = (Math.random() - 0.5) * 30;
-      positions[i * 3 + 1] = (Math.random() - 0.5) * 12;
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 30;
+      positions[i * 3] = (Math.random() - 0.5) * 20;
+      positions[i * 3 + 1] = Math.random() * 8 - 2;
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 15 - 3;
     }
     return positions;
   }, []);
 
   useFrame((state) => {
     if (meshRef.current) {
-      meshRef.current.rotation.y = state.clock.elapsedTime * 0.008;
+      meshRef.current.rotation.y = state.clock.elapsedTime * 0.02;
+      const positions = meshRef.current.geometry.attributes.position.array as Float32Array;
+      for (let i = 0; i < count; i++) {
+        positions[i * 3 + 1] += Math.sin(state.clock.elapsedTime + i) * 0.001;
+      }
+      meshRef.current.geometry.attributes.position.needsUpdate = true;
     }
   });
 
@@ -420,108 +160,168 @@ const RoomParticles = forwardRef<THREE.Points>((_, ref) => {
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" count={count} array={particles} itemSize={3} />
       </bufferGeometry>
-      <pointsMaterial size={0.02} color="#00d4ff" transparent opacity={0.4} sizeAttenuation blending={THREE.AdditiveBlending} />
+      <pointsMaterial 
+        size={0.05} 
+        color="#ffd700" 
+        transparent 
+        opacity={0.6} 
+        sizeAttenuation 
+        blending={THREE.AdditiveBlending} 
+      />
     </points>
   );
-});
-RoomParticles.displayName = "RoomParticles";
+};
 
-function Scene() {
-  // Main curved screens arranged in a semicircle
-  const mainScreens = [
-    { angle: -0.6, color: "#ff00aa", content: "FULL STACK", subtext: "React • Node.js • Cloud" },
-    { angle: -0.3, color: "#00ff88", content: "DATA SYSTEMS", subtext: "Analytics • Pipelines" },
-    { angle: 0, color: "#00d4ff", content: "AI/ML SOLUTIONS", subtext: "Neural Networks • LLMs • Deep Learning" },
-    { angle: 0.3, color: "#ffaa00", content: "MLOPS", subtext: "Kubernetes • Docker" },
-    { angle: 0.6, color: "#aa00ff", content: "CLOUD INFRA", subtext: "AWS • Scalable Systems" },
-  ];
+// Holographic display screens
+const HolographicScreen = ({ position, angle, color, content, subtext }: {
+  position: [number, number, number];
+  angle: number;
+  color: string;
+  content: string;
+  subtext?: string;
+}) => {
+  return (
+    <Float speed={0.8} rotationIntensity={0.02} floatIntensity={0.1}>
+      <group position={position} rotation={[0, angle, 0]}>
+        {/* Screen panel */}
+        <mesh>
+          <planeGeometry args={[3.5, 2.5]} />
+          <meshBasicMaterial color={color} transparent opacity={0.08} side={THREE.DoubleSide} />
+        </mesh>
+        {/* Border glow */}
+        <mesh position={[0, 0, -0.01]}>
+          <planeGeometry args={[3.6, 2.6]} />
+          <meshBasicMaterial color={color} transparent opacity={0.25} side={THREE.DoubleSide} />
+        </mesh>
+        {/* Text */}
+        <Billboard>
+          <Text
+            position={[0, subtext ? 0.2 : 0, 0.05]}
+            fontSize={0.35}
+            color={color}
+            anchorX="center"
+            anchorY="middle"
+          >
+            {content}
+          </Text>
+        </Billboard>
+        {subtext && (
+          <Billboard>
+            <Text
+              position={[0, -0.3, 0.05]}
+              fontSize={0.14}
+              color={color}
+              anchorX="center"
+              anchorY="middle"
+            >
+              {subtext}
+            </Text>
+          </Billboard>
+        )}
+        {/* Screen light */}
+        <pointLight position={[0, 0, 1]} intensity={0.4} color={color} distance={4} />
+      </group>
+    </Float>
+  );
+};
 
-  // Bottom row screens
-  const bottomScreens = [
-    { angle: -0.45, color: "#ff6600", content: "RAG SYSTEMS" },
-    { angle: -0.15, color: "#00ffff", content: "LLM FINE-TUNING" },
-    { angle: 0.15, color: "#ff44aa", content: "MULTI-AGENT AI" },
-    { angle: 0.45, color: "#88ff44", content: "NEURAL NETS" },
+// Main Stage Scene
+function StageScene() {
+  const screens = [
+    { position: [-5, 1, -4] as [number, number, number], angle: 0.4, color: "#00d4ff", content: "AI/ML SOLUTIONS", subtext: "Neural Networks • LLMs" },
+    { position: [-2.5, 0.5, -5] as [number, number, number], angle: 0.2, color: "#ff00aa", content: "FULL STACK", subtext: "React • Node.js" },
+    { position: [0, 1.2, -6] as [number, number, number], angle: 0, color: "#00ff88", content: "DATA SYSTEMS", subtext: "Analytics • Pipelines" },
+    { position: [2.5, 0.5, -5] as [number, number, number], angle: -0.2, color: "#ffaa00", content: "MLOPS", subtext: "Kubernetes • Docker" },
+    { position: [5, 1, -4] as [number, number, number], angle: -0.4, color: "#aa00ff", content: "CLOUD INFRA", subtext: "AWS • Scalable" },
   ];
 
   return (
     <>
-      {/* Exhibition hall lighting - dramatic and subtle */}
-      <ambientLight intensity={0.03} color="#0a1020" />
+      {/* Ambient lighting - very subtle */}
+      <ambientLight intensity={0.02} color="#1a1a2e" />
       
-      {/* Main spotlight on scientist from above */}
-      <spotLight
-        position={[0, 6, 4]}
-        angle={0.4}
-        penumbra={0.8}
+      {/* Main center spotlight - warm white */}
+      <StageSpotlight 
+        position={[0, 8, 2]} 
+        target={[0, 0, -2]} 
+        color="#fff5e6" 
+        intensity={3}
+      />
+      
+      {/* Side spotlights - colored */}
+      <StageSpotlight 
+        position={[-6, 7, 0]} 
+        target={[-2, 0, -3]} 
+        color="#ff00aa" 
         intensity={1.5}
-        color="#ffffff"
-        castShadow
-        target-position={[0, 0, 2]}
+      />
+      <StageSpotlight 
+        position={[6, 7, 0]} 
+        target={[2, 0, -3]} 
+        color="#00d4ff" 
+        intensity={1.5}
       />
       
-      {/* Rim lights for dramatic effect */}
-      <spotLight
-        position={[-4, 3, 0]}
-        angle={0.6}
-        penumbra={1}
-        intensity={0.8}
-        color="#ff00aa"
-      />
-      <spotLight
-        position={[4, 3, 0]}
-        angle={0.6}
-        penumbra={1}
-        intensity={0.8}
-        color="#00ff88"
-      />
+      {/* Back lights */}
+      <pointLight position={[-8, 4, -6]} intensity={0.5} color="#ff6600" distance={12} />
+      <pointLight position={[8, 4, -6]} intensity={0.5} color="#00ff88" distance={12} />
+      <pointLight position={[0, 5, -8]} intensity={0.8} color="#c9a227" distance={15} />
       
-      {/* Back light */}
-      <pointLight position={[0, 2, -2]} intensity={0.3} color="#00d4ff" />
+      {/* Stage floor with reflections */}
+      <StageFloor />
       
-      {/* Exhibition hall environment */}
-      <ExhibitionHall />
+      {/* Stage arch frame */}
+      <StageArch />
       
-      {/* 3D Scientist Model */}
-      <ScientistModel />
+      {/* Curtains - left side */}
+      <Curtain position={[-10, 3, -6]} color="#1a0a15" />
+      <Curtain position={[-11.5, 3, -5]} color="#150812" />
       
-      {/* Subtle dust particles */}
-      <RoomParticles />
+      {/* Curtains - right side */}
+      <Curtain position={[10, 3, -6]} color="#1a0a15" />
+      <Curtain position={[11.5, 3, -5]} color="#150812" />
       
-      {/* Main curved screen array */}
-      {mainScreens.map((screen, i) => (
-        <CurvedScreen key={i} {...screen} />
+      {/* Back curtain */}
+      <mesh position={[0, 3, -10]}>
+        <planeGeometry args={[25, 12]} />
+        <meshStandardMaterial color="#0a0510" roughness={0.95} />
+      </mesh>
+      
+      {/* Holographic screens */}
+      {screens.map((screen, i) => (
+        <HolographicScreen key={i} {...screen} />
       ))}
       
-      {/* Bottom screens */}
-      {bottomScreens.map((screen, i) => (
-        <BottomScreen key={i} {...screen} />
-      ))}
-
-      {/* Fog for atmosphere */}
-      <fog attach="fog" args={["#020208", 4, 22]} />
+      {/* Atmospheric particles */}
+      <StageParticles />
+      
+      {/* Subtle fog */}
+      <fog attach="fog" args={["#050508", 8, 30]} />
     </>
   );
 }
 
 const SpaceHero = () => {
   return (
-    <section className="relative h-screen w-full overflow-hidden bg-[#020208]">
-      {/* Three.js Canvas - Exhibition hall with scientist */}
+    <section className="relative h-screen w-full overflow-hidden bg-[#050508]">
+      {/* Three.js Canvas - Elegant Stage */}
       <div className="absolute inset-0">
         <Canvas
-          camera={{ position: [0, 0.5, 6], fov: 60 }}
+          camera={{ position: [0, 1, 8], fov: 55 }}
           gl={{ antialias: true, alpha: false }}
           shadows
         >
           <Suspense fallback={null}>
-            <Scene />
+            <StageScene />
           </Suspense>
         </Canvas>
       </div>
 
-      {/* Vignette effect */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(2,2,8,0.4)_50%,rgba(2,2,8,0.9)_100%)]" />
+      {/* Subtle vignette */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_20%,rgba(5,5,8,0.5)_60%,rgba(5,5,8,0.95)_100%)]" />
+      
+      {/* Top light beam effect */}
+      <div className="pointer-events-none absolute left-1/2 top-0 h-full w-[40%] -translate-x-1/2 bg-[radial-gradient(ellipse_at_top,rgba(255,245,230,0.08)_0%,transparent_50%)]" />
 
       {/* Content overlay */}
       <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 text-center">
@@ -602,8 +402,8 @@ const SpaceHero = () => {
         </motion.div>
       </div>
 
-      {/* Scanlines */}
-      <div className="scanlines pointer-events-none absolute inset-0 opacity-30" />
+      {/* Subtle scanlines */}
+      <div className="scanlines pointer-events-none absolute inset-0 opacity-20" />
     </section>
   );
 };
