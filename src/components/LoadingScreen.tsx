@@ -1,125 +1,86 @@
 import { motion } from "framer-motion";
 import { useEffect, useState, useRef, useMemo } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Points, PointMaterial } from "@react-three/drei";
+import { Line } from "@react-three/drei";
 import * as THREE from "three";
 
-// 3D Starfield with rotating camera
-const StarField = () => {
-  const ref = useRef<THREE.Points>(null);
-  const cameraRef = useRef({ angle: 0 });
+// Single Meteor with trail
+const Meteor = ({ delay, speed, startPos }: { delay: number; speed: number; startPos: [number, number, number] }) => {
+  const ref = useRef<THREE.Group>(null);
+  const [active, setActive] = useState(false);
+  const progress = useRef(0);
+  const tailLength = 3 + Math.random() * 2;
 
-  const positions = useMemo(() => {
-    const pos = new Float32Array(3000 * 3);
-    for (let i = 0; i < 3000; i++) {
-      const r = 50 + Math.random() * 100;
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(2 * Math.random() - 1);
-      pos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-      pos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
-      pos[i * 3 + 2] = r * Math.cos(phi);
-    }
-    return pos;
-  }, []);
+  useEffect(() => {
+    const timeout = setTimeout(() => setActive(true), delay * 1000);
+    return () => clearTimeout(timeout);
+  }, [delay]);
 
-  useFrame((state, delta) => {
-    if (ref.current) {
-      ref.current.rotation.x += delta * 0.02;
-      ref.current.rotation.y += delta * 0.03;
-    }
+  useFrame((_, delta) => {
+    if (!ref.current || !active) return;
     
-    // Rotate camera for immersive effect
-    cameraRef.current.angle += delta * 0.15;
-    state.camera.position.x = Math.sin(cameraRef.current.angle) * 3;
-    state.camera.position.y = Math.cos(cameraRef.current.angle * 0.5) * 2;
-    state.camera.position.z = 5 + Math.sin(cameraRef.current.angle * 0.3) * 2;
-    state.camera.lookAt(0, 0, 0);
+    progress.current += delta * speed;
+    
+    // Move diagonally down-left
+    ref.current.position.x = startPos[0] - progress.current * 15;
+    ref.current.position.y = startPos[1] - progress.current * 10;
+    ref.current.position.z = startPos[2];
+
+    // Reset when off screen
+    if (progress.current > 3) {
+      progress.current = 0;
+      ref.current.position.set(startPos[0], startPos[1], startPos[2]);
+    }
   });
 
+  if (!active) return null;
+
+  const points: [number, number, number][] = [
+    [0, 0, 0],
+    [tailLength * 0.6, tailLength * 0.4, 0],
+  ];
+
   return (
-    <Points ref={ref} positions={positions} stride={3} frustumCulled={false}>
-      <PointMaterial
+    <group ref={ref} position={startPos}>
+      <Line
+        points={points}
+        color="#ffffff"
+        lineWidth={1.5}
         transparent
-        color="#00d4ff"
-        size={0.15}
-        sizeAttenuation={true}
-        depthWrite={false}
-        blending={THREE.AdditiveBlending}
+        opacity={0.9}
       />
-    </Points>
+      <Line
+        points={[[0.1, 0.1, 0], [tailLength * 0.4, tailLength * 0.25, 0]]}
+        color="#aaaaaa"
+        lineWidth={0.8}
+        transparent
+        opacity={0.5}
+      />
+    </group>
   );
 };
 
-// Secondary colored stars for depth
-const ColoredStars = () => {
-  const ref = useRef<THREE.Points>(null);
-
-  const positions = useMemo(() => {
-    const pos = new Float32Array(500 * 3);
-    for (let i = 0; i < 500; i++) {
-      const r = 30 + Math.random() * 80;
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(2 * Math.random() - 1);
-      pos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-      pos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
-      pos[i * 3 + 2] = r * Math.cos(phi);
-    }
-    return pos;
+// Meteor shower effect
+const MeteorShower = () => {
+  const meteors = useMemo(() => {
+    return Array.from({ length: 8 }, (_, i) => ({
+      id: i,
+      delay: Math.random() * 3,
+      speed: 0.8 + Math.random() * 0.6,
+      startPos: [
+        15 + Math.random() * 20,
+        10 + Math.random() * 15,
+        -5 - Math.random() * 10,
+      ] as [number, number, number],
+    }));
   }, []);
 
-  useFrame((_, delta) => {
-    if (ref.current) {
-      ref.current.rotation.x -= delta * 0.01;
-      ref.current.rotation.z += delta * 0.02;
-    }
-  });
-
   return (
-    <Points ref={ref} positions={positions} stride={3} frustumCulled={false}>
-      <PointMaterial
-        transparent
-        color="#ff00aa"
-        size={0.2}
-        sizeAttenuation={true}
-        depthWrite={false}
-        blending={THREE.AdditiveBlending}
-      />
-    </Points>
-  );
-};
-
-// Nebula clouds
-const Nebula = () => {
-  const ref = useRef<THREE.Points>(null);
-
-  const positions = useMemo(() => {
-    const pos = new Float32Array(200 * 3);
-    for (let i = 0; i < 200; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * 60;
-      pos[i * 3 + 1] = (Math.random() - 0.5) * 40;
-      pos[i * 3 + 2] = (Math.random() - 0.5) * 60 - 30;
-    }
-    return pos;
-  }, []);
-
-  useFrame((_, delta) => {
-    if (ref.current) {
-      ref.current.rotation.y += delta * 0.005;
-    }
-  });
-
-  return (
-    <Points ref={ref} positions={positions} stride={3} frustumCulled={false}>
-      <PointMaterial
-        transparent
-        color="#6633ff"
-        size={1.5}
-        sizeAttenuation={true}
-        depthWrite={false}
-        blending={THREE.AdditiveBlending}
-        opacity={0.3}
-      />
-    </Points>
+    <>
+      {meteors.map((meteor) => (
+        <Meteor key={meteor.id} {...meteor} />
+      ))}
+    </>
   );
 };
 
@@ -248,15 +209,13 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
       className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background overflow-hidden"
       style={shakeStyle}
     >
-      {/* 3D Space Background */}
+      {/* 3D Space Background with Meteors */}
       <div className="absolute inset-0">
         <Canvas camera={{ position: [0, 0, 5], fov: 75 }}>
           <color attach="background" args={["#050510"]} />
           <fog attach="fog" args={["#050510", 50, 150]} />
           <ambientLight intensity={0.1} />
-          <StarField />
-          <ColoredStars />
-          <Nebula />
+          <MeteorShower />
         </Canvas>
       </div>
 
