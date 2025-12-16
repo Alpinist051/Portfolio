@@ -317,14 +317,39 @@ const Footer = () => {
         <div className="grid gap-8 md:grid-cols-3">
           {/* Brand */}
           <div>
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-primary/30 bg-primary/10">
-                <span className="font-display text-sm font-bold text-primary">D</span>
+            <motion.div 
+              className="group flex items-center gap-3"
+              whileHover={{ x: 5 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="relative flex h-10 w-10 items-center justify-center">
+                {/* Outer ring */}
+                <motion.div
+                  className="absolute inset-0 rounded-lg border border-primary/40 transition-all duration-300 group-hover:border-primary group-hover:shadow-[0_0_12px_hsl(var(--primary)/0.4)]"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+                />
+                {/* Inner box */}
+                <div className="relative flex h-8 w-8 items-center justify-center rounded-md bg-gradient-to-br from-primary/20 to-primary/5 transition-all duration-300 group-hover:from-primary/40 group-hover:to-primary/20 group-hover:shadow-[0_0_15px_hsl(var(--primary)/0.3)]">
+                  <span className="font-display text-base font-bold bg-gradient-to-br from-primary via-primary to-primary/70 bg-clip-text text-transparent">
+                    IT
+                  </span>
+                </div>
+                {/* Corner accents */}
+                <div className="absolute -top-0.5 -left-0.5 h-1.5 w-1.5 border-t border-l border-primary/50 transition-all duration-300 group-hover:border-primary" />
+                <div className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 border-t border-r border-primary/50 transition-all duration-300 group-hover:border-primary" />
+                <div className="absolute -bottom-0.5 -left-0.5 h-1.5 w-1.5 border-b border-l border-primary/50 transition-all duration-300 group-hover:border-primary" />
+                <div className="absolute -bottom-0.5 -right-0.5 h-1.5 w-1.5 border-b border-r border-primary/50 transition-all duration-300 group-hover:border-primary" />
               </div>
-              <span className="font-display text-sm tracking-wider text-foreground">
-                DEV<span className="text-primary">_PORTFOLIO</span>
-              </span>
-            </div>
+              <div className="flex flex-col">
+                <span className="font-display text-sm tracking-widest text-foreground transition-all duration-300 group-hover:text-primary">
+                  IVAN<span className="text-primary"> TAN</span>
+                </span>
+                <span className="font-body text-[9px] tracking-wider text-muted-foreground/60">
+                  DEVELOPER & CREATOR
+                </span>
+              </div>
+            </motion.div>
             <p className="mt-4 font-body text-sm text-muted-foreground">
               Building the future of technology,
               <br />
