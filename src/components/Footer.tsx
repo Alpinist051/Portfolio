@@ -1,5 +1,5 @@
-import { motion } from "framer-motion";
-import { useMemo } from "react";
+import { motion, useMotionValue, useTransform } from "framer-motion";
+import { useMemo, useRef, useState, useCallback } from "react";
 
 // Floating particle component
 const FloatingParticle = ({ delay, duration, x, size }: { delay: number; duration: number; x: number; size: number }) => (
@@ -25,31 +25,166 @@ const FloatingParticle = ({ delay, duration, x, size }: { delay: number; duratio
   />
 );
 
-// Glowing line component
-const GlowingLine = ({ x1, y1, x2, y2, delay }: { x1: string; y1: string; x2: string; y2: string; delay: number }) => (
-  <motion.div
-    className="absolute h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent"
-    style={{
-      left: x1,
-      top: y1,
-      width: `calc(${x2} - ${x1})`,
-      transformOrigin: "left",
-    }}
-    animate={{
-      opacity: [0.1, 0.5, 0.1],
-      scaleX: [0.8, 1, 0.8],
-    }}
-    transition={{
-      duration: 4,
-      delay,
-      repeat: Infinity,
-      ease: "easeInOut",
-    }}
-  />
-);
+// Interactive glowing line component
+const InteractiveGlowingLine = ({ 
+  x1, y1, x2, delay, mouseX, mouseY, containerRef 
+}: { 
+  x1: string; y1: string; x2: string; delay: number;
+  mouseX: number; mouseY: number; containerRef: React.RefObject<HTMLDivElement>;
+}) => {
+  const lineRef = useRef<HTMLDivElement>(null);
+  
+  // Calculate proximity-based glow
+  const getGlowIntensity = useCallback(() => {
+    if (!lineRef.current || !containerRef.current) return 0.1;
+    const lineRect = lineRef.current.getBoundingClientRect();
+    const containerRect = containerRef.current.getBoundingClientRect();
+    
+    const lineCenterX = lineRect.left + lineRect.width / 2 - containerRect.left;
+    const lineCenterY = lineRect.top + lineRect.height / 2 - containerRect.top;
+    
+    const distance = Math.sqrt(
+      Math.pow(mouseX - lineCenterX, 2) + Math.pow(mouseY - lineCenterY, 2)
+    );
+    
+    const maxDistance = 150;
+    const intensity = Math.max(0, 1 - distance / maxDistance);
+    return 0.1 + intensity * 0.9;
+  }, [mouseX, mouseY, containerRef]);
+
+  const glowIntensity = getGlowIntensity();
+
+  return (
+    <motion.div
+      ref={lineRef}
+      className="absolute h-px transition-all duration-200"
+      style={{
+        left: x1,
+        top: y1,
+        width: `calc(${x2} - ${x1})`,
+        transformOrigin: "left",
+        background: `linear-gradient(90deg, transparent, hsl(var(--primary) / ${glowIntensity}), transparent)`,
+        boxShadow: glowIntensity > 0.3 ? `0 0 ${glowIntensity * 20}px hsl(var(--primary) / ${glowIntensity * 0.5})` : 'none',
+      }}
+      animate={{
+        scaleX: [0.8, 1, 0.8],
+      }}
+      transition={{
+        duration: 4,
+        delay,
+        repeat: Infinity,
+        ease: "easeInOut",
+      }}
+    />
+  );
+};
+
+// Interactive circuit component
+const InteractiveCircuit = ({ 
+  position, path, circlePos, mouseX, mouseY, containerRef, delay = 0 
+}: { 
+  position: 'left' | 'right';
+  path: string;
+  circlePos: { cx: number; cy: number };
+  mouseX: number;
+  mouseY: number;
+  containerRef: React.RefObject<HTMLDivElement>;
+  delay?: number;
+}) => {
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  const getGlowIntensity = useCallback(() => {
+    if (!svgRef.current || !containerRef.current) return 0.2;
+    const svgRect = svgRef.current.getBoundingClientRect();
+    const containerRect = containerRef.current.getBoundingClientRect();
+    
+    const svgCenterX = svgRect.left + svgRect.width / 2 - containerRect.left;
+    const svgCenterY = svgRect.top + svgRect.height / 2 - containerRect.top;
+    
+    const distance = Math.sqrt(
+      Math.pow(mouseX - svgCenterX, 2) + Math.pow(mouseY - svgCenterY, 2)
+    );
+    
+    const maxDistance = 200;
+    const intensity = Math.max(0, 1 - distance / maxDistance);
+    return 0.2 + intensity * 0.8;
+  }, [mouseX, mouseY, containerRef]);
+
+  const glowIntensity = getGlowIntensity();
+  const isActive = glowIntensity > 0.4;
+
+  return (
+    <svg 
+      ref={svgRef}
+      className={`absolute bottom-0 ${position === 'left' ? 'left-0' : 'right-0'} h-32 w-32 transition-opacity duration-300`}
+      style={{ opacity: 0.2 + glowIntensity * 0.6 }}
+      viewBox="0 0 100 100"
+    >
+      <defs>
+        <filter id={`glow-${position}`} x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation={isActive ? "3" : "1"} result="coloredBlur"/>
+          <feMerge>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
+      <motion.path
+        d={path}
+        stroke="hsl(var(--primary))"
+        strokeWidth={isActive ? "2" : "1"}
+        fill="none"
+        filter={`url(#glow-${position})`}
+        initial={{ pathLength: 0, opacity: 0 }}
+        animate={{ 
+          pathLength: 1, 
+          opacity: [glowIntensity * 0.5, glowIntensity, glowIntensity * 0.5],
+        }}
+        transition={{ duration: 4, delay, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.circle
+        cx={circlePos.cx}
+        cy={circlePos.cy}
+        r={isActive ? 5 : 3}
+        fill="hsl(var(--primary))"
+        filter={`url(#glow-${position})`}
+        animate={{ 
+          opacity: [glowIntensity * 0.5, glowIntensity, glowIntensity * 0.5], 
+          scale: isActive ? [1, 1.5, 1] : [0.8, 1.2, 0.8] 
+        }}
+        transition={{ duration: isActive ? 1 : 2, repeat: Infinity, delay: delay + 1 }}
+      />
+      {/* Additional glow ring when active */}
+      {isActive && (
+        <motion.circle
+          cx={circlePos.cx}
+          cy={circlePos.cy}
+          r="8"
+          fill="none"
+          stroke="hsl(var(--primary))"
+          strokeWidth="1"
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: [0, 0.5, 0], scale: [0.5, 1.5, 2] }}
+          transition={{ duration: 1.5, repeat: Infinity }}
+        />
+      )}
+    </svg>
+  );
+};
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    setMousePos({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+  }, []);
 
   const socialLinks = [
     { name: "GitHub", href: "#", icon: "M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" },
@@ -69,7 +204,11 @@ const Footer = () => {
   );
 
   return (
-    <footer className="relative border-t border-border/50 bg-card/50 overflow-hidden">
+    <footer 
+      ref={containerRef}
+      onMouseMove={handleMouseMove}
+      className="relative border-t border-border/50 bg-card/50 overflow-hidden"
+    >
       {/* Elegant animated background */}
       <div className="pointer-events-none absolute inset-0">
         {/* Aurora gradient waves */}
@@ -139,51 +278,30 @@ const Footer = () => {
           <FloatingParticle key={particle.id} {...particle} />
         ))}
 
-        {/* Glowing horizontal lines */}
-        <GlowingLine x1="5%" y1="30%" x2="35%" y2="30%" delay={0} />
-        <GlowingLine x1="65%" y1="25%" x2="95%" y2="25%" delay={2} />
-        <GlowingLine x1="20%" y1="70%" x2="45%" y2="70%" delay={1} />
-        <GlowingLine x1="55%" y1="75%" x2="85%" y2="75%" delay={3} />
+        {/* Interactive glowing horizontal lines */}
+        <InteractiveGlowingLine x1="5%" y1="30%" x2="35%" delay={0} mouseX={mousePos.x} mouseY={mousePos.y} containerRef={containerRef} />
+        <InteractiveGlowingLine x1="65%" y1="25%" x2="95%" delay={2} mouseX={mousePos.x} mouseY={mousePos.y} containerRef={containerRef} />
+        <InteractiveGlowingLine x1="20%" y1="70%" x2="45%" delay={1} mouseX={mousePos.x} mouseY={mousePos.y} containerRef={containerRef} />
+        <InteractiveGlowingLine x1="55%" y1="75%" x2="85%" delay={3} mouseX={mousePos.x} mouseY={mousePos.y} containerRef={containerRef} />
 
-        {/* Circuit-like corner accents */}
-        <svg className="absolute bottom-0 left-0 h-32 w-32 opacity-20" viewBox="0 0 100 100">
-          <motion.path
-            d="M0 100 L0 60 L20 60 L20 40 L40 40"
-            stroke="hsl(var(--primary))"
-            strokeWidth="1"
-            fill="none"
-            initial={{ pathLength: 0, opacity: 0 }}
-            animate={{ pathLength: 1, opacity: [0.2, 0.5, 0.2] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          />
-          <motion.circle
-            cx="40"
-            cy="40"
-            r="3"
-            fill="hsl(var(--primary))"
-            animate={{ opacity: [0.3, 0.8, 0.3], scale: [0.8, 1.2, 0.8] }}
-            transition={{ duration: 2, repeat: Infinity, delay: 1 }}
-          />
-        </svg>
-        <svg className="absolute bottom-0 right-0 h-32 w-32 opacity-20" viewBox="0 0 100 100">
-          <motion.path
-            d="M100 100 L100 50 L80 50 L80 30 L60 30"
-            stroke="hsl(var(--primary))"
-            strokeWidth="1"
-            fill="none"
-            initial={{ pathLength: 0, opacity: 0 }}
-            animate={{ pathLength: 1, opacity: [0.2, 0.5, 0.2] }}
-            transition={{ duration: 4, delay: 2, repeat: Infinity, ease: "easeInOut" }}
-          />
-          <motion.circle
-            cx="60"
-            cy="30"
-            r="3"
-            fill="hsl(var(--primary))"
-            animate={{ opacity: [0.3, 0.8, 0.3], scale: [0.8, 1.2, 0.8] }}
-            transition={{ duration: 2, repeat: Infinity, delay: 3 }}
-          />
-        </svg>
+        {/* Interactive circuit-like corner accents */}
+        <InteractiveCircuit
+          position="left"
+          path="M0 100 L0 60 L20 60 L20 40 L40 40"
+          circlePos={{ cx: 40, cy: 40 }}
+          mouseX={mousePos.x}
+          mouseY={mousePos.y}
+          containerRef={containerRef}
+        />
+        <InteractiveCircuit
+          position="right"
+          path="M100 100 L100 50 L80 50 L80 30 L60 30"
+          circlePos={{ cx: 60, cy: 30 }}
+          mouseX={mousePos.x}
+          mouseY={mousePos.y}
+          containerRef={containerRef}
+          delay={2}
+        />
 
         {/* Mesh grid pattern */}
         <div 
