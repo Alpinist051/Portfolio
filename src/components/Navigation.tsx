@@ -61,36 +61,52 @@ const Navigation = () => {
       <div className="container mx-auto flex items-center justify-between px-4 py-4">
         {/* Logo */}
         <Link to="/" className="group flex items-center gap-3">
-          <div className="relative flex h-11 w-11 items-center justify-center">
+          <motion.div 
+            className="relative flex h-11 w-11 items-center justify-center"
+            whileHover={{ scale: 1.05 }}
+            transition={{ duration: 0.2 }}
+          >
+            {/* Hover glow effect */}
+            <motion.div
+              className="absolute inset-[-8px] rounded-2xl bg-primary/0 blur-xl"
+              initial={{ opacity: 0 }}
+              whileHover={{ opacity: 1 }}
+              style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.4) 0%, transparent 70%)' }}
+            />
+            <div className="absolute inset-[-8px] rounded-2xl bg-primary/0 blur-xl transition-all duration-300 group-hover:bg-primary/30" />
+            
             {/* Outer rotating ring */}
             <motion.div
-              className="absolute inset-0 rounded-xl border border-primary/40"
+              className="absolute inset-0 rounded-xl border border-primary/40 transition-all duration-300 group-hover:border-primary group-hover:shadow-[0_0_15px_hsl(var(--primary)/0.5)]"
               animate={{ rotate: 360 }}
               transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
             />
+            
             {/* Inner glowing box */}
-            <div className="relative flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 backdrop-blur-sm">
-              <span className="font-display text-xl font-bold bg-gradient-to-br from-primary via-primary to-primary/70 bg-clip-text text-transparent">
+            <div className="relative flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 backdrop-blur-sm transition-all duration-300 group-hover:from-primary/40 group-hover:to-primary/20 group-hover:shadow-[0_0_20px_hsl(var(--primary)/0.4)]">
+              <span className="font-display text-xl font-bold bg-gradient-to-br from-primary via-primary to-primary/70 bg-clip-text text-transparent transition-all duration-300 group-hover:drop-shadow-[0_0_8px_hsl(var(--primary)/0.8)]">
                 IT
               </span>
-              {/* Pulse effect */}
+              {/* Pulse effect - faster on hover */}
               <motion.div
-                className="absolute inset-0 rounded-lg bg-primary/20"
+                className="absolute inset-0 rounded-lg bg-primary/20 transition-all duration-300 group-hover:bg-primary/30"
                 animate={{ opacity: [0, 0.3, 0], scale: [0.8, 1.1, 0.8] }}
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
               />
             </div>
-            {/* Corner accents */}
-            <div className="absolute -top-0.5 -left-0.5 h-2 w-2 border-t border-l border-primary/60" />
-            <div className="absolute -top-0.5 -right-0.5 h-2 w-2 border-t border-r border-primary/60" />
-            <div className="absolute -bottom-0.5 -left-0.5 h-2 w-2 border-b border-l border-primary/60" />
-            <div className="absolute -bottom-0.5 -right-0.5 h-2 w-2 border-b border-r border-primary/60" />
-          </div>
+            
+            {/* Corner accents - glow on hover */}
+            <div className="absolute -top-0.5 -left-0.5 h-2 w-2 border-t border-l border-primary/60 transition-all duration-300 group-hover:border-primary group-hover:shadow-[0_0_6px_hsl(var(--primary)/0.8)]" />
+            <div className="absolute -top-0.5 -right-0.5 h-2 w-2 border-t border-r border-primary/60 transition-all duration-300 group-hover:border-primary group-hover:shadow-[0_0_6px_hsl(var(--primary)/0.8)]" />
+            <div className="absolute -bottom-0.5 -left-0.5 h-2 w-2 border-b border-l border-primary/60 transition-all duration-300 group-hover:border-primary group-hover:shadow-[0_0_6px_hsl(var(--primary)/0.8)]" />
+            <div className="absolute -bottom-0.5 -right-0.5 h-2 w-2 border-b border-r border-primary/60 transition-all duration-300 group-hover:border-primary group-hover:shadow-[0_0_6px_hsl(var(--primary)/0.8)]" />
+          </motion.div>
+          
           <div className="hidden flex-col sm:flex">
-            <span className="font-display text-base tracking-widest text-foreground">
+            <span className="font-display text-base tracking-widest text-foreground transition-all duration-300 group-hover:text-primary group-hover:drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]">
               IVAN<span className="text-primary"> TAN</span>
             </span>
-            <span className="font-body text-[10px] tracking-wider text-muted-foreground/70">
+            <span className="font-body text-[10px] tracking-wider text-muted-foreground/70 transition-all duration-300 group-hover:text-muted-foreground">
               DEVELOPER & CREATOR
             </span>
           </div>
