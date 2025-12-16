@@ -218,14 +218,86 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
       <div className="absolute inset-0">
         <Canvas camera={{ position: [0, 0, 5], fov: 75 }}>
           <color attach="background" args={["#050510"]} />
-          <fog attach="fog" args={["#050510", 50, 150]} />
+          <fog attach="fog" args={["#050510", 20, 80]} />
           <ambientLight intensity={0.1} />
           <MeteorShower />
         </Canvas>
       </div>
 
+      {/* Animated fog layers */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {/* Bottom fog layer - slow drift */}
+        <motion.div
+          className="absolute -bottom-20 -left-20 -right-20 h-[60%] opacity-40"
+          style={{
+            background: 'radial-gradient(ellipse 120% 80% at 50% 100%, hsl(var(--primary) / 0.15) 0%, hsl(var(--secondary) / 0.08) 40%, transparent 70%)',
+            filter: 'blur(40px)',
+          }}
+          animate={{ 
+            x: [-30, 30, -30],
+            scaleX: [1, 1.1, 1],
+          }}
+          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+        />
+        
+        {/* Mid fog layer - medium drift */}
+        <motion.div
+          className="absolute top-1/3 -left-40 -right-40 h-[50%] opacity-30"
+          style={{
+            background: 'radial-gradient(ellipse 100% 60% at 30% 50%, hsl(var(--primary) / 0.12) 0%, transparent 60%)',
+            filter: 'blur(60px)',
+          }}
+          animate={{ 
+            x: [40, -40, 40],
+            y: [-20, 20, -20],
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+        />
+        
+        {/* Top fog wisps */}
+        <motion.div
+          className="absolute -top-20 -left-20 -right-20 h-[40%] opacity-25"
+          style={{
+            background: 'radial-gradient(ellipse 80% 100% at 70% 0%, hsl(var(--secondary) / 0.1) 0%, transparent 50%)',
+            filter: 'blur(50px)',
+          }}
+          animate={{ 
+            x: [-20, 40, -20],
+            opacity: [0.2, 0.35, 0.2],
+          }}
+          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+        />
+
+        {/* Floating fog particles */}
+        {[...Array(6)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute rounded-full"
+            style={{
+              width: 150 + i * 50,
+              height: 80 + i * 30,
+              left: `${10 + i * 15}%`,
+              top: `${20 + (i % 3) * 25}%`,
+              background: `radial-gradient(ellipse, hsl(var(--primary) / ${0.06 + i * 0.01}) 0%, transparent 70%)`,
+              filter: 'blur(30px)',
+            }}
+            animate={{
+              x: [0, 30 - i * 10, 0],
+              y: [0, 15 - i * 5, 0],
+              opacity: [0.3, 0.5, 0.3],
+            }}
+            transition={{
+              duration: 8 + i * 2,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: i * 0.5,
+            }}
+          />
+        ))}
+      </div>
+
       {/* Overlay gradient for depth */}
-      <div className="absolute inset-0 bg-gradient-radial from-transparent via-background/30 to-background/80 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-radial from-transparent via-background/20 to-background/60 pointer-events-none" />
 
       {/* Cinematic flash effect when shaking */}
       {isShaking && (
