@@ -85,6 +85,7 @@ const MeteorShower = () => {
 };
 
 const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
+  const [hasStarted, setHasStarted] = useState(false);
   const [progress, setProgress] = useState(0);
   const [isShaking, setIsShaking] = useState(false);
   const [shakeIntensity, setShakeIntensity] = useState(0);
@@ -95,204 +96,183 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
   const [completionFlash, setCompletionFlash] = useState(false);
   const triggeredMilestones = useRef<Set<number>>(new Set());
   const timeoutsRef = useRef<number[]>([]);
+  const audioContextRef = useRef<AudioContext | null>(null);
 
-  // Cinematic deep thunder with sub-bass rumble
-  const playThunder = (intensity: number = 1) => {
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    audioContext.resume();
+  // Initialize audio context on user interaction
+  const initAudio = () => {
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+    audioContextRef.current.resume();
+    return audioContextRef.current;
+  };
+
+  // WAR EXPLOSION - massive artillery blast
+  const playExplosion = (intensity: number = 1) => {
+    const audioContext = initAudio();
+    const duration = 2 + intensity * 1.2;
     
-    const duration = 1.5 + intensity * 0.8;
+    // Massive sub-bass boom
+    const boomOsc = audioContext.createOscillator();
+    const boomGain = audioContext.createGain();
+    boomOsc.type = 'sine';
+    boomOsc.frequency.setValueAtTime(60, audioContext.currentTime);
+    boomOsc.frequency.exponentialRampToValueAtTime(15, audioContext.currentTime + duration);
+    boomGain.gain.setValueAtTime(0.7 * intensity, audioContext.currentTime);
+    boomGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+    boomOsc.connect(boomGain);
+    boomGain.connect(audioContext.destination);
+    boomOsc.start();
+    boomOsc.stop(audioContext.currentTime + duration);
     
-    // Deep sub-bass rumble
-    const subBassOsc = audioContext.createOscillator();
-    const subBassGain = audioContext.createGain();
-    subBassOsc.type = 'sine';
-    subBassOsc.frequency.setValueAtTime(25 + intensity * 10, audioContext.currentTime);
-    subBassOsc.frequency.exponentialRampToValueAtTime(15, audioContext.currentTime + duration);
-    subBassGain.gain.setValueAtTime(0.5 * intensity, audioContext.currentTime);
-    subBassGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
-    subBassOsc.connect(subBassGain);
-    subBassGain.connect(audioContext.destination);
-    subBassOsc.start();
-    subBassOsc.stop(audioContext.currentTime + duration);
-    
-    // Heavy rumbling noise
-    const bufferSize = audioContext.sampleRate * duration;
-    const noiseBuffer = audioContext.createBuffer(2, bufferSize, audioContext.sampleRate);
-    
+    // Sharp explosion crack
+    const crackBuffer = audioContext.createBuffer(2, audioContext.sampleRate * 0.15, audioContext.sampleRate);
     for (let channel = 0; channel < 2; channel++) {
-      const output = noiseBuffer.getChannelData(channel);
-      for (let i = 0; i < bufferSize; i++) {
-        const envelope = Math.pow(1 - i / bufferSize, 0.3);
-        output[i] = (Math.random() * 2 - 1) * envelope;
+      const data = crackBuffer.getChannelData(channel);
+      for (let i = 0; i < data.length; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 1.5) * 1.5;
       }
     }
-    
-    const noiseSource = audioContext.createBufferSource();
-    noiseSource.buffer = noiseBuffer;
-    
-    // Very low-pass filter for deep rumble
-    const lowPass = audioContext.createBiquadFilter();
-    lowPass.type = 'lowpass';
-    lowPass.frequency.setValueAtTime(80 + intensity * 30, audioContext.currentTime);
-    lowPass.frequency.exponentialRampToValueAtTime(30, audioContext.currentTime + duration);
-    lowPass.Q.value = 1;
-    
-    const gainNode = audioContext.createGain();
-    gainNode.gain.setValueAtTime(0.4 * intensity, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
-    
-    noiseSource.connect(lowPass);
-    lowPass.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    noiseSource.start();
-    noiseSource.stop(audioContext.currentTime + duration);
-    
-    // Sharp crack at start
-    const crackBuffer = audioContext.createBuffer(1, audioContext.sampleRate * 0.05, audioContext.sampleRate);
-    const crackData = crackBuffer.getChannelData(0);
-    for (let i = 0; i < crackData.length; i++) {
-      crackData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / crackData.length, 2);
-    }
-    
     const crackSource = audioContext.createBufferSource();
     crackSource.buffer = crackBuffer;
     const crackGain = audioContext.createGain();
-    crackGain.gain.setValueAtTime(0.3 * intensity, audioContext.currentTime);
-    crackGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+    crackGain.gain.setValueAtTime(0.5 * intensity, audioContext.currentTime);
+    crackGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
     crackSource.connect(crackGain);
     crackGain.connect(audioContext.destination);
     crackSource.start();
-    crackSource.stop(audioContext.currentTime + 0.1);
-  };
-
-  // Ominous dark whisper/drone
-  const playWhisper = () => {
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    audioContext.resume();
+    crackSource.stop(audioContext.currentTime + 0.2);
     
-    const duration = 2 + Math.random() * 1.5;
-    
-    // Dark drone oscillator
-    const droneOsc = audioContext.createOscillator();
-    const droneOsc2 = audioContext.createOscillator();
-    const droneGain = audioContext.createGain();
-    
-    droneOsc.type = 'sine';
-    droneOsc.frequency.setValueAtTime(50 + Math.random() * 20, audioContext.currentTime);
-    droneOsc2.type = 'sine';
-    droneOsc2.frequency.setValueAtTime(52 + Math.random() * 20, audioContext.currentTime); // Slight detune for thickness
-    
-    droneGain.gain.setValueAtTime(0, audioContext.currentTime);
-    droneGain.gain.linearRampToValueAtTime(0.15, audioContext.currentTime + duration * 0.3);
-    droneGain.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + duration * 0.7);
-    droneGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
-    
-    droneOsc.connect(droneGain);
-    droneOsc2.connect(droneGain);
-    droneGain.connect(audioContext.destination);
-    
-    droneOsc.start();
-    droneOsc2.start();
-    droneOsc.stop(audioContext.currentTime + duration);
-    droneOsc2.stop(audioContext.currentTime + duration);
-    
-    // Eerie filtered noise
-    const bufferSize = audioContext.sampleRate * duration;
-    const noiseBuffer = audioContext.createBuffer(2, bufferSize, audioContext.sampleRate);
-    
+    // Rumbling debris
+    const rumbleBuffer = audioContext.createBuffer(2, audioContext.sampleRate * duration, audioContext.sampleRate);
     for (let channel = 0; channel < 2; channel++) {
-      const output = noiseBuffer.getChannelData(channel);
-      for (let i = 0; i < bufferSize; i++) {
-        const envelope = Math.sin((i / bufferSize) * Math.PI);
-        output[i] = (Math.random() * 2 - 1) * envelope * 0.3;
+      const data = rumbleBuffer.getChannelData(channel);
+      for (let i = 0; i < data.length; i++) {
+        const env = Math.pow(1 - i / data.length, 0.4);
+        data[i] = (Math.random() * 2 - 1) * env;
       }
     }
-    
-    const noiseSource = audioContext.createBufferSource();
-    noiseSource.buffer = noiseBuffer;
-    
-    const bandPass = audioContext.createBiquadFilter();
-    bandPass.type = 'bandpass';
-    bandPass.frequency.setValueAtTime(200 + Math.random() * 100, audioContext.currentTime);
-    bandPass.Q.value = 8;
-    
-    const noiseGain = audioContext.createGain();
-    noiseGain.gain.setValueAtTime(0.08, audioContext.currentTime);
-    
-    const panner = audioContext.createStereoPanner();
-    panner.pan.value = (Math.random() - 0.5) * 1.8;
-    
-    noiseSource.connect(bandPass);
-    bandPass.connect(noiseGain);
-    noiseGain.connect(panner);
-    panner.connect(audioContext.destination);
-    
-    noiseSource.start();
-    noiseSource.stop(audioContext.currentTime + duration);
+    const rumbleSource = audioContext.createBufferSource();
+    rumbleSource.buffer = rumbleBuffer;
+    const rumbleLowPass = audioContext.createBiquadFilter();
+    rumbleLowPass.type = 'lowpass';
+    rumbleLowPass.frequency.setValueAtTime(200, audioContext.currentTime);
+    rumbleLowPass.frequency.exponentialRampToValueAtTime(40, audioContext.currentTime + duration);
+    const rumbleGain = audioContext.createGain();
+    rumbleGain.gain.setValueAtTime(0.5 * intensity, audioContext.currentTime);
+    rumbleGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+    rumbleSource.connect(rumbleLowPass);
+    rumbleLowPass.connect(rumbleGain);
+    rumbleGain.connect(audioContext.destination);
+    rumbleSource.start();
+    rumbleSource.stop(audioContext.currentTime + duration);
   };
 
-  // Epic cinematic voice/horn effect
-  const playVoiceEffect = (type: 'startup' | 'milestone' | 'complete') => {
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    audioContext.resume();
+  // DISTANT ARTILLERY - booming cannons
+  const playArtillery = () => {
+    const audioContext = initAudio();
+    const distance = 0.3 + Math.random() * 0.7; // Distance affects intensity
+    
+    // Delayed boom (sound travels slower than light)
+    setTimeout(() => {
+      // Deep cannon boom
+      const boomOsc = audioContext.createOscillator();
+      const boomGain = audioContext.createGain();
+      boomOsc.type = 'sine';
+      boomOsc.frequency.setValueAtTime(40 + Math.random() * 20, audioContext.currentTime);
+      boomOsc.frequency.exponentialRampToValueAtTime(20, audioContext.currentTime + 1.5);
+      boomGain.gain.setValueAtTime(0.4 * distance, audioContext.currentTime);
+      boomGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 2);
+      boomOsc.connect(boomGain);
+      boomGain.connect(audioContext.destination);
+      boomOsc.start();
+      boomOsc.stop(audioContext.currentTime + 2);
+      
+      // Echo rumble
+      const echoBuffer = audioContext.createBuffer(2, audioContext.sampleRate * 3, audioContext.sampleRate);
+      for (let ch = 0; ch < 2; ch++) {
+        const data = echoBuffer.getChannelData(ch);
+        for (let i = 0; i < data.length; i++) {
+          const env = Math.pow(1 - i / data.length, 0.5) * Math.sin(i / 1000);
+          data[i] = (Math.random() * 2 - 1) * env * 0.5;
+        }
+      }
+      const echoSource = audioContext.createBufferSource();
+      echoSource.buffer = echoBuffer;
+      const echoLowPass = audioContext.createBiquadFilter();
+      echoLowPass.type = 'lowpass';
+      echoLowPass.frequency.value = 100;
+      const echoGain = audioContext.createGain();
+      echoGain.gain.setValueAtTime(0.25 * distance, audioContext.currentTime);
+      echoGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 3);
+      echoSource.connect(echoLowPass);
+      echoLowPass.connect(echoGain);
+      echoGain.connect(audioContext.destination);
+      echoSource.start();
+      echoSource.stop(audioContext.currentTime + 3);
+    }, distance * 500);
+  };
+
+  // WAR HORN - epic brass call
+  const playWarHorn = (type: 'startup' | 'milestone' | 'complete') => {
+    const audioContext = initAudio();
     
     const configs = {
-      startup: { baseFreq: 80, duration: 1.2, intensity: 0.6 },
-      milestone: { baseFreq: 100, duration: 0.8, intensity: 0.7 },
-      complete: { baseFreq: 60, duration: 2, intensity: 1 }
+      startup: { baseFreq: 65, duration: 2.5, intensity: 0.8 },
+      milestone: { baseFreq: 80, duration: 1.5, intensity: 0.9 },
+      complete: { baseFreq: 55, duration: 4, intensity: 1 }
     };
     
     const config = configs[type];
     
-    // Deep brass/horn-like tone
-    const osc1 = audioContext.createOscillator();
-    const osc2 = audioContext.createOscillator();
-    const osc3 = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
+    // Primary horn tone
+    const horn1 = audioContext.createOscillator();
+    const horn2 = audioContext.createOscillator();
+    const horn3 = audioContext.createOscillator();
+    const hornGain = audioContext.createGain();
     
-    osc1.type = 'sawtooth';
-    osc1.frequency.setValueAtTime(config.baseFreq, audioContext.currentTime);
+    horn1.type = 'sawtooth';
+    horn1.frequency.setValueAtTime(config.baseFreq, audioContext.currentTime);
+    horn1.frequency.linearRampToValueAtTime(config.baseFreq * 1.02, audioContext.currentTime + config.duration * 0.5);
     
-    osc2.type = 'sawtooth';
-    osc2.frequency.setValueAtTime(config.baseFreq * 1.5, audioContext.currentTime); // Fifth
+    horn2.type = 'sawtooth';
+    horn2.frequency.setValueAtTime(config.baseFreq * 1.5, audioContext.currentTime);
     
-    osc3.type = 'sine';
-    osc3.frequency.setValueAtTime(config.baseFreq * 2, audioContext.currentTime); // Octave
+    horn3.type = 'triangle';
+    horn3.frequency.setValueAtTime(config.baseFreq * 2, audioContext.currentTime);
     
-    // Envelope
-    gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-    gainNode.gain.linearRampToValueAtTime(0.25 * config.intensity, audioContext.currentTime + 0.1);
-    gainNode.gain.linearRampToValueAtTime(0.2 * config.intensity, audioContext.currentTime + config.duration * 0.6);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + config.duration);
+    // Epic swell envelope
+    hornGain.gain.setValueAtTime(0, audioContext.currentTime);
+    hornGain.gain.linearRampToValueAtTime(0.3 * config.intensity, audioContext.currentTime + 0.3);
+    hornGain.gain.linearRampToValueAtTime(0.35 * config.intensity, audioContext.currentTime + config.duration * 0.6);
+    hornGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + config.duration);
     
-    // Low-pass for warmth
-    const lowPass = audioContext.createBiquadFilter();
-    lowPass.type = 'lowpass';
-    lowPass.frequency.setValueAtTime(400, audioContext.currentTime);
-    lowPass.frequency.linearRampToValueAtTime(800, audioContext.currentTime + 0.2);
-    lowPass.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + config.duration);
+    const hornFilter = audioContext.createBiquadFilter();
+    hornFilter.type = 'lowpass';
+    hornFilter.frequency.setValueAtTime(300, audioContext.currentTime);
+    hornFilter.frequency.linearRampToValueAtTime(1200, audioContext.currentTime + 0.5);
+    hornFilter.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + config.duration);
     
-    osc1.connect(lowPass);
-    osc2.connect(lowPass);
-    osc3.connect(lowPass);
-    lowPass.connect(gainNode);
-    gainNode.connect(audioContext.destination);
+    horn1.connect(hornFilter);
+    horn2.connect(hornFilter);
+    horn3.connect(hornFilter);
+    hornFilter.connect(hornGain);
+    hornGain.connect(audioContext.destination);
     
-    osc1.start();
-    osc2.start();
-    osc3.start();
-    osc1.stop(audioContext.currentTime + config.duration);
-    osc2.stop(audioContext.currentTime + config.duration);
-    osc3.stop(audioContext.currentTime + config.duration);
+    horn1.start();
+    horn2.start();
+    horn3.start();
+    horn1.stop(audioContext.currentTime + config.duration);
+    horn2.stop(audioContext.currentTime + config.duration);
+    horn3.stop(audioContext.currentTime + config.duration);
     
-    // Sub-bass impact
+    // Sub-bass foundation
     const subOsc = audioContext.createOscillator();
     const subGain = audioContext.createGain();
     subOsc.type = 'sine';
     subOsc.frequency.setValueAtTime(config.baseFreq / 2, audioContext.currentTime);
-    subOsc.frequency.exponentialRampToValueAtTime(20, audioContext.currentTime + config.duration);
-    subGain.gain.setValueAtTime(0.35 * config.intensity, audioContext.currentTime);
+    subGain.gain.setValueAtTime(0, audioContext.currentTime);
+    subGain.gain.linearRampToValueAtTime(0.5 * config.intensity, audioContext.currentTime + 0.2);
     subGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + config.duration);
     subOsc.connect(subGain);
     subGain.connect(audioContext.destination);
@@ -300,27 +280,93 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
     subOsc.stop(audioContext.currentTime + config.duration);
   };
 
-  // Ambient whisper effect
-  useEffect(() => {
-    const whisperInterval = setInterval(() => {
-      if (Math.random() > 0.6) {
-        playWhisper();
-      }
-    }, 2500);
+  // IMPACT HIT - heavy metal clash
+  const playImpact = (intensity: number = 1) => {
+    const audioContext = initAudio();
+
+    // Metal impact
+    const impactOsc = audioContext.createOscillator();
+    const impactGain = audioContext.createGain();
+    impactOsc.type = 'square';
+    impactOsc.frequency.setValueAtTime(200 * intensity, audioContext.currentTime);
+    impactOsc.frequency.exponentialRampToValueAtTime(40, audioContext.currentTime + 0.3);
+    impactGain.gain.setValueAtTime(0.5 * intensity, audioContext.currentTime);
+    impactGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
     
-    // Initial startup voice
-    const startupTimeout = setTimeout(() => {
-      playVoiceEffect('startup');
-    }, 500);
+    const distortion = audioContext.createWaveShaper();
+    const curve = new Float32Array(256);
+    for (let i = 0; i < 256; i++) {
+      curve[i] = Math.tanh((i / 128 - 1) * 5);
+    }
+    distortion.curve = curve;
+    
+    impactOsc.connect(distortion);
+    distortion.connect(impactGain);
+    impactGain.connect(audioContext.destination);
+    impactOsc.start();
+    impactOsc.stop(audioContext.currentTime + 0.4);
+
+    // Massive sub hit
+    const subOsc = audioContext.createOscillator();
+    const subGain = audioContext.createGain();
+    subOsc.type = 'sine';
+    subOsc.frequency.setValueAtTime(80, audioContext.currentTime);
+    subOsc.frequency.exponentialRampToValueAtTime(20, audioContext.currentTime + 0.5);
+    subGain.gain.setValueAtTime(0.7 * intensity, audioContext.currentTime);
+    subGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.6);
+    subOsc.connect(subGain);
+    subGain.connect(audioContext.destination);
+    subOsc.start();
+    subOsc.stop(audioContext.currentTime + 0.6);
+    
+    // Debris noise
+    const noiseBuffer = audioContext.createBuffer(1, audioContext.sampleRate * 0.2, audioContext.sampleRate);
+    const noiseData = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < noiseData.length; i++) {
+      noiseData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / noiseData.length, 2);
+    }
+    const noiseSource = audioContext.createBufferSource();
+    noiseSource.buffer = noiseBuffer;
+    const noiseLowPass = audioContext.createBiquadFilter();
+    noiseLowPass.type = 'lowpass';
+    noiseLowPass.frequency.value = 800;
+    const noiseGain = audioContext.createGain();
+    noiseGain.gain.setValueAtTime(0.3 * intensity, audioContext.currentTime);
+    noiseGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+    noiseSource.connect(noiseLowPass);
+    noiseLowPass.connect(noiseGain);
+    noiseGain.connect(audioContext.destination);
+    noiseSource.start();
+    noiseSource.stop(audioContext.currentTime + 0.2);
+  };
+
+  // War ambient effects
+  useEffect(() => {
+    if (!hasStarted) return;
+    
+    // Distant artillery every few seconds
+    const artilleryInterval = setInterval(() => {
+      if (Math.random() > 0.5) {
+        playArtillery();
+      }
+    }, 2000 + Math.random() * 2000);
+    
+    // Initial war horn
+    const hornTimeout = setTimeout(() => {
+      playWarHorn('startup');
+      playExplosion(0.6);
+    }, 300);
     
     return () => {
-      clearInterval(whisperInterval);
-      clearTimeout(startupTimeout);
+      clearInterval(artilleryInterval);
+      clearTimeout(hornTimeout);
     };
-  }, []);
+  }, [hasStarted]);
 
-  // Random lightning effect with thunder
+  // Lightning with explosion
   useEffect(() => {
+    if (!hasStarted) return;
+    
     const triggerLightning = () => {
       setLightningPosition({ 
         x: 20 + Math.random() * 60, 
@@ -328,98 +374,30 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
       });
       setLightningFlash(true);
       setTimeout(() => setLightningFlash(false), 150);
-      // Double flash effect
       setTimeout(() => {
         setLightningFlash(true);
         setTimeout(() => setLightningFlash(false), 80);
       }, 200);
       
-      // Thunder follows lightning with slight delay
+      // Explosion follows flash
       setTimeout(() => {
-        playThunder(0.5 + Math.random() * 0.5);
-      }, 100 + Math.random() * 300);
+        playExplosion(0.4 + Math.random() * 0.4);
+      }, 50 + Math.random() * 150);
     };
 
     const interval = setInterval(() => {
-      if (Math.random() > 0.7) {
+      if (Math.random() > 0.6) {
         triggerLightning();
       }
-    }, 3000);
+    }, 2500);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [hasStarted]);
 
   const setManagedTimeout = (fn: () => void, ms: number) => {
     const id = window.setTimeout(fn, ms);
     timeoutsRef.current.push(id);
     return id;
-  };
-
-  // Heavy cinematic impact hit
-  const playImpact = (intensity: number = 1) => {
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    audioContext.resume();
-
-    // Deep kick/thud
-    const kickOsc = audioContext.createOscillator();
-    const kickGain = audioContext.createGain();
-    kickOsc.type = 'sine';
-    kickOsc.frequency.setValueAtTime(150 * intensity, audioContext.currentTime);
-    kickOsc.frequency.exponentialRampToValueAtTime(30, audioContext.currentTime + 0.3);
-    kickGain.gain.setValueAtTime(0.6 * intensity, audioContext.currentTime);
-    kickGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
-    kickOsc.connect(kickGain);
-    kickGain.connect(audioContext.destination);
-    kickOsc.start();
-    kickOsc.stop(audioContext.currentTime + 0.4);
-
-    // Distorted layer for "solid" feel
-    const distOsc = audioContext.createOscillator();
-    const distGain = audioContext.createGain();
-    const waveshaper = audioContext.createWaveShaper();
-    
-    // Create distortion curve
-    const curve = new Float32Array(256);
-    for (let i = 0; i < 256; i++) {
-      const x = (i / 128) - 1;
-      curve[i] = Math.tanh(x * 3);
-    }
-    waveshaper.curve = curve;
-    
-    distOsc.type = 'square';
-    distOsc.frequency.setValueAtTime(80 * intensity, audioContext.currentTime);
-    distOsc.frequency.exponentialRampToValueAtTime(20, audioContext.currentTime + 0.2);
-    distGain.gain.setValueAtTime(0.15 * intensity, audioContext.currentTime);
-    distGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.25);
-    
-    distOsc.connect(waveshaper);
-    waveshaper.connect(distGain);
-    distGain.connect(audioContext.destination);
-    distOsc.start();
-    distOsc.stop(audioContext.currentTime + 0.25);
-
-    // Noise burst for transient
-    const bufferSize = audioContext.sampleRate * 0.08;
-    const noiseBuffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
-    const noiseData = noiseBuffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      noiseData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 3);
-    }
-    
-    const noiseSource = audioContext.createBufferSource();
-    noiseSource.buffer = noiseBuffer;
-    const noiseGain = audioContext.createGain();
-    const noiseLowPass = audioContext.createBiquadFilter();
-    noiseLowPass.type = 'lowpass';
-    noiseLowPass.frequency.value = 500;
-    noiseGain.gain.setValueAtTime(0.25 * intensity, audioContext.currentTime);
-    noiseGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-    
-    noiseSource.connect(noiseLowPass);
-    noiseLowPass.connect(noiseGain);
-    noiseGain.connect(audioContext.destination);
-    noiseSource.start();
-    noiseSource.stop(audioContext.currentTime + 0.1);
   };
 
   // Trigger shake at specific milestone
@@ -430,7 +408,7 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
     setIsShaking(true);
     setShakeIntensity(intensity);
     playImpact(intensity / 5);
-    playVoiceEffect('milestone');
+    playWarHorn('milestone');
 
     setManagedTimeout(() => {
       if (milestone !== 100) {
@@ -441,6 +419,8 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
   };
 
   useEffect(() => {
+    if (!hasStarted) return;
+    
     const interval = window.setInterval(() => {
       setProgress((prev) => {
         const newProgress = prev + 2;
@@ -475,7 +455,7 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
       timeoutsRef.current.forEach((id) => window.clearTimeout(id));
       timeoutsRef.current = [];
     };
-  }, []);
+  }, [hasStarted]);
 
   // When reaching 100%, trigger dramatic flash and transition
   useEffect(() => {
@@ -485,14 +465,14 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
     
     // Dramatic completion flash sequence
     setCompletionFlash(true);
-    playThunder(1.5); // Big thunder for completion
-    playVoiceEffect('complete'); // Completion voice announcement
+    playExplosion(1.5); // Big explosion for completion
+    playWarHorn('complete'); // Epic war horn
     
     setTimeout(() => {
       setCompletionFlash(false);
       setTimeout(() => {
         setCompletionFlash(true);
-        playThunder(1);
+        playExplosion(1);
         setTimeout(() => {
           setCompletionFlash(false);
           setIsExiting(true);
@@ -526,6 +506,36 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
       className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background overflow-hidden"
       style={shakeStyle}
     >
+      {/* Click to Start Overlay */}
+      {!hasStarted && (
+        <motion.div
+          className="absolute inset-0 z-[60] flex flex-col items-center justify-center cursor-pointer bg-background/90 backdrop-blur-sm"
+          onClick={() => {
+            initAudio();
+            setHasStarted(true);
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div
+            className="flex flex-col items-center gap-6"
+            animate={{ scale: [1, 1.02, 1] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            <div className="w-24 h-24 rounded-full border-2 border-primary/50 flex items-center justify-center">
+              <motion.div
+                className="w-0 h-0 border-l-[20px] border-l-primary border-y-[12px] border-y-transparent ml-2"
+                animate={{ opacity: [0.5, 1, 0.5] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              />
+            </div>
+            <h2 className="font-display text-2xl tracking-widest text-foreground/80">CLICK TO INITIALIZE</h2>
+            <p className="text-sm text-muted-foreground tracking-wider">ENGAGE AUDIO SYSTEMS</p>
+          </motion.div>
+        </motion.div>
+      )}
+
       {/* Dramatic completion flash overlay */}
       {completionFlash && (
         <motion.div
