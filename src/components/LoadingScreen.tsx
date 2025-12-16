@@ -159,6 +159,11 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
           triggerMilestoneShake(80, 8, 500);
         }
 
+        // Milestone 3: Heavy shake at 99%
+        if (newProgress >= 98 && newProgress < 100) {
+          triggerMilestoneShake(99, 12, 600);
+        }
+
         // Stop at 100
         if (newProgress >= 100) {
           window.clearInterval(interval);
