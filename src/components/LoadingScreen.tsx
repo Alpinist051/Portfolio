@@ -92,10 +92,59 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
   const [isExiting, setIsExiting] = useState(false);
   const [lightningFlash, setLightningFlash] = useState(false);
   const [lightningPosition, setLightningPosition] = useState({ x: 50, y: 30 });
+  const [completionFlash, setCompletionFlash] = useState(false);
   const triggeredMilestones = useRef<Set<number>>(new Set());
   const timeoutsRef = useRef<number[]>([]);
 
-  // Random lightning effect
+  // Create thunder sound using Web Audio API
+  const playThunder = (intensity: number = 1) => {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    
+    // Create noise buffer for thunder rumble
+    const bufferSize = audioContext.sampleRate * (0.5 + intensity * 0.3);
+    const noiseBuffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+    
+    for (let i = 0; i < bufferSize; i++) {
+      output[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 0.5);
+    }
+    
+    const noiseSource = audioContext.createBufferSource();
+    noiseSource.buffer = noiseBuffer;
+    
+    // Low-pass filter for rumble effect
+    const lowPass = audioContext.createBiquadFilter();
+    lowPass.type = 'lowpass';
+    lowPass.frequency.setValueAtTime(150 + intensity * 50, audioContext.currentTime);
+    lowPass.frequency.exponentialRampToValueAtTime(60, audioContext.currentTime + 0.5);
+    
+    // Gain envelope
+    const gainNode = audioContext.createGain();
+    gainNode.gain.setValueAtTime(0.3 * intensity, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5 + intensity * 0.2);
+    
+    noiseSource.connect(lowPass);
+    lowPass.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    noiseSource.start();
+    noiseSource.stop(audioContext.currentTime + 0.5 + intensity * 0.2);
+    
+    // Add a crack sound
+    const crackOsc = audioContext.createOscillator();
+    const crackGain = audioContext.createGain();
+    crackOsc.type = 'sawtooth';
+    crackOsc.frequency.setValueAtTime(100, audioContext.currentTime);
+    crackOsc.frequency.exponentialRampToValueAtTime(30, audioContext.currentTime + 0.1);
+    crackGain.gain.setValueAtTime(0.15 * intensity, audioContext.currentTime);
+    crackGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+    crackOsc.connect(crackGain);
+    crackGain.connect(audioContext.destination);
+    crackOsc.start();
+    crackOsc.stop(audioContext.currentTime + 0.15);
+  };
+
+  // Random lightning effect with thunder
   useEffect(() => {
     const triggerLightning = () => {
       setLightningPosition({ 
@@ -109,6 +158,11 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
         setLightningFlash(true);
         setTimeout(() => setLightningFlash(false), 80);
       }, 200);
+      
+      // Thunder follows lightning with slight delay
+      setTimeout(() => {
+        playThunder(0.5 + Math.random() * 0.5);
+      }, 100 + Math.random() * 300);
     };
 
     const interval = setInterval(() => {
@@ -208,18 +262,33 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
     };
   }, []);
 
-  // When reaching 100%, immediately transition to landing page
+  // When reaching 100%, trigger dramatic flash and transition
   useEffect(() => {
     if (progress !== 100 || isFinalEffect) return;
 
     setIsFinalEffect(true);
-    setIsExiting(true);
-    playSqueak(3);
+    
+    // Dramatic completion flash sequence
+    setCompletionFlash(true);
+    playThunder(1.5); // Big thunder for completion
+    
+    setTimeout(() => {
+      setCompletionFlash(false);
+      setTimeout(() => {
+        setCompletionFlash(true);
+        playThunder(1);
+        setTimeout(() => {
+          setCompletionFlash(false);
+          setIsExiting(true);
+          playSqueak(3);
+        }, 100);
+      }, 150);
+    }, 150);
 
     // Complete after exit animation
     setManagedTimeout(() => {
       onComplete();
-    }, 800);
+    }, 1200);
   }, [progress, isFinalEffect, onComplete]);
 
   // Generate shake transform
@@ -241,6 +310,19 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
       className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background overflow-hidden"
       style={shakeStyle}
     >
+      {/* Dramatic completion flash overlay */}
+      {completionFlash && (
+        <motion.div
+          className="absolute inset-0 z-50 pointer-events-none"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: [0, 1, 0.8, 1, 0] }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
+          style={{
+            background: 'radial-gradient(circle at center, hsl(var(--primary)) 0%, hsl(var(--secondary) / 0.8) 30%, hsl(var(--background)) 70%)',
+          }}
+        />
+      )}
+
       {/* 3D Space Background with Meteors */}
       <div className="absolute inset-0">
         <Canvas camera={{ position: [0, 0, 5], fov: 75 }}>
