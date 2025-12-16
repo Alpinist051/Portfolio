@@ -60,18 +60,40 @@ const Navigation = () => {
     >
       <div className="container mx-auto flex items-center justify-between px-4 py-4">
         {/* Logo */}
-        <Link to="/" className="group flex items-center gap-2">
-          <div className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-primary/30 bg-primary/10">
-            <span className="font-display text-lg font-bold text-primary">D</span>
+        <Link to="/" className="group flex items-center gap-3">
+          <div className="relative flex h-11 w-11 items-center justify-center">
+            {/* Outer rotating ring */}
             <motion.div
-              className="absolute inset-0 rounded-lg border border-primary"
-              animate={{ opacity: [0.5, 1, 0.5] }}
-              transition={{ duration: 2, repeat: Infinity }}
+              className="absolute inset-0 rounded-xl border border-primary/40"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
             />
+            {/* Inner glowing box */}
+            <div className="relative flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 backdrop-blur-sm">
+              <span className="font-display text-xl font-bold bg-gradient-to-br from-primary via-primary to-primary/70 bg-clip-text text-transparent">
+                IT
+              </span>
+              {/* Pulse effect */}
+              <motion.div
+                className="absolute inset-0 rounded-lg bg-primary/20"
+                animate={{ opacity: [0, 0.3, 0], scale: [0.8, 1.1, 0.8] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              />
+            </div>
+            {/* Corner accents */}
+            <div className="absolute -top-0.5 -left-0.5 h-2 w-2 border-t border-l border-primary/60" />
+            <div className="absolute -top-0.5 -right-0.5 h-2 w-2 border-t border-r border-primary/60" />
+            <div className="absolute -bottom-0.5 -left-0.5 h-2 w-2 border-b border-l border-primary/60" />
+            <div className="absolute -bottom-0.5 -right-0.5 h-2 w-2 border-b border-r border-primary/60" />
           </div>
-          <span className="hidden font-display text-sm tracking-wider text-foreground sm:block">
-            DEV<span className="text-primary">_PORTFOLIO</span>
-          </span>
+          <div className="hidden flex-col sm:flex">
+            <span className="font-display text-base tracking-widest text-foreground">
+              IVAN<span className="text-primary"> TAN</span>
+            </span>
+            <span className="font-body text-[10px] tracking-wider text-muted-foreground/70">
+              DEVELOPER & CREATOR
+            </span>
+          </div>
         </Link>
 
         {/* Desktop Navigation */}
