@@ -1,81 +1,76 @@
 import { Suspense, useRef, useMemo } from "react";
 import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
-import { Environment } from "@react-three/drei";
+import { useGLTF, Environment } from "@react-three/drei";
 import * as THREE from "three";
 import { motion } from "framer-motion";
 import faceImage from "@/assets/scientist-hero.png";
 
-// Main portrait with 3D depth effect
-const Portrait3D = () => {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const glowRef = useRef<THREE.Mesh>(null);
+// 3D Human model with face decal
+const HumanModel = () => {
+  const groupRef = useRef<THREE.Group>(null);
+  const jawRef = useRef<THREE.Object3D>(null);
   
-  const texture = useLoader(THREE.TextureLoader, faceImage);
+  // Load realistic human model from ReadyPlayer.me (business suit avatar)
+  const { scene } = useGLTF('https://models.readyplayer.me/64f6c7b1e136a6c847c6c8d3.glb');
   
-  // Calculate aspect ratio from texture
-  const aspect = useMemo(() => {
-    if (texture.image) {
-      return texture.image.width / texture.image.height;
-    }
-    return 1;
-  }, [texture]);
+  // Load face texture
+  const faceTexture = useLoader(THREE.TextureLoader, faceImage);
   
-  const height = 4.5;
-  const width = height * aspect;
+  // Clone the scene to avoid mutation issues
+  const clonedScene = useMemo(() => {
+    const clone = scene.clone();
+    
+    // Find the head mesh and apply face texture
+    clone.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        // Apply face texture to head/face meshes
+        if (child.name.toLowerCase().includes('head') || 
+            child.name.toLowerCase().includes('face') ||
+            child.name.toLowerCase().includes('wolf3d_head')) {
+          const material = child.material as THREE.MeshStandardMaterial;
+          if (material) {
+            material.map = faceTexture;
+            material.needsUpdate = true;
+          }
+        }
+        
+        // Store jaw reference for animation
+        if (child.name.toLowerCase().includes('jaw') || 
+            child.name.toLowerCase().includes('teeth')) {
+          jawRef.current = child;
+        }
+      }
+    });
+    
+    return clone;
+  }, [scene, faceTexture]);
   
+  // Breathing and talking animation
   useFrame((state) => {
-    if (meshRef.current) {
-      // Subtle breathing/presence animation
-      meshRef.current.scale.x = 1 + Math.sin(state.clock.elapsedTime * 0.8) * 0.008;
-      meshRef.current.scale.y = 1 + Math.sin(state.clock.elapsedTime * 0.5) * 0.005;
+    if (groupRef.current) {
+      // Subtle breathing
+      groupRef.current.scale.y = 1 + Math.sin(state.clock.elapsedTime * 0.6) * 0.005;
+      groupRef.current.position.y = -1 + Math.sin(state.clock.elapsedTime * 0.6) * 0.01;
     }
-    if (glowRef.current) {
-      glowRef.current.scale.x = 1.1 + Math.sin(state.clock.elapsedTime * 0.6) * 0.02;
-      glowRef.current.scale.y = 1.1 + Math.sin(state.clock.elapsedTime * 0.4) * 0.015;
+    
+    // Jaw/talking animation
+    if (jawRef.current) {
+      jawRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 4) * 0.05;
     }
   });
 
   return (
-    <group position={[0, 0.2, 0]}>
-      {/* Back glow layer */}
-      <mesh ref={glowRef} position={[0, 0, -0.1]}>
-        <planeGeometry args={[width * 1.3, height * 1.3]} />
-        <meshBasicMaterial 
-          color="#ffffff"
-          transparent
-          opacity={0.08}
-        />
-      </mesh>
+    <group ref={groupRef} position={[0, -1, 0]} scale={[1.8, 1.8, 1.8]}>
+      <primitive object={clonedScene} />
       
-      {/* Magenta rim glow - left */}
-      <mesh position={[-width * 0.45, 0, -0.05]}>
-        <planeGeometry args={[width * 0.3, height * 1.1]} />
+      {/* Face decal overlay */}
+      <mesh position={[0, 1.65, 0.12]} rotation={[0, 0, 0]}>
+        <planeGeometry args={[0.22, 0.28]} />
         <meshBasicMaterial 
-          color="#ff00aa"
-          transparent
-          opacity={0.15}
-        />
-      </mesh>
-      
-      {/* Cyan rim glow - right */}
-      <mesh position={[width * 0.45, 0, -0.05]}>
-        <planeGeometry args={[width * 0.3, height * 1.1]} />
-        <meshBasicMaterial 
-          color="#00d4ff"
-          transparent
-          opacity={0.15}
-        />
-      </mesh>
-      
-      {/* Main portrait */}
-      <mesh ref={meshRef}>
-        <planeGeometry args={[width, height]} />
-        <meshStandardMaterial 
-          map={texture}
-          transparent
-          side={THREE.FrontSide}
-          emissive="#ffffff"
-          emissiveIntensity={0.05}
+          map={faceTexture} 
+          transparent 
+          opacity={0.95}
+          depthWrite={false}
         />
       </mesh>
     </group>
@@ -88,81 +83,147 @@ const RotatingCamera = () => {
   
   useFrame((state) => {
     const time = state.clock.elapsedTime;
-    const radius = 6;
-    const rotationSpeed = 0.12;
+    const radius = 4;
+    const rotationSpeed = 0.15;
     
     // Smooth orbital camera movement
-    camera.position.x = Math.sin(time * rotationSpeed) * radius * 0.4;
-    camera.position.z = 4 + Math.cos(time * rotationSpeed) * radius * 0.15;
-    camera.position.y = 0.3 + Math.sin(time * 0.2) * 0.2;
+    camera.position.x = Math.sin(time * rotationSpeed) * radius * 0.5;
+    camera.position.z = 3 + Math.cos(time * rotationSpeed) * radius * 0.2;
+    camera.position.y = 1.5 + Math.sin(time * 0.25) * 0.15;
     
-    camera.lookAt(0, 0.2, 0);
+    camera.lookAt(0, 1, 0);
   });
   
   return null;
 };
 
-// Spotlight beam visualization
-const SpotlightBeam = ({ position, color, intensity = 1 }: { position: [number, number, number], color: string, intensity?: number }) => {
-  const coneRef = useRef<THREE.Mesh>(null);
+// Spotlight beams
+const SpotlightBeams = () => {
+  return (
+    <>
+      {/* Main spotlight from above */}
+      <spotLight
+        position={[0, 8, 3]}
+        angle={0.4}
+        penumbra={0.6}
+        intensity={3}
+        color="#fffaf5"
+        castShadow
+      />
+      
+      {/* Left magenta accent */}
+      <spotLight
+        position={[-5, 5, 2]}
+        angle={0.5}
+        penumbra={0.8}
+        intensity={2}
+        color="#ff00aa"
+      />
+      
+      {/* Right cyan accent */}
+      <spotLight
+        position={[5, 5, 2]}
+        angle={0.5}
+        penumbra={0.8}
+        intensity={2}
+        color="#00d4ff"
+      />
+      
+      {/* Back rim light */}
+      <spotLight
+        position={[0, 4, -4]}
+        angle={0.6}
+        penumbra={0.5}
+        intensity={2.5}
+        color="#ffd700"
+      />
+      
+      <ambientLight intensity={0.2} />
+    </>
+  );
+};
+
+// Visible light cone effects
+const LightCones = () => {
+  const cone1Ref = useRef<THREE.Mesh>(null);
+  const cone2Ref = useRef<THREE.Mesh>(null);
+  const cone3Ref = useRef<THREE.Mesh>(null);
   
   useFrame((state) => {
-    if (coneRef.current && coneRef.current.material instanceof THREE.MeshBasicMaterial) {
-      coneRef.current.material.opacity = 0.03 + Math.sin(state.clock.elapsedTime * 0.5 + position[0]) * 0.015;
+    const time = state.clock.elapsedTime;
+    if (cone1Ref.current?.material instanceof THREE.MeshBasicMaterial) {
+      cone1Ref.current.material.opacity = 0.04 + Math.sin(time * 0.5) * 0.015;
+    }
+    if (cone2Ref.current?.material instanceof THREE.MeshBasicMaterial) {
+      cone2Ref.current.material.opacity = 0.03 + Math.sin(time * 0.6 + 1) * 0.01;
+    }
+    if (cone3Ref.current?.material instanceof THREE.MeshBasicMaterial) {
+      cone3Ref.current.material.opacity = 0.03 + Math.sin(time * 0.7 + 2) * 0.01;
     }
   });
   
   return (
-    <group position={position}>
-      <spotLight
-        position={[0, 0, 0]}
-        target-position={[0, 0, 0]}
-        angle={0.5}
-        penumbra={0.8}
-        intensity={intensity * 2}
-        color={color}
-        distance={15}
-      />
-      {/* Visible light cone */}
-      <mesh 
-        ref={coneRef} 
-        position={[0, -4, 0]} 
-        rotation={[0, 0, 0]}
-      >
-        <coneGeometry args={[3, 8, 32, 1, true]} />
+    <>
+      {/* Main light cone */}
+      <mesh ref={cone1Ref} position={[0, 4, 1]} rotation={[0.2, 0, 0]}>
+        <coneGeometry args={[2.5, 8, 32, 1, true]} />
         <meshBasicMaterial 
-          color={color} 
+          color="#fffaf5" 
           transparent 
           opacity={0.04}
           side={THREE.DoubleSide}
           depthWrite={false}
         />
       </mesh>
-    </group>
+      
+      {/* Left magenta cone */}
+      <mesh ref={cone2Ref} position={[-3, 3, 0]} rotation={[0.3, 0.4, 0]}>
+        <coneGeometry args={[2, 6, 32, 1, true]} />
+        <meshBasicMaterial 
+          color="#ff00aa" 
+          transparent 
+          opacity={0.03}
+          side={THREE.DoubleSide}
+          depthWrite={false}
+        />
+      </mesh>
+      
+      {/* Right cyan cone */}
+      <mesh ref={cone3Ref} position={[3, 3, 0]} rotation={[0.3, -0.4, 0]}>
+        <coneGeometry args={[2, 6, 32, 1, true]} />
+        <meshBasicMaterial 
+          color="#00d4ff" 
+          transparent 
+          opacity={0.03}
+          side={THREE.DoubleSide}
+          depthWrite={false}
+        />
+      </mesh>
+    </>
   );
 };
 
-// Floating particles
+// Floating dust particles
 const Particles = () => {
   const particlesRef = useRef<THREE.Points>(null);
   
-  const particleCount = 100;
+  const particleCount = 150;
   const positions = useMemo(() => {
     const pos = new Float32Array(particleCount * 3);
     for (let i = 0; i < particleCount; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * 10;
-      pos[i * 3 + 1] = (Math.random() - 0.5) * 8;
-      pos[i * 3 + 2] = (Math.random() - 0.5) * 6 - 1;
+      pos[i * 3] = (Math.random() - 0.5) * 12;
+      pos[i * 3 + 1] = Math.random() * 6 - 1;
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 8 - 1;
     }
     return pos;
   }, []);
   
   useFrame((state) => {
     if (particlesRef.current) {
-      particlesRef.current.rotation.y = state.clock.elapsedTime * 0.02;
+      particlesRef.current.rotation.y = state.clock.elapsedTime * 0.015;
       const positions = particlesRef.current.geometry.attributes.position.array as Float32Array;
       for (let i = 0; i < particleCount; i++) {
-        positions[i * 3 + 1] += Math.sin(state.clock.elapsedTime + i) * 0.001;
+        positions[i * 3 + 1] += Math.sin(state.clock.elapsedTime * 0.5 + i * 0.1) * 0.001;
       }
       particlesRef.current.geometry.attributes.position.needsUpdate = true;
     }
@@ -179,10 +240,10 @@ const Particles = () => {
         />
       </bufferGeometry>
       <pointsMaterial
-        size={0.02}
+        size={0.025}
         color="#ffffff"
         transparent
-        opacity={0.4}
+        opacity={0.5}
         sizeAttenuation
       />
     </points>
@@ -192,13 +253,23 @@ const Particles = () => {
 // Reflective floor
 const Floor = () => {
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2.3, 0]} receiveShadow>
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1, 0]} receiveShadow>
       <planeGeometry args={[30, 30]} />
       <meshStandardMaterial 
         color="#030305"
-        roughness={0.15}
-        metalness={0.9}
+        roughness={0.1}
+        metalness={0.95}
       />
+    </mesh>
+  );
+};
+
+// Loading fallback
+const Loader = () => {
+  return (
+    <mesh>
+      <sphereGeometry args={[0.5, 16, 16]} />
+      <meshBasicMaterial color="#ffffff" wireframe />
     </mesh>
   );
 };
@@ -208,33 +279,19 @@ const SpaceHero = () => {
     <section className="relative h-screen w-full overflow-hidden bg-[#020205]">
       <Canvas
         shadows
-        camera={{ position: [0, 0.3, 5], fov: 40 }}
+        camera={{ position: [0, 1.5, 4], fov: 45 }}
         className="absolute inset-0"
         gl={{ antialias: true, alpha: true }}
       >
-        <fog attach="fog" args={['#020205', 8, 25]} />
+        <fog attach="fog" args={['#020205', 6, 20]} />
         
-        <Suspense fallback={null}>
+        <Suspense fallback={<Loader />}>
           <RotatingCamera />
-          
-          {/* Main center spotlight */}
-          <SpotlightBeam position={[0, 6, 2]} color="#fffaf5" intensity={1.5} />
-          
-          {/* Left magenta accent */}
-          <SpotlightBeam position={[-4, 5, 1]} color="#ff00aa" intensity={1} />
-          
-          {/* Right cyan accent */}
-          <SpotlightBeam position={[4, 5, 1]} color="#00d4ff" intensity={1} />
-          
-          {/* Back rim light */}
-          <spotLight position={[0, 3, -3]} intensity={2} color="#ffd700" angle={0.6} />
-          
-          <ambientLight intensity={0.15} />
-          
-          <Portrait3D />
+          <SpotlightBeams />
+          <LightCones />
+          <HumanModel />
           <Particles />
           <Floor />
-          
           <Environment preset="night" />
         </Suspense>
       </Canvas>
@@ -261,5 +318,8 @@ const SpaceHero = () => {
     </section>
   );
 };
+
+// Preload the model
+useGLTF.preload('https://models.readyplayer.me/64f6c7b1e136a6c847c6c8d3.glb');
 
 export default SpaceHero;
