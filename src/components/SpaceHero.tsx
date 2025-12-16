@@ -1,135 +1,218 @@
+import { Suspense, useRef } from "react";
+import { Canvas, useFrame, useLoader } from "@react-three/fiber";
+import { OrbitControls, Environment } from "@react-three/drei";
+import * as THREE from "three";
 import { motion } from "framer-motion";
-import scientistImage from "@/assets/scientist-hero.png";
+import faceTexture from "@/assets/scientist-hero.png";
+
+// 3D Human Character with face texture
+const HumanCharacter = () => {
+  const groupRef = useRef<THREE.Group>(null);
+  const mouthRef = useRef<THREE.Mesh>(null);
+  
+  // Load face texture
+  const texture = useLoader(THREE.TextureLoader, faceTexture);
+  
+  // Breathing and talking animation
+  useFrame((state) => {
+    if (groupRef.current) {
+      // Subtle breathing
+      groupRef.current.scale.y = 1 + Math.sin(state.clock.elapsedTime * 0.5) * 0.01;
+    }
+    if (mouthRef.current) {
+      // Talking animation
+      mouthRef.current.scale.y = 0.3 + Math.sin(state.clock.elapsedTime * 4) * 0.15;
+    }
+  });
+
+  return (
+    <group ref={groupRef} position={[0, -1.5, 0]}>
+      {/* Head with face texture */}
+      <mesh position={[0, 2.8, 0]}>
+        <sphereGeometry args={[0.45, 32, 32]} />
+        <meshStandardMaterial color="#f0d0c0" roughness={0.7} />
+      </mesh>
+      
+      {/* Face plane with user's face */}
+      <mesh position={[0, 2.8, 0.4]} rotation={[0, 0, 0]}>
+        <planeGeometry args={[0.8, 0.8]} />
+        <meshStandardMaterial 
+          map={texture} 
+          transparent 
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+      
+      {/* Hair */}
+      <mesh position={[0, 3.1, -0.1]}>
+        <sphereGeometry args={[0.42, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        <meshStandardMaterial color="#1a1a1a" roughness={0.8} />
+      </mesh>
+      
+      {/* Neck */}
+      <mesh position={[0, 2.2, 0]}>
+        <cylinderGeometry args={[0.12, 0.15, 0.3, 16]} />
+        <meshStandardMaterial color="#f0d0c0" roughness={0.7} />
+      </mesh>
+      
+      {/* Torso - Suit jacket */}
+      <mesh position={[0, 1.3, 0]}>
+        <cylinderGeometry args={[0.35, 0.45, 1.5, 16]} />
+        <meshStandardMaterial color="#0a0a0a" roughness={0.3} metalness={0.1} />
+      </mesh>
+      
+      {/* White shirt collar */}
+      <mesh position={[0, 2.0, 0.1]}>
+        <boxGeometry args={[0.25, 0.15, 0.1]} />
+        <meshStandardMaterial color="#ffffff" roughness={0.5} />
+      </mesh>
+      
+      {/* Bow tie */}
+      <mesh position={[0, 1.9, 0.18]}>
+        <boxGeometry args={[0.2, 0.08, 0.05]} />
+        <meshStandardMaterial color="#0a0a0a" roughness={0.3} />
+      </mesh>
+      
+      {/* Left shoulder */}
+      <mesh position={[-0.5, 1.7, 0]}>
+        <sphereGeometry args={[0.18, 16, 16]} />
+        <meshStandardMaterial color="#0a0a0a" roughness={0.3} />
+      </mesh>
+      
+      {/* Right shoulder */}
+      <mesh position={[0.5, 1.7, 0]}>
+        <sphereGeometry args={[0.18, 16, 16]} />
+        <meshStandardMaterial color="#0a0a0a" roughness={0.3} />
+      </mesh>
+      
+      {/* Left arm */}
+      <mesh position={[-0.55, 1.2, 0.1]} rotation={[0.2, 0, 0.15]}>
+        <cylinderGeometry args={[0.1, 0.08, 0.8, 16]} />
+        <meshStandardMaterial color="#0a0a0a" roughness={0.3} />
+      </mesh>
+      
+      {/* Right arm - adjusting tie */}
+      <mesh position={[0.4, 1.4, 0.25]} rotation={[0.8, 0, -0.3]}>
+        <cylinderGeometry args={[0.1, 0.08, 0.7, 16]} />
+        <meshStandardMaterial color="#0a0a0a" roughness={0.3} />
+      </mesh>
+      
+      {/* Left hand */}
+      <mesh position={[-0.6, 0.75, 0.2]}>
+        <sphereGeometry args={[0.08, 16, 16]} />
+        <meshStandardMaterial color="#f0d0c0" roughness={0.7} />
+      </mesh>
+      
+      {/* Right hand near tie */}
+      <mesh position={[0.15, 1.85, 0.35]}>
+        <sphereGeometry args={[0.08, 16, 16]} />
+        <meshStandardMaterial color="#f0d0c0" roughness={0.7} />
+      </mesh>
+      
+      {/* Animated mouth indicator (subtle glow) */}
+      <mesh ref={mouthRef} position={[0, 2.65, 0.46]}>
+        <planeGeometry args={[0.12, 0.05]} />
+        <meshBasicMaterial color="#cc8888" transparent opacity={0.3} />
+      </mesh>
+    </group>
+  );
+};
+
+// Rotating camera controller
+const CameraController = () => {
+  useFrame((state) => {
+    const angle = state.clock.elapsedTime * 0.15;
+    const radius = 5;
+    state.camera.position.x = Math.sin(angle) * radius;
+    state.camera.position.z = Math.cos(angle) * radius;
+    state.camera.position.y = 1.5 + Math.sin(state.clock.elapsedTime * 0.3) * 0.3;
+    state.camera.lookAt(0, 1.5, 0);
+  });
+  return null;
+};
+
+// Spotlight beams visualization
+const SpotlightBeams = () => {
+  return (
+    <>
+      {/* Main spotlight from above */}
+      <spotLight
+        position={[0, 8, 2]}
+        angle={0.4}
+        penumbra={0.5}
+        intensity={3}
+        color="#fffaf5"
+        castShadow
+      />
+      
+      {/* Left magenta light */}
+      <spotLight
+        position={[-5, 6, 0]}
+        angle={0.5}
+        penumbra={0.8}
+        intensity={2}
+        color="#ff00aa"
+      />
+      
+      {/* Right cyan light */}
+      <spotLight
+        position={[5, 6, 0]}
+        angle={0.5}
+        penumbra={0.8}
+        intensity={2}
+        color="#00d4ff"
+      />
+      
+      {/* Back rim light */}
+      <spotLight
+        position={[0, 4, -4]}
+        angle={0.6}
+        penumbra={0.5}
+        intensity={2}
+        color="#ffd700"
+      />
+      
+      {/* Ambient fill */}
+      <ambientLight intensity={0.1} />
+    </>
+  );
+};
+
+// Floor with reflection
+const Floor = () => {
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.5, 0]} receiveShadow>
+      <planeGeometry args={[20, 20]} />
+      <meshStandardMaterial 
+        color="#050505" 
+        roughness={0.2} 
+        metalness={0.8}
+      />
+    </mesh>
+  );
+};
 
 const SpaceHero = () => {
   return (
     <section className="relative h-screen w-full overflow-hidden bg-[#020205]">
-      {/* Rotating camera container */}
-      <motion.div 
+      {/* 3D Canvas */}
+      <Canvas
+        shadows
+        camera={{ position: [0, 1.5, 5], fov: 45 }}
         className="absolute inset-0"
-        animate={{ 
-          rotateY: [0, 5, 0, -5, 0],
-          scale: [1, 1.02, 1, 1.02, 1],
-        }}
-        transition={{ 
-          duration: 12, 
-          repeat: Infinity, 
-          ease: "easeInOut" 
-        }}
-        style={{ 
-          perspective: "1000px",
-          transformStyle: "preserve-3d",
-        }}
       >
-        {/* Spotlight beams */}
-        <div className="pointer-events-none absolute inset-0">
-          {/* Main center spotlight from above */}
-          <motion.div 
-            className="absolute left-1/2 top-0 h-full w-[600px] -translate-x-1/2"
-            animate={{ opacity: [0.6, 0.8, 0.6] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            style={{
-              background: 'linear-gradient(180deg, rgba(255,250,245,0.2) 0%, rgba(255,250,245,0.08) 40%, transparent 75%)',
-              clipPath: 'polygon(42% 0%, 58% 0%, 72% 100%, 28% 100%)',
-            }}
-          />
-          
-          {/* Left magenta accent light */}
-          <motion.div 
-            className="absolute left-[15%] top-0 h-full w-[350px]"
-            animate={{ opacity: [0.4, 0.6, 0.4] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-            style={{
-              background: 'linear-gradient(180deg, rgba(255,0,170,0.25) 0%, rgba(255,0,170,0.1) 50%, transparent 85%)',
-              clipPath: 'polygon(30% 0%, 70% 0%, 85% 100%, 15% 100%)',
-            }}
-          />
-          
-          {/* Right cyan accent light */}
-          <motion.div 
-            className="absolute right-[15%] top-0 h-full w-[350px]"
-            animate={{ opacity: [0.4, 0.6, 0.4] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-            style={{
-              background: 'linear-gradient(180deg, rgba(0,212,255,0.25) 0%, rgba(0,212,255,0.1) 50%, transparent 85%)',
-              clipPath: 'polygon(30% 0%, 70% 0%, 85% 100%, 15% 100%)',
-            }}
-          />
-        </div>
+        <fog attach="fog" args={['#020205', 5, 20]} />
+        
+        <Suspense fallback={null}>
+          <CameraController />
+          <SpotlightBeams />
+          <HumanCharacter />
+          <Floor />
+          <Environment preset="night" />
+        </Suspense>
+      </Canvas>
 
-        {/* Human Image with animations */}
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <motion.div 
-            className="relative"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, delay: 0.3 }}
-          >
-            {/* Glow effects around the image */}
-            <div 
-              className="absolute inset-0 -z-10"
-              style={{
-                background: 'radial-gradient(ellipse at center, rgba(255,250,245,0.15) 0%, transparent 50%)',
-                filter: 'blur(40px)',
-                transform: 'scale(1.5)',
-              }}
-            />
-            
-            {/* The human image with smile/talking animation */}
-            <motion.div
-              className="relative"
-              animate={{ 
-                scaleY: [1, 1.002, 1, 1.001, 1],
-              }}
-              transition={{ 
-                duration: 2, 
-                repeat: Infinity, 
-                ease: "easeInOut" 
-              }}
-            >
-              <motion.img 
-                src={scientistImage} 
-                alt="Professional"
-                className="h-[70vh] w-auto max-w-[90vw] object-contain"
-                animate={{
-                  filter: [
-                    'drop-shadow(0 0 60px rgba(255,250,245,0.3)) drop-shadow(-30px 0 50px rgba(255,0,170,0.2)) drop-shadow(30px 0 50px rgba(0,212,255,0.2))',
-                    'drop-shadow(0 0 80px rgba(255,250,245,0.4)) drop-shadow(-40px 0 60px rgba(255,0,170,0.3)) drop-shadow(40px 0 60px rgba(0,212,255,0.3))',
-                    'drop-shadow(0 0 60px rgba(255,250,245,0.3)) drop-shadow(-30px 0 50px rgba(255,0,170,0.2)) drop-shadow(30px 0 50px rgba(0,212,255,0.2))',
-                  ]
-                }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              />
-              
-              {/* Subtle talking/smile overlay animation */}
-              <motion.div
-                className="absolute bottom-[35%] left-1/2 h-8 w-16 -translate-x-1/2 rounded-full"
-                animate={{
-                  scaleX: [1, 1.05, 1, 1.03, 1],
-                  scaleY: [1, 0.95, 1, 0.97, 1],
-                  opacity: [0, 0.05, 0, 0.03, 0],
-                }}
-                transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-                style={{
-                  background: 'radial-gradient(ellipse, rgba(255,200,180,0.3) 0%, transparent 70%)',
-                  filter: 'blur(8px)',
-                }}
-              />
-            </motion.div>
-            
-            {/* Floor reflection glow */}
-            <div 
-              className="absolute -bottom-20 left-1/2 h-40 w-[400px] -translate-x-1/2"
-              style={{
-                background: 'radial-gradient(ellipse at center, rgba(255,250,245,0.1) 0%, transparent 70%)',
-                filter: 'blur(30px)',
-              }}
-            />
-          </motion.div>
-        </div>
-      </motion.div>
-
-      {/* Vignette */}
+      {/* Vignette overlay */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(2,2,5,0.7)_65%,rgba(2,2,5,0.95)_100%)]" />
 
       {/* Scroll indicator */}
