@@ -55,15 +55,261 @@ const Curtain = ({ position, rotation = [0, 0, 0], color = "#1a0a15" }: {
   );
 };
 
-// Stage Spotlight
+// Animated Sweeping Spotlight Beam
+const SweepingSpotlight = ({ 
+  basePosition, 
+  color, 
+  speed = 0.5, 
+  swingAngle = 0.6,
+  phase = 0 
+}: {
+  basePosition: [number, number, number];
+  color: string;
+  speed?: number;
+  swingAngle?: number;
+  phase?: number;
+}) => {
+  const groupRef = useRef<THREE.Group>(null);
+  const beamRef = useRef<THREE.Mesh>(null);
+  
+  useFrame((state) => {
+    if (groupRef.current) {
+      const swing = Math.sin(state.clock.elapsedTime * speed + phase) * swingAngle;
+      groupRef.current.rotation.z = swing;
+    }
+    if (beamRef.current) {
+      // Pulse the beam opacity
+      const material = beamRef.current.material as THREE.MeshBasicMaterial;
+      material.opacity = 0.08 + Math.sin(state.clock.elapsedTime * 2 + phase) * 0.03;
+    }
+  });
+
+  return (
+    <group position={basePosition}>
+      {/* Spotlight fixture */}
+      <mesh>
+        <cylinderGeometry args={[0.2, 0.3, 0.5, 16]} />
+        <meshStandardMaterial color="#1a1a1a" metalness={0.9} roughness={0.2} />
+      </mesh>
+      {/* Lens glow */}
+      <mesh position={[0, -0.3, 0]}>
+        <sphereGeometry args={[0.15, 16, 16]} />
+        <meshBasicMaterial color={color} transparent opacity={0.8} />
+      </mesh>
+      
+      {/* Animated beam group */}
+      <group ref={groupRef}>
+        {/* Light cone beam - visible volumetric effect */}
+        <mesh ref={beamRef} position={[0, -6, 0]} rotation={[0, 0, 0]}>
+          <coneGeometry args={[3, 12, 32, 1, true]} />
+          <meshBasicMaterial 
+            color={color} 
+            transparent 
+            opacity={0.1} 
+            side={THREE.DoubleSide}
+            blending={THREE.AdditiveBlending}
+          />
+        </mesh>
+        {/* Inner bright core */}
+        <mesh position={[0, -6, 0]}>
+          <coneGeometry args={[1.5, 12, 32, 1, true]} />
+          <meshBasicMaterial 
+            color={color} 
+            transparent 
+            opacity={0.15} 
+            side={THREE.DoubleSide}
+            blending={THREE.AdditiveBlending}
+          />
+        </mesh>
+        {/* The actual spotlight */}
+        <spotLight
+          position={[0, -0.5, 0]}
+          angle={0.4}
+          penumbra={0.9}
+          intensity={2}
+          color={color}
+          distance={15}
+          castShadow
+        />
+      </group>
+    </group>
+  );
+};
+
+// Elegant Podium/Lectern
+const Podium = () => {
+  const groupRef = useRef<THREE.Group>(null);
+  
+  useFrame((state) => {
+    if (groupRef.current) {
+      // Subtle hover animation
+      groupRef.current.position.y = -1.3 + Math.sin(state.clock.elapsedTime * 0.8) * 0.02;
+    }
+  });
+
+  return (
+    <group ref={groupRef} position={[0, -1.3, 0]}>
+      {/* Main podium body */}
+      <mesh position={[0, 0.4, 0]}>
+        <boxGeometry args={[0.8, 1.2, 0.5]} />
+        <meshStandardMaterial color="#0a0a12" metalness={0.7} roughness={0.3} />
+      </mesh>
+      
+      {/* Top surface - angled reading surface */}
+      <mesh position={[0, 1.05, 0.05]} rotation={[-0.2, 0, 0]}>
+        <boxGeometry args={[0.85, 0.05, 0.55]} />
+        <meshStandardMaterial color="#0d0d15" metalness={0.8} roughness={0.2} />
+      </mesh>
+      
+      {/* Gold trim - top */}
+      <mesh position={[0, 1, 0.28]}>
+        <boxGeometry args={[0.82, 0.03, 0.03]} />
+        <meshStandardMaterial color="#c9a227" metalness={0.95} roughness={0.1} />
+      </mesh>
+      
+      {/* Gold trim - front vertical */}
+      <mesh position={[0, 0.4, 0.26]}>
+        <boxGeometry args={[0.03, 1.1, 0.03]} />
+        <meshStandardMaterial color="#c9a227" metalness={0.95} roughness={0.1} />
+      </mesh>
+      
+      {/* Side gold accents */}
+      <mesh position={[-0.38, 0.4, 0.1]}>
+        <boxGeometry args={[0.03, 0.8, 0.03]} />
+        <meshStandardMaterial color="#c9a227" metalness={0.95} roughness={0.1} />
+      </mesh>
+      <mesh position={[0.38, 0.4, 0.1]}>
+        <boxGeometry args={[0.03, 0.8, 0.03]} />
+        <meshStandardMaterial color="#c9a227" metalness={0.95} roughness={0.1} />
+      </mesh>
+      
+      {/* Base */}
+      <mesh position={[0, -0.25, 0]}>
+        <boxGeometry args={[1, 0.1, 0.7]} />
+        <meshStandardMaterial color="#080810" metalness={0.6} roughness={0.4} />
+      </mesh>
+      
+      {/* Microphone */}
+      <group position={[0.25, 1.3, 0.1]}>
+        <mesh>
+          <cylinderGeometry args={[0.015, 0.015, 0.4, 8]} />
+          <meshStandardMaterial color="#1a1a1a" metalness={0.9} roughness={0.2} />
+        </mesh>
+        <mesh position={[0, 0.22, 0]}>
+          <sphereGeometry args={[0.04, 16, 16]} />
+          <meshStandardMaterial color="#2a2a2a" metalness={0.8} roughness={0.3} />
+        </mesh>
+        {/* Mic light indicator */}
+        <mesh position={[0, 0.15, 0.02]}>
+          <sphereGeometry args={[0.008, 8, 8]} />
+          <meshBasicMaterial color="#00ff00" />
+        </mesh>
+      </group>
+      
+      {/* Glowing logo/emblem on front */}
+      <mesh position={[0, 0.5, 0.26]}>
+        <circleGeometry args={[0.15, 32]} />
+        <meshBasicMaterial color="#00d4ff" transparent opacity={0.3} />
+      </mesh>
+      <mesh position={[0, 0.5, 0.265]}>
+        <ringGeometry args={[0.12, 0.15, 32]} />
+        <meshBasicMaterial color="#00d4ff" transparent opacity={0.6} />
+      </mesh>
+      
+      {/* Podium light */}
+      <pointLight position={[0, 1.5, 0.5]} intensity={0.5} color="#fff5e6" distance={3} />
+    </group>
+  );
+};
+
+// Stage Smoke/Haze Effect
+const StageHaze = () => {
+  const count = 40;
+  const meshRef = useRef<THREE.Points>(null);
+  
+  const particles = useMemo(() => {
+    const positions = new Float32Array(count * 3);
+    const sizes = new Float32Array(count);
+    
+    for (let i = 0; i < count; i++) {
+      // Spread across the stage floor
+      positions[i * 3] = (Math.random() - 0.5) * 18;
+      positions[i * 3 + 1] = -1.8 + Math.random() * 0.8;
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 12 - 2;
+      sizes[i] = 0.5 + Math.random() * 1.5;
+    }
+    return { positions, sizes };
+  }, []);
+
+  useFrame((state) => {
+    if (meshRef.current) {
+      const positions = meshRef.current.geometry.attributes.position.array as Float32Array;
+      
+      for (let i = 0; i < count; i++) {
+        // Slow drifting movement
+        positions[i * 3] += Math.sin(state.clock.elapsedTime * 0.2 + i) * 0.003;
+        positions[i * 3 + 1] += Math.sin(state.clock.elapsedTime * 0.3 + i * 0.5) * 0.002;
+        positions[i * 3 + 2] += Math.cos(state.clock.elapsedTime * 0.15 + i) * 0.002;
+        
+        // Reset if drifted too far
+        if (positions[i * 3] > 10) positions[i * 3] = -10;
+        if (positions[i * 3] < -10) positions[i * 3] = 10;
+      }
+      meshRef.current.geometry.attributes.position.needsUpdate = true;
+    }
+  });
+
+  return (
+    <points ref={meshRef}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" count={count} array={particles.positions} itemSize={3} />
+      </bufferGeometry>
+      <pointsMaterial 
+        size={2}
+        color="#ffffff"
+        transparent
+        opacity={0.06}
+        sizeAttenuation
+        blending={THREE.AdditiveBlending}
+        depthWrite={false}
+      />
+    </points>
+  );
+};
+
+// Volumetric haze layer
+const HazeLayer = ({ y, opacity = 0.04 }: { y: number; opacity?: number }) => {
+  const meshRef = useRef<THREE.Mesh>(null);
+  
+  useFrame((state) => {
+    if (meshRef.current) {
+      meshRef.current.position.x = Math.sin(state.clock.elapsedTime * 0.1) * 0.5;
+      meshRef.current.position.z = Math.cos(state.clock.elapsedTime * 0.08) * 0.3;
+    }
+  });
+
+  return (
+    <mesh ref={meshRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, y, -2]}>
+      <planeGeometry args={[25, 20]} />
+      <meshBasicMaterial 
+        color="#aabbcc"
+        transparent 
+        opacity={opacity}
+        blending={THREE.AdditiveBlending}
+        depthWrite={false}
+        side={THREE.DoubleSide}
+      />
+    </mesh>
+  );
+};
+
+// Stage Spotlight (static)
 const StageSpotlight = ({ position, target, color, intensity = 2 }: {
   position: [number, number, number];
   target: [number, number, number];
   color: string;
   intensity?: number;
 }) => {
-  const lightRef = useRef<THREE.SpotLight>(null);
-  
   return (
     <group>
       {/* Spotlight fixture */}
@@ -73,7 +319,6 @@ const StageSpotlight = ({ position, target, color, intensity = 2 }: {
       </mesh>
       {/* The light */}
       <spotLight
-        ref={lightRef}
         position={position}
         target-position={target}
         angle={0.35}
@@ -248,7 +493,30 @@ function StageScene() {
         intensity={3}
       />
       
-      {/* Side spotlights - colored */}
+      {/* Animated sweeping spotlights */}
+      <SweepingSpotlight 
+        basePosition={[-5, 9, 3]} 
+        color="#ff00aa" 
+        speed={0.4}
+        swingAngle={0.5}
+        phase={0}
+      />
+      <SweepingSpotlight 
+        basePosition={[5, 9, 3]} 
+        color="#00d4ff" 
+        speed={0.35}
+        swingAngle={0.5}
+        phase={Math.PI}
+      />
+      <SweepingSpotlight 
+        basePosition={[0, 10, -2]} 
+        color="#c9a227" 
+        speed={0.25}
+        swingAngle={0.4}
+        phase={Math.PI / 2}
+      />
+      
+      {/* Side spotlights - colored (static) */}
       <StageSpotlight 
         position={[-6, 7, 0]} 
         target={[-2, 0, -3]} 
@@ -269,6 +537,9 @@ function StageScene() {
       
       {/* Stage floor with reflections */}
       <StageFloor />
+      
+      {/* Center podium */}
+      <Podium />
       
       {/* Stage arch frame */}
       <StageArch />
@@ -291,6 +562,12 @@ function StageScene() {
       {screens.map((screen, i) => (
         <HolographicScreen key={i} {...screen} />
       ))}
+      
+      {/* Stage smoke/haze effect */}
+      <StageHaze />
+      <HazeLayer y={-1.6} opacity={0.05} />
+      <HazeLayer y={-1.4} opacity={0.03} />
+      <HazeLayer y={-1.2} opacity={0.02} />
       
       {/* Atmospheric particles */}
       <StageParticles />
