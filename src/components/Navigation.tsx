@@ -182,13 +182,45 @@ const Navigation = () => {
         </div>
 
         {/* Status indicator */}
-        <div className="hidden items-center gap-2 md:flex">
-          <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
-          </span>
-          <span className="font-body text-xs text-muted-foreground">Available</span>
-        </div>
+        <motion.div 
+          className="group hidden items-center gap-3 rounded-full border border-border/50 bg-background/50 px-4 py-2 backdrop-blur-sm transition-all duration-300 hover:border-green-500/50 hover:bg-green-500/5 md:flex"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.6 }}
+          whileHover={{ scale: 1.02 }}
+        >
+          {/* Animated status dot */}
+          <div className="relative flex h-3 w-3 items-center justify-center">
+            {/* Outer pulse rings */}
+            <motion.span 
+              className="absolute h-full w-full rounded-full bg-green-400/30"
+              animate={{ scale: [1, 2, 1], opacity: [0.5, 0, 0.5] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }}
+            />
+            <motion.span 
+              className="absolute h-full w-full rounded-full bg-green-400/20"
+              animate={{ scale: [1, 2.5, 1], opacity: [0.3, 0, 0.3] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeOut", delay: 0.3 }}
+            />
+            {/* Inner glow */}
+            <span className="absolute h-2 w-2 rounded-full bg-green-400/50 blur-sm" />
+            {/* Core dot */}
+            <motion.span 
+              className="relative h-2 w-2 rounded-full bg-gradient-to-br from-green-400 to-green-500 shadow-[0_0_8px_rgba(74,222,128,0.6)]"
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+            />
+          </div>
+          {/* Status text */}
+          <div className="flex flex-col">
+            <span className="font-display text-[10px] tracking-wider text-green-400/80 transition-all duration-300 group-hover:text-green-400">
+              AVAILABLE
+            </span>
+            <span className="font-body text-[8px] text-muted-foreground/50">
+              For new projects
+            </span>
+          </div>
+        </motion.div>
 
         {/* Mobile menu button */}
         <button

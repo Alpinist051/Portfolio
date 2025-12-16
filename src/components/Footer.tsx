@@ -408,15 +408,61 @@ const Footer = () => {
           <p className="font-body text-xs text-muted-foreground">
             © {currentYear} Developer Portfolio. All systems operational.
           </p>
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-2 font-body text-xs text-muted-foreground">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
+          <motion.div 
+            className="group flex items-center gap-3 rounded-full border border-border/30 bg-background/30 px-4 py-2 backdrop-blur-sm transition-all duration-300 hover:border-green-500/40 hover:bg-green-500/5"
+            whileHover={{ scale: 1.02 }}
+          >
+            {/* Animated status indicator */}
+            <div className="relative flex h-4 w-4 items-center justify-center">
+              {/* Circuit-like outer ring */}
+              <svg className="absolute h-4 w-4" viewBox="0 0 16 16">
+                <motion.circle
+                  cx="8"
+                  cy="8"
+                  r="6"
+                  fill="none"
+                  stroke="rgba(74, 222, 128, 0.3)"
+                  strokeWidth="1"
+                  strokeDasharray="2 2"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                  style={{ transformOrigin: "center" }}
+                />
+              </svg>
+              {/* Pulse rings */}
+              <motion.span 
+                className="absolute h-3 w-3 rounded-full bg-green-400/20"
+                animate={{ scale: [1, 1.8, 1], opacity: [0.4, 0, 0.4] }}
+                transition={{ duration: 2.5, repeat: Infinity, ease: "easeOut" }}
+              />
+              {/* Inner glow */}
+              <span className="absolute h-2.5 w-2.5 rounded-full bg-green-400/30 blur-sm" />
+              {/* Core dot with gradient */}
+              <motion.span 
+                className="relative h-2 w-2 rounded-full bg-gradient-to-br from-green-300 via-green-400 to-green-500 shadow-[0_0_10px_rgba(74,222,128,0.7)]"
+                animate={{ scale: [1, 1.15, 1], boxShadow: ["0 0 10px rgba(74,222,128,0.7)", "0 0 15px rgba(74,222,128,0.9)", "0 0 10px rgba(74,222,128,0.7)"] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              />
+            </div>
+            {/* Status text */}
+            <div className="flex flex-col">
+              <span className="font-display text-[10px] tracking-widest text-green-400/90 transition-all duration-300 group-hover:text-green-400 group-hover:drop-shadow-[0_0_6px_rgba(74,222,128,0.5)]">
+                SYSTEM STATUS
               </span>
-              System Status: Online
-            </span>
-          </div>
+              <span className="font-body text-[9px] tracking-wider text-muted-foreground/60">
+                All systems online
+              </span>
+            </div>
+            {/* Decorative line */}
+            <div className="ml-2 h-4 w-px bg-gradient-to-b from-transparent via-green-500/30 to-transparent" />
+            <motion.span 
+              className="font-display text-[10px] tracking-wider text-green-500/70"
+              animate={{ opacity: [0.5, 1, 0.5] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              ●
+            </motion.span>
+          </motion.div>
         </div>
       </div>
 
