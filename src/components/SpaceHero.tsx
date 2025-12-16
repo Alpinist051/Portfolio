@@ -1,192 +1,203 @@
-import { Suspense, useRef } from "react";
-import { Canvas, useFrame, useLoader } from "@react-three/fiber";
-import { OrbitControls, Environment } from "@react-three/drei";
+import { Suspense, useRef, useMemo } from "react";
+import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
+import { Environment } from "@react-three/drei";
 import * as THREE from "three";
 import { motion } from "framer-motion";
-import faceTexture from "@/assets/scientist-hero.png";
+import faceImage from "@/assets/scientist-hero.png";
 
-// 3D Human Character with face texture
-const HumanCharacter = () => {
-  const groupRef = useRef<THREE.Group>(null);
-  const mouthRef = useRef<THREE.Mesh>(null);
+// Main portrait with 3D depth effect
+const Portrait3D = () => {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const glowRef = useRef<THREE.Mesh>(null);
   
-  // Load face texture
-  const texture = useLoader(THREE.TextureLoader, faceTexture);
+  const texture = useLoader(THREE.TextureLoader, faceImage);
   
-  // Breathing and talking animation
-  useFrame((state) => {
-    if (groupRef.current) {
-      // Subtle breathing
-      groupRef.current.scale.y = 1 + Math.sin(state.clock.elapsedTime * 0.5) * 0.01;
+  // Calculate aspect ratio from texture
+  const aspect = useMemo(() => {
+    if (texture.image) {
+      return texture.image.width / texture.image.height;
     }
-    if (mouthRef.current) {
-      // Talking animation
-      mouthRef.current.scale.y = 0.3 + Math.sin(state.clock.elapsedTime * 4) * 0.15;
+    return 1;
+  }, [texture]);
+  
+  const height = 4.5;
+  const width = height * aspect;
+  
+  useFrame((state) => {
+    if (meshRef.current) {
+      // Subtle breathing/presence animation
+      meshRef.current.scale.x = 1 + Math.sin(state.clock.elapsedTime * 0.8) * 0.008;
+      meshRef.current.scale.y = 1 + Math.sin(state.clock.elapsedTime * 0.5) * 0.005;
+    }
+    if (glowRef.current) {
+      glowRef.current.scale.x = 1.1 + Math.sin(state.clock.elapsedTime * 0.6) * 0.02;
+      glowRef.current.scale.y = 1.1 + Math.sin(state.clock.elapsedTime * 0.4) * 0.015;
     }
   });
 
   return (
-    <group ref={groupRef} position={[0, -1.5, 0]}>
-      {/* Head with face texture */}
-      <mesh position={[0, 2.8, 0]}>
-        <sphereGeometry args={[0.45, 32, 32]} />
-        <meshStandardMaterial color="#f0d0c0" roughness={0.7} />
-      </mesh>
-      
-      {/* Face plane with user's face */}
-      <mesh position={[0, 2.8, 0.4]} rotation={[0, 0, 0]}>
-        <planeGeometry args={[0.8, 0.8]} />
-        <meshStandardMaterial 
-          map={texture} 
-          transparent 
-          side={THREE.DoubleSide}
+    <group position={[0, 0.2, 0]}>
+      {/* Back glow layer */}
+      <mesh ref={glowRef} position={[0, 0, -0.1]}>
+        <planeGeometry args={[width * 1.3, height * 1.3]} />
+        <meshBasicMaterial 
+          color="#ffffff"
+          transparent
+          opacity={0.08}
         />
       </mesh>
       
-      {/* Hair */}
-      <mesh position={[0, 3.1, -0.1]}>
-        <sphereGeometry args={[0.42, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
-        <meshStandardMaterial color="#1a1a1a" roughness={0.8} />
+      {/* Magenta rim glow - left */}
+      <mesh position={[-width * 0.45, 0, -0.05]}>
+        <planeGeometry args={[width * 0.3, height * 1.1]} />
+        <meshBasicMaterial 
+          color="#ff00aa"
+          transparent
+          opacity={0.15}
+        />
       </mesh>
       
-      {/* Neck */}
-      <mesh position={[0, 2.2, 0]}>
-        <cylinderGeometry args={[0.12, 0.15, 0.3, 16]} />
-        <meshStandardMaterial color="#f0d0c0" roughness={0.7} />
+      {/* Cyan rim glow - right */}
+      <mesh position={[width * 0.45, 0, -0.05]}>
+        <planeGeometry args={[width * 0.3, height * 1.1]} />
+        <meshBasicMaterial 
+          color="#00d4ff"
+          transparent
+          opacity={0.15}
+        />
       </mesh>
       
-      {/* Torso - Suit jacket */}
-      <mesh position={[0, 1.3, 0]}>
-        <cylinderGeometry args={[0.35, 0.45, 1.5, 16]} />
-        <meshStandardMaterial color="#0a0a0a" roughness={0.3} metalness={0.1} />
-      </mesh>
-      
-      {/* White shirt collar */}
-      <mesh position={[0, 2.0, 0.1]}>
-        <boxGeometry args={[0.25, 0.15, 0.1]} />
-        <meshStandardMaterial color="#ffffff" roughness={0.5} />
-      </mesh>
-      
-      {/* Bow tie */}
-      <mesh position={[0, 1.9, 0.18]}>
-        <boxGeometry args={[0.2, 0.08, 0.05]} />
-        <meshStandardMaterial color="#0a0a0a" roughness={0.3} />
-      </mesh>
-      
-      {/* Left shoulder */}
-      <mesh position={[-0.5, 1.7, 0]}>
-        <sphereGeometry args={[0.18, 16, 16]} />
-        <meshStandardMaterial color="#0a0a0a" roughness={0.3} />
-      </mesh>
-      
-      {/* Right shoulder */}
-      <mesh position={[0.5, 1.7, 0]}>
-        <sphereGeometry args={[0.18, 16, 16]} />
-        <meshStandardMaterial color="#0a0a0a" roughness={0.3} />
-      </mesh>
-      
-      {/* Left arm */}
-      <mesh position={[-0.55, 1.2, 0.1]} rotation={[0.2, 0, 0.15]}>
-        <cylinderGeometry args={[0.1, 0.08, 0.8, 16]} />
-        <meshStandardMaterial color="#0a0a0a" roughness={0.3} />
-      </mesh>
-      
-      {/* Right arm - adjusting tie */}
-      <mesh position={[0.4, 1.4, 0.25]} rotation={[0.8, 0, -0.3]}>
-        <cylinderGeometry args={[0.1, 0.08, 0.7, 16]} />
-        <meshStandardMaterial color="#0a0a0a" roughness={0.3} />
-      </mesh>
-      
-      {/* Left hand */}
-      <mesh position={[-0.6, 0.75, 0.2]}>
-        <sphereGeometry args={[0.08, 16, 16]} />
-        <meshStandardMaterial color="#f0d0c0" roughness={0.7} />
-      </mesh>
-      
-      {/* Right hand near tie */}
-      <mesh position={[0.15, 1.85, 0.35]}>
-        <sphereGeometry args={[0.08, 16, 16]} />
-        <meshStandardMaterial color="#f0d0c0" roughness={0.7} />
-      </mesh>
-      
-      {/* Animated mouth indicator (subtle glow) */}
-      <mesh ref={mouthRef} position={[0, 2.65, 0.46]}>
-        <planeGeometry args={[0.12, 0.05]} />
-        <meshBasicMaterial color="#cc8888" transparent opacity={0.3} />
+      {/* Main portrait */}
+      <mesh ref={meshRef}>
+        <planeGeometry args={[width, height]} />
+        <meshStandardMaterial 
+          map={texture}
+          transparent
+          side={THREE.FrontSide}
+          emissive="#ffffff"
+          emissiveIntensity={0.05}
+        />
       </mesh>
     </group>
   );
 };
 
-// Rotating camera controller
-const CameraController = () => {
+// Camera that rotates around the subject
+const RotatingCamera = () => {
+  const { camera } = useThree();
+  
   useFrame((state) => {
-    const angle = state.clock.elapsedTime * 0.15;
-    const radius = 5;
-    state.camera.position.x = Math.sin(angle) * radius;
-    state.camera.position.z = Math.cos(angle) * radius;
-    state.camera.position.y = 1.5 + Math.sin(state.clock.elapsedTime * 0.3) * 0.3;
-    state.camera.lookAt(0, 1.5, 0);
+    const time = state.clock.elapsedTime;
+    const radius = 6;
+    const rotationSpeed = 0.12;
+    
+    // Smooth orbital camera movement
+    camera.position.x = Math.sin(time * rotationSpeed) * radius * 0.4;
+    camera.position.z = 4 + Math.cos(time * rotationSpeed) * radius * 0.15;
+    camera.position.y = 0.3 + Math.sin(time * 0.2) * 0.2;
+    
+    camera.lookAt(0, 0.2, 0);
   });
+  
   return null;
 };
 
-// Spotlight beams visualization
-const SpotlightBeams = () => {
+// Spotlight beam visualization
+const SpotlightBeam = ({ position, color, intensity = 1 }: { position: [number, number, number], color: string, intensity?: number }) => {
+  const coneRef = useRef<THREE.Mesh>(null);
+  
+  useFrame((state) => {
+    if (coneRef.current && coneRef.current.material instanceof THREE.MeshBasicMaterial) {
+      coneRef.current.material.opacity = 0.03 + Math.sin(state.clock.elapsedTime * 0.5 + position[0]) * 0.015;
+    }
+  });
+  
   return (
-    <>
-      {/* Main spotlight from above */}
+    <group position={position}>
       <spotLight
-        position={[0, 8, 2]}
-        angle={0.4}
-        penumbra={0.5}
-        intensity={3}
-        color="#fffaf5"
-        castShadow
-      />
-      
-      {/* Left magenta light */}
-      <spotLight
-        position={[-5, 6, 0]}
+        position={[0, 0, 0]}
+        target-position={[0, 0, 0]}
         angle={0.5}
         penumbra={0.8}
-        intensity={2}
-        color="#ff00aa"
+        intensity={intensity * 2}
+        color={color}
+        distance={15}
       />
-      
-      {/* Right cyan light */}
-      <spotLight
-        position={[5, 6, 0]}
-        angle={0.5}
-        penumbra={0.8}
-        intensity={2}
-        color="#00d4ff"
-      />
-      
-      {/* Back rim light */}
-      <spotLight
-        position={[0, 4, -4]}
-        angle={0.6}
-        penumbra={0.5}
-        intensity={2}
-        color="#ffd700"
-      />
-      
-      {/* Ambient fill */}
-      <ambientLight intensity={0.1} />
-    </>
+      {/* Visible light cone */}
+      <mesh 
+        ref={coneRef} 
+        position={[0, -4, 0]} 
+        rotation={[0, 0, 0]}
+      >
+        <coneGeometry args={[3, 8, 32, 1, true]} />
+        <meshBasicMaterial 
+          color={color} 
+          transparent 
+          opacity={0.04}
+          side={THREE.DoubleSide}
+          depthWrite={false}
+        />
+      </mesh>
+    </group>
   );
 };
 
-// Floor with reflection
+// Floating particles
+const Particles = () => {
+  const particlesRef = useRef<THREE.Points>(null);
+  
+  const particleCount = 100;
+  const positions = useMemo(() => {
+    const pos = new Float32Array(particleCount * 3);
+    for (let i = 0; i < particleCount; i++) {
+      pos[i * 3] = (Math.random() - 0.5) * 10;
+      pos[i * 3 + 1] = (Math.random() - 0.5) * 8;
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 6 - 1;
+    }
+    return pos;
+  }, []);
+  
+  useFrame((state) => {
+    if (particlesRef.current) {
+      particlesRef.current.rotation.y = state.clock.elapsedTime * 0.02;
+      const positions = particlesRef.current.geometry.attributes.position.array as Float32Array;
+      for (let i = 0; i < particleCount; i++) {
+        positions[i * 3 + 1] += Math.sin(state.clock.elapsedTime + i) * 0.001;
+      }
+      particlesRef.current.geometry.attributes.position.needsUpdate = true;
+    }
+  });
+  
+  return (
+    <points ref={particlesRef}>
+      <bufferGeometry>
+        <bufferAttribute
+          attach="attributes-position"
+          count={particleCount}
+          array={positions}
+          itemSize={3}
+        />
+      </bufferGeometry>
+      <pointsMaterial
+        size={0.02}
+        color="#ffffff"
+        transparent
+        opacity={0.4}
+        sizeAttenuation
+      />
+    </points>
+  );
+};
+
+// Reflective floor
 const Floor = () => {
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.5, 0]} receiveShadow>
-      <planeGeometry args={[20, 20]} />
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2.3, 0]} receiveShadow>
+      <planeGeometry args={[30, 30]} />
       <meshStandardMaterial 
-        color="#050505" 
-        roughness={0.2} 
-        metalness={0.8}
+        color="#030305"
+        roughness={0.15}
+        metalness={0.9}
       />
     </mesh>
   );
@@ -195,19 +206,35 @@ const Floor = () => {
 const SpaceHero = () => {
   return (
     <section className="relative h-screen w-full overflow-hidden bg-[#020205]">
-      {/* 3D Canvas */}
       <Canvas
         shadows
-        camera={{ position: [0, 1.5, 5], fov: 45 }}
+        camera={{ position: [0, 0.3, 5], fov: 40 }}
         className="absolute inset-0"
+        gl={{ antialias: true, alpha: true }}
       >
-        <fog attach="fog" args={['#020205', 5, 20]} />
+        <fog attach="fog" args={['#020205', 8, 25]} />
         
         <Suspense fallback={null}>
-          <CameraController />
-          <SpotlightBeams />
-          <HumanCharacter />
+          <RotatingCamera />
+          
+          {/* Main center spotlight */}
+          <SpotlightBeam position={[0, 6, 2]} color="#fffaf5" intensity={1.5} />
+          
+          {/* Left magenta accent */}
+          <SpotlightBeam position={[-4, 5, 1]} color="#ff00aa" intensity={1} />
+          
+          {/* Right cyan accent */}
+          <SpotlightBeam position={[4, 5, 1]} color="#00d4ff" intensity={1} />
+          
+          {/* Back rim light */}
+          <spotLight position={[0, 3, -3]} intensity={2} color="#ffd700" angle={0.6} />
+          
+          <ambientLight intensity={0.15} />
+          
+          <Portrait3D />
+          <Particles />
           <Floor />
+          
           <Environment preset="night" />
         </Suspense>
       </Canvas>
