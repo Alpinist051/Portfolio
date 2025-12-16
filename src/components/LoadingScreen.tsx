@@ -96,189 +96,208 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
   const triggeredMilestones = useRef<Set<number>>(new Set());
   const timeoutsRef = useRef<number[]>([]);
 
-  // Create thunder sound using Web Audio API
+  // Cinematic deep thunder with sub-bass rumble
   const playThunder = (intensity: number = 1) => {
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    audioContext.resume(); // Ensure context is running
-    // Create noise buffer for thunder rumble
-    const bufferSize = audioContext.sampleRate * (0.5 + intensity * 0.3);
-    const noiseBuffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
-    const output = noiseBuffer.getChannelData(0);
+    audioContext.resume();
     
-    for (let i = 0; i < bufferSize; i++) {
-      output[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 0.5);
+    const duration = 1.5 + intensity * 0.8;
+    
+    // Deep sub-bass rumble
+    const subBassOsc = audioContext.createOscillator();
+    const subBassGain = audioContext.createGain();
+    subBassOsc.type = 'sine';
+    subBassOsc.frequency.setValueAtTime(25 + intensity * 10, audioContext.currentTime);
+    subBassOsc.frequency.exponentialRampToValueAtTime(15, audioContext.currentTime + duration);
+    subBassGain.gain.setValueAtTime(0.5 * intensity, audioContext.currentTime);
+    subBassGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+    subBassOsc.connect(subBassGain);
+    subBassGain.connect(audioContext.destination);
+    subBassOsc.start();
+    subBassOsc.stop(audioContext.currentTime + duration);
+    
+    // Heavy rumbling noise
+    const bufferSize = audioContext.sampleRate * duration;
+    const noiseBuffer = audioContext.createBuffer(2, bufferSize, audioContext.sampleRate);
+    
+    for (let channel = 0; channel < 2; channel++) {
+      const output = noiseBuffer.getChannelData(channel);
+      for (let i = 0; i < bufferSize; i++) {
+        const envelope = Math.pow(1 - i / bufferSize, 0.3);
+        output[i] = (Math.random() * 2 - 1) * envelope;
+      }
     }
     
     const noiseSource = audioContext.createBufferSource();
     noiseSource.buffer = noiseBuffer;
     
-    // Low-pass filter for rumble effect
+    // Very low-pass filter for deep rumble
     const lowPass = audioContext.createBiquadFilter();
     lowPass.type = 'lowpass';
-    lowPass.frequency.setValueAtTime(150 + intensity * 50, audioContext.currentTime);
-    lowPass.frequency.exponentialRampToValueAtTime(60, audioContext.currentTime + 0.5);
+    lowPass.frequency.setValueAtTime(80 + intensity * 30, audioContext.currentTime);
+    lowPass.frequency.exponentialRampToValueAtTime(30, audioContext.currentTime + duration);
+    lowPass.Q.value = 1;
     
-    // Gain envelope
     const gainNode = audioContext.createGain();
-    gainNode.gain.setValueAtTime(0.3 * intensity, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5 + intensity * 0.2);
+    gainNode.gain.setValueAtTime(0.4 * intensity, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
     
     noiseSource.connect(lowPass);
     lowPass.connect(gainNode);
     gainNode.connect(audioContext.destination);
-    
-    noiseSource.start();
-    noiseSource.stop(audioContext.currentTime + 0.5 + intensity * 0.2);
-    
-    // Add a crack sound
-    const crackOsc = audioContext.createOscillator();
-    const crackGain = audioContext.createGain();
-    crackOsc.type = 'sawtooth';
-    crackOsc.frequency.setValueAtTime(100, audioContext.currentTime);
-    crackOsc.frequency.exponentialRampToValueAtTime(30, audioContext.currentTime + 0.1);
-    crackGain.gain.setValueAtTime(0.15 * intensity, audioContext.currentTime);
-    crackGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
-    crackOsc.connect(crackGain);
-    crackGain.connect(audioContext.destination);
-    crackOsc.start();
-    crackOsc.stop(audioContext.currentTime + 0.15);
-  };
-
-  // Create ethereal whisper sound effect
-  const playWhisper = () => {
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    audioContext.resume(); // Ensure context is running
-    const duration = 0.8 + Math.random() * 0.4;
-    
-    // Create filtered noise for whisper
-    const bufferSize = audioContext.sampleRate * duration;
-    const noiseBuffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
-    const output = noiseBuffer.getChannelData(0);
-    
-    for (let i = 0; i < bufferSize; i++) {
-      const envelope = Math.sin((i / bufferSize) * Math.PI);
-      output[i] = (Math.random() * 2 - 1) * envelope * 0.5;
-    }
-    
-    const noiseSource = audioContext.createBufferSource();
-    noiseSource.buffer = noiseBuffer;
-    
-    // Band-pass filter for breathy whisper
-    const bandPass = audioContext.createBiquadFilter();
-    bandPass.type = 'bandpass';
-    bandPass.frequency.setValueAtTime(800 + Math.random() * 400, audioContext.currentTime);
-    bandPass.Q.value = 2;
-    
-    // Add modulation for eerie effect
-    const lfo = audioContext.createOscillator();
-    const lfoGain = audioContext.createGain();
-    lfo.frequency.value = 3 + Math.random() * 4;
-    lfoGain.gain.value = 200;
-    lfo.connect(lfoGain);
-    lfoGain.connect(bandPass.frequency);
-    
-    const gainNode = audioContext.createGain();
-    gainNode.gain.setValueAtTime(0.35, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
-    
-    // Stereo panning for immersion
-    const panner = audioContext.createStereoPanner();
-    panner.pan.value = (Math.random() - 0.5) * 1.5;
-    
-    noiseSource.connect(bandPass);
-    bandPass.connect(gainNode);
-    gainNode.connect(panner);
-    panner.connect(audioContext.destination);
-    
-    lfo.start();
     noiseSource.start();
     noiseSource.stop(audioContext.currentTime + duration);
-    lfo.stop(audioContext.currentTime + duration);
+    
+    // Sharp crack at start
+    const crackBuffer = audioContext.createBuffer(1, audioContext.sampleRate * 0.05, audioContext.sampleRate);
+    const crackData = crackBuffer.getChannelData(0);
+    for (let i = 0; i < crackData.length; i++) {
+      crackData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / crackData.length, 2);
+    }
+    
+    const crackSource = audioContext.createBufferSource();
+    crackSource.buffer = crackBuffer;
+    const crackGain = audioContext.createGain();
+    crackGain.gain.setValueAtTime(0.3 * intensity, audioContext.currentTime);
+    crackGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+    crackSource.connect(crackGain);
+    crackGain.connect(audioContext.destination);
+    crackSource.start();
+    crackSource.stop(audioContext.currentTime + 0.1);
   };
 
-  // Create synthetic voice announcement effect
-  const playVoiceEffect = (type: 'startup' | 'milestone' | 'complete') => {
+  // Ominous dark whisper/drone
+  const playWhisper = () => {
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    audioContext.resume(); // Ensure context is running
+    audioContext.resume();
     
-    const frequencies = {
-      startup: [200, 300, 400, 350],
-      milestone: [250, 400, 350, 450],
-      complete: [300, 450, 500, 600, 500, 400]
-    };
+    const duration = 2 + Math.random() * 1.5;
     
-    const durations = {
-      startup: 0.15,
-      milestone: 0.12,
-      complete: 0.18
-    };
+    // Dark drone oscillator
+    const droneOsc = audioContext.createOscillator();
+    const droneOsc2 = audioContext.createOscillator();
+    const droneGain = audioContext.createGain();
     
-    const freqs = frequencies[type];
-    const noteDuration = durations[type];
+    droneOsc.type = 'sine';
+    droneOsc.frequency.setValueAtTime(50 + Math.random() * 20, audioContext.currentTime);
+    droneOsc2.type = 'sine';
+    droneOsc2.frequency.setValueAtTime(52 + Math.random() * 20, audioContext.currentTime); // Slight detune for thickness
     
-    freqs.forEach((freq, index) => {
-      const osc = audioContext.createOscillator();
-      const osc2 = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      const filter = audioContext.createBiquadFilter();
-      
-      // Main tone
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, audioContext.currentTime + index * noteDuration);
-      
-      // Harmonic for richness
-      osc2.type = 'triangle';
-      osc2.frequency.setValueAtTime(freq * 1.5, audioContext.currentTime + index * noteDuration);
-      
-      // Formant-like filter
-      filter.type = 'bandpass';
-      filter.frequency.setValueAtTime(freq * 2, audioContext.currentTime + index * noteDuration);
-      filter.Q.value = 5;
-      
-      const startTime = audioContext.currentTime + index * noteDuration;
-      gainNode.gain.setValueAtTime(0, startTime);
-      gainNode.gain.linearRampToValueAtTime(0.4, startTime + 0.02);
-      gainNode.gain.linearRampToValueAtTime(0.3, startTime + noteDuration * 0.5);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + noteDuration);
-      
-      osc.connect(filter);
-      osc2.connect(filter);
-      filter.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      osc.start(startTime);
-      osc2.start(startTime);
-      osc.stop(startTime + noteDuration);
-      osc2.stop(startTime + noteDuration);
-    });
+    droneGain.gain.setValueAtTime(0, audioContext.currentTime);
+    droneGain.gain.linearRampToValueAtTime(0.15, audioContext.currentTime + duration * 0.3);
+    droneGain.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + duration * 0.7);
+    droneGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
     
-    // Add robotic vocoder effect
-    const vocoderDuration = freqs.length * noteDuration + 0.3;
-    const noiseBuffer = audioContext.createBuffer(1, audioContext.sampleRate * vocoderDuration, audioContext.sampleRate);
-    const noiseData = noiseBuffer.getChannelData(0);
+    droneOsc.connect(droneGain);
+    droneOsc2.connect(droneGain);
+    droneGain.connect(audioContext.destination);
     
-    for (let i = 0; i < noiseData.length; i++) {
-      noiseData[i] = (Math.random() * 2 - 1) * 0.1;
+    droneOsc.start();
+    droneOsc2.start();
+    droneOsc.stop(audioContext.currentTime + duration);
+    droneOsc2.stop(audioContext.currentTime + duration);
+    
+    // Eerie filtered noise
+    const bufferSize = audioContext.sampleRate * duration;
+    const noiseBuffer = audioContext.createBuffer(2, bufferSize, audioContext.sampleRate);
+    
+    for (let channel = 0; channel < 2; channel++) {
+      const output = noiseBuffer.getChannelData(channel);
+      for (let i = 0; i < bufferSize; i++) {
+        const envelope = Math.sin((i / bufferSize) * Math.PI);
+        output[i] = (Math.random() * 2 - 1) * envelope * 0.3;
+      }
     }
     
     const noiseSource = audioContext.createBufferSource();
     noiseSource.buffer = noiseBuffer;
     
-    const vocoderFilter = audioContext.createBiquadFilter();
-    vocoderFilter.type = 'bandpass';
-    vocoderFilter.frequency.setValueAtTime(2000, audioContext.currentTime);
-    vocoderFilter.Q.value = 10;
+    const bandPass = audioContext.createBiquadFilter();
+    bandPass.type = 'bandpass';
+    bandPass.frequency.setValueAtTime(200 + Math.random() * 100, audioContext.currentTime);
+    bandPass.Q.value = 8;
     
-    const vocoderGain = audioContext.createGain();
-    vocoderGain.gain.setValueAtTime(0.15, audioContext.currentTime);
-    vocoderGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + vocoderDuration);
+    const noiseGain = audioContext.createGain();
+    noiseGain.gain.setValueAtTime(0.08, audioContext.currentTime);
     
-    noiseSource.connect(vocoderFilter);
-    vocoderFilter.connect(vocoderGain);
-    vocoderGain.connect(audioContext.destination);
+    const panner = audioContext.createStereoPanner();
+    panner.pan.value = (Math.random() - 0.5) * 1.8;
+    
+    noiseSource.connect(bandPass);
+    bandPass.connect(noiseGain);
+    noiseGain.connect(panner);
+    panner.connect(audioContext.destination);
     
     noiseSource.start();
-    noiseSource.stop(audioContext.currentTime + vocoderDuration);
+    noiseSource.stop(audioContext.currentTime + duration);
+  };
+
+  // Epic cinematic voice/horn effect
+  const playVoiceEffect = (type: 'startup' | 'milestone' | 'complete') => {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    audioContext.resume();
+    
+    const configs = {
+      startup: { baseFreq: 80, duration: 1.2, intensity: 0.6 },
+      milestone: { baseFreq: 100, duration: 0.8, intensity: 0.7 },
+      complete: { baseFreq: 60, duration: 2, intensity: 1 }
+    };
+    
+    const config = configs[type];
+    
+    // Deep brass/horn-like tone
+    const osc1 = audioContext.createOscillator();
+    const osc2 = audioContext.createOscillator();
+    const osc3 = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    osc1.type = 'sawtooth';
+    osc1.frequency.setValueAtTime(config.baseFreq, audioContext.currentTime);
+    
+    osc2.type = 'sawtooth';
+    osc2.frequency.setValueAtTime(config.baseFreq * 1.5, audioContext.currentTime); // Fifth
+    
+    osc3.type = 'sine';
+    osc3.frequency.setValueAtTime(config.baseFreq * 2, audioContext.currentTime); // Octave
+    
+    // Envelope
+    gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+    gainNode.gain.linearRampToValueAtTime(0.25 * config.intensity, audioContext.currentTime + 0.1);
+    gainNode.gain.linearRampToValueAtTime(0.2 * config.intensity, audioContext.currentTime + config.duration * 0.6);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + config.duration);
+    
+    // Low-pass for warmth
+    const lowPass = audioContext.createBiquadFilter();
+    lowPass.type = 'lowpass';
+    lowPass.frequency.setValueAtTime(400, audioContext.currentTime);
+    lowPass.frequency.linearRampToValueAtTime(800, audioContext.currentTime + 0.2);
+    lowPass.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + config.duration);
+    
+    osc1.connect(lowPass);
+    osc2.connect(lowPass);
+    osc3.connect(lowPass);
+    lowPass.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    osc1.start();
+    osc2.start();
+    osc3.start();
+    osc1.stop(audioContext.currentTime + config.duration);
+    osc2.stop(audioContext.currentTime + config.duration);
+    osc3.stop(audioContext.currentTime + config.duration);
+    
+    // Sub-bass impact
+    const subOsc = audioContext.createOscillator();
+    const subGain = audioContext.createGain();
+    subOsc.type = 'sine';
+    subOsc.frequency.setValueAtTime(config.baseFreq / 2, audioContext.currentTime);
+    subOsc.frequency.exponentialRampToValueAtTime(20, audioContext.currentTime + config.duration);
+    subGain.gain.setValueAtTime(0.35 * config.intensity, audioContext.currentTime);
+    subGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + config.duration);
+    subOsc.connect(subGain);
+    subGain.connect(audioContext.destination);
+    subOsc.start();
+    subOsc.stop(audioContext.currentTime + config.duration);
   };
 
   // Ambient whisper effect
@@ -336,33 +355,71 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
     return id;
   };
 
-  // Create squeak sound using Web Audio API
-  const playSqueak = (intensity: number = 1) => {
+  // Heavy cinematic impact hit
+  const playImpact = (intensity: number = 1) => {
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    audioContext.resume(); // Ensure context is running
+    audioContext.resume();
 
-    // Create oscillator for squeak sound
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
+    // Deep kick/thud
+    const kickOsc = audioContext.createOscillator();
+    const kickGain = audioContext.createGain();
+    kickOsc.type = 'sine';
+    kickOsc.frequency.setValueAtTime(150 * intensity, audioContext.currentTime);
+    kickOsc.frequency.exponentialRampToValueAtTime(30, audioContext.currentTime + 0.3);
+    kickGain.gain.setValueAtTime(0.6 * intensity, audioContext.currentTime);
+    kickGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+    kickOsc.connect(kickGain);
+    kickGain.connect(audioContext.destination);
+    kickOsc.start();
+    kickOsc.stop(audioContext.currentTime + 0.4);
 
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
+    // Distorted layer for "solid" feel
+    const distOsc = audioContext.createOscillator();
+    const distGain = audioContext.createGain();
+    const waveshaper = audioContext.createWaveShaper();
+    
+    // Create distortion curve
+    const curve = new Float32Array(256);
+    for (let i = 0; i < 256; i++) {
+      const x = (i / 128) - 1;
+      curve[i] = Math.tanh(x * 3);
+    }
+    waveshaper.curve = curve;
+    
+    distOsc.type = 'square';
+    distOsc.frequency.setValueAtTime(80 * intensity, audioContext.currentTime);
+    distOsc.frequency.exponentialRampToValueAtTime(20, audioContext.currentTime + 0.2);
+    distGain.gain.setValueAtTime(0.15 * intensity, audioContext.currentTime);
+    distGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.25);
+    
+    distOsc.connect(waveshaper);
+    waveshaper.connect(distGain);
+    distGain.connect(audioContext.destination);
+    distOsc.start();
+    distOsc.stop(audioContext.currentTime + 0.25);
 
-    // High-pitched squeak - adjust based on intensity
-    oscillator.frequency.setValueAtTime(600 + intensity * 200, audioContext.currentTime);
-    oscillator.frequency.exponentialRampToValueAtTime(1500 + intensity * 500, audioContext.currentTime + 0.1);
-    oscillator.frequency.exponentialRampToValueAtTime(500 + intensity * 100, audioContext.currentTime + 0.2);
-    oscillator.frequency.exponentialRampToValueAtTime(1200 + intensity * 300, audioContext.currentTime + 0.3);
-
-    // Volume envelope - louder for higher intensity
-    const baseVolume = 0.1 + intensity * 0.05;
-    gainNode.gain.setValueAtTime(baseVolume, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(baseVolume * 2, audioContext.currentTime + 0.05);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3 + intensity * 0.1);
-
-    oscillator.type = "sine";
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.3 + intensity * 0.1);
+    // Noise burst for transient
+    const bufferSize = audioContext.sampleRate * 0.08;
+    const noiseBuffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+    const noiseData = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      noiseData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 3);
+    }
+    
+    const noiseSource = audioContext.createBufferSource();
+    noiseSource.buffer = noiseBuffer;
+    const noiseGain = audioContext.createGain();
+    const noiseLowPass = audioContext.createBiquadFilter();
+    noiseLowPass.type = 'lowpass';
+    noiseLowPass.frequency.value = 500;
+    noiseGain.gain.setValueAtTime(0.25 * intensity, audioContext.currentTime);
+    noiseGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+    
+    noiseSource.connect(noiseLowPass);
+    noiseLowPass.connect(noiseGain);
+    noiseGain.connect(audioContext.destination);
+    noiseSource.start();
+    noiseSource.stop(audioContext.currentTime + 0.1);
   };
 
   // Trigger shake at specific milestone
@@ -372,7 +429,7 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
 
     setIsShaking(true);
     setShakeIntensity(intensity);
-    playSqueak(intensity / 5);
+    playImpact(intensity / 5);
     playVoiceEffect('milestone');
 
     setManagedTimeout(() => {
@@ -439,7 +496,7 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
         setTimeout(() => {
           setCompletionFlash(false);
           setIsExiting(true);
-          playSqueak(3);
+          playImpact(3);
         }, 100);
       }, 150);
     }, 150);
