@@ -32,43 +32,50 @@ const InsightCard = ({ insight, index }: { insight: typeof insights[0]; index: n
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.6, delay: index * 0.15 }}
-      whileHover={{ scale: 1.02 }}
+      whileHover={{ y: -8, scale: 1.02 }}
       className="group relative"
     >
-      <div className="relative overflow-hidden rounded-xl border border-stone-200 bg-white p-8 shadow-md">
+      {/* Glow effect */}
+      <div className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-cyan-500/30 via-blue-500/30 to-purple-500/30 opacity-0 blur-lg transition-all duration-500 group-hover:opacity-100" />
+      
+      <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br from-card via-card to-muted/30 p-8 backdrop-blur-sm">
+        {/* Animated gradient background */}
+        <motion.div
+          className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-transparent to-purple-500/10 opacity-0 transition-all duration-500 group-hover:opacity-100"
+        />
+        
         {/* Quote icon */}
         <motion.div
           initial={{ opacity: 0, scale: 0 }}
-          whileInView={{ opacity: 0.1, scale: 1 }}
+          whileInView={{ opacity: 0.15, scale: 1 }}
           viewport={{ once: true }}
           transition={{ delay: 0.3 + index * 0.1 }}
-          className="absolute -left-4 -top-4 font-serif text-9xl text-amber-500/20"
+          className="absolute -left-2 -top-2 font-serif text-8xl text-cyan-500/30"
         >
           "
         </motion.div>
 
         {/* Content */}
         <div className="relative z-10">
-          <p className="mb-6 font-serif text-lg italic leading-relaxed text-stone-700 md:text-xl">
+          <p className="mb-6 font-serif text-lg italic leading-relaxed text-foreground/90 md:text-xl">
             {insight.quote}
           </p>
-          <div className="inline-block rounded-full border border-amber-300 bg-amber-50 px-3 py-1">
-            <span className="font-display text-xs tracking-wider text-amber-700">
+          <div className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500/20 to-blue-500/20 px-4 py-2 backdrop-blur-sm">
+            <div className="h-2 w-2 rounded-full bg-cyan-400" />
+            <span className="font-display text-xs tracking-wider text-cyan-400">
               {insight.category}
             </span>
           </div>
         </div>
 
-        {/* Hover gradient */}
-        <motion.div
-          className="absolute inset-0 bg-gradient-to-br from-amber-50 to-stone-50 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-        />
+        {/* Corner glow */}
+        <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-cyan-500/10 blur-2xl opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
 
-        {/* Bottom accent */}
+        {/* Bottom gradient line */}
         <motion.div
-          className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-300"
+          className="absolute bottom-0 left-0 h-1 rounded-full bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500"
           initial={{ width: "0%" }}
-          whileInView={{ width: "30%" }}
+          whileInView={{ width: "40%" }}
           viewport={{ once: true }}
           transition={{ delay: 0.5 + index * 0.1, duration: 0.8 }}
         />
@@ -161,7 +168,7 @@ const ToClientsSection = () => {
         >
           <Link
             to="/insights"
-            className="group relative inline-flex items-center gap-2 overflow-hidden rounded-lg border border-amber-400 bg-amber-50 px-8 py-4 font-display text-sm font-semibold tracking-wider text-amber-700 transition-all hover:bg-amber-100"
+            className="group relative inline-flex items-center gap-3 overflow-hidden rounded-xl border border-cyan-500/50 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 px-8 py-4 font-display text-sm font-semibold tracking-wider text-cyan-400 backdrop-blur-sm transition-all hover:border-cyan-400 hover:from-cyan-500/20 hover:to-blue-500/20"
           >
             <span className="relative z-10">VIEW ALL INSIGHTS</span>
             <motion.svg
