@@ -64,7 +64,7 @@ const CertificationCard = ({ cert, index }: { cert: Certification; index: number
       whileHover={{ y: -4, transition: { duration: 0.2 } }}
       className="group h-full"
     >
-      <div className="flex h-full flex-col rounded-xl border border-stone-200 bg-white p-6 shadow-sm transition-shadow duration-300 hover:shadow-md">
+      <div className="flex h-full flex-col rounded-xl border border-stone-200 bg-white p-6 shadow-sm transition-all duration-300 hover:bg-stone-50 hover:shadow-md">
         {/* Badge icon */}
         <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-stone-100">
           <svg className="h-5 w-5 text-stone-600" fill="currentColor" viewBox="0 0 24 24">
