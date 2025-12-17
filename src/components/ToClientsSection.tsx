@@ -35,7 +35,7 @@ const InsightCard = ({ insight, index }: { insight: typeof insights[0]; index: n
       whileHover={{ y: -4, transition: { duration: 0.2 } }}
       className="group"
     >
-      <div className="rounded-xl border border-stone-200 bg-white p-8 shadow-sm transition-shadow duration-300 hover:shadow-md">
+      <div className="rounded-xl border border-stone-200 bg-white p-8 shadow-sm transition-all duration-300 hover:bg-stone-50 hover:shadow-md">
         {/* Quote icon */}
         <span className="mb-4 block font-serif text-4xl text-stone-300">"</span>
 
