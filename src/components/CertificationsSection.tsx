@@ -57,64 +57,33 @@ const certifications: Certification[] = [
 const CertificationCard = ({ cert, index }: { cert: Certification; index: number }) => {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30, rotateX: -10 }}
-      whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={{ duration: 0.6, delay: index * 0.1 }}
-      whileHover={{ y: -8, scale: 1.02, transition: { duration: 0.3 } }}
-      className="group relative h-full"
+      transition={{ duration: 0.5, delay: index * 0.1 }}
+      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+      className="group h-full"
     >
-      {/* Glow effect */}
-      <div className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-cyan-500/30 via-blue-500/30 to-purple-500/30 opacity-0 blur-lg transition-all duration-500 group-hover:opacity-100" />
-      
-      {/* Card */}
-      <div className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br from-card via-card to-muted/30 p-6 backdrop-blur-sm transition-all duration-300">
-        {/* Animated gradient background */}
-        <motion.div
-          className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-transparent to-purple-500/10 opacity-0 transition-all duration-500 group-hover:opacity-100"
-        />
-        
-        {/* Decorative badge */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0, rotate: -20 }}
-          whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.3 + index * 0.1, type: "spring" }}
-          className="absolute right-4 top-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 backdrop-blur-sm"
-        >
-          <svg className="h-6 w-6 text-cyan-400" fill="currentColor" viewBox="0 0 24 24">
+      <div className="flex h-full flex-col rounded-xl border border-stone-200 bg-white p-6 shadow-sm transition-shadow duration-300 hover:shadow-md">
+        {/* Badge icon */}
+        <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-stone-100">
+          <svg className="h-5 w-5 text-stone-600" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
           </svg>
-        </motion.div>
-
-        {/* Content */}
-        <div className="relative z-10 flex flex-1 flex-col pr-16">
-          <h3 className="mb-2 font-display text-lg font-semibold tracking-wide text-foreground transition-colors group-hover:text-cyan-400 md:text-xl">
-            {cert.title}
-          </h3>
-          <p className="mb-3 font-body text-sm text-muted-foreground">{cert.issuer}</p>
-
-          <div className="mt-auto flex items-center gap-4 border-t border-border/50 pt-4">
-            <div className="rounded-lg bg-cyan-500/10 px-3 py-1.5">
-              <span className="font-body text-xs text-cyan-400">{cert.date}</span>
-            </div>
-            <div>
-              <p className="font-mono text-xs text-muted-foreground/70">{cert.credentialId}</p>
-            </div>
-          </div>
         </div>
 
-        {/* Corner glow */}
-        <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-cyan-500/10 blur-2xl opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+        {/* Content */}
+        <h3 className="mb-2 font-display text-lg font-semibold text-stone-800 transition-colors group-hover:text-stone-900">
+          {cert.title}
+        </h3>
+        <p className="mb-4 font-body text-sm text-stone-500">{cert.issuer}</p>
 
-        {/* Bottom gradient line */}
-        <motion.div
-          className="absolute bottom-0 left-0 h-1 rounded-full bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500"
-          initial={{ width: "0%" }}
-          whileInView={{ width: "30%" }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.4 + index * 0.1, duration: 0.8 }}
-        />
+        <div className="mt-auto flex items-center gap-3 border-t border-stone-100 pt-4">
+          <span className="rounded-md bg-stone-100 px-3 py-1 font-body text-xs font-medium text-stone-600">
+            {cert.date}
+          </span>
+          <span className="font-mono text-xs text-stone-400">{cert.credentialId}</span>
+        </div>
       </div>
     </motion.div>
   );

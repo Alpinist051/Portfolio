@@ -28,57 +28,28 @@ const insights = [
 const InsightCard = ({ insight, index }: { insight: typeof insights[0]; index: number }) => {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
+      initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={{ duration: 0.6, delay: index * 0.15 }}
-      whileHover={{ y: -8, scale: 1.02 }}
-      className="group relative"
+      transition={{ duration: 0.5, delay: index * 0.1 }}
+      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+      className="group"
     >
-      {/* Glow effect */}
-      <div className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-cyan-500/30 via-blue-500/30 to-purple-500/30 opacity-0 blur-lg transition-all duration-500 group-hover:opacity-100" />
-      
-      <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br from-card via-card to-muted/30 p-8 backdrop-blur-sm">
-        {/* Animated gradient background */}
-        <motion.div
-          className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-transparent to-purple-500/10 opacity-0 transition-all duration-500 group-hover:opacity-100"
-        />
-        
+      <div className="rounded-xl border border-stone-200 bg-white p-8 shadow-sm transition-shadow duration-300 hover:shadow-md">
         {/* Quote icon */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0 }}
-          whileInView={{ opacity: 0.15, scale: 1 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.3 + index * 0.1 }}
-          className="absolute -left-2 -top-2 font-serif text-8xl text-cyan-500/30"
-        >
-          "
-        </motion.div>
+        <span className="mb-4 block font-serif text-4xl text-stone-300">"</span>
 
         {/* Content */}
-        <div className="relative z-10">
-          <p className="mb-6 font-serif text-lg italic leading-relaxed text-foreground/90 md:text-xl">
-            {insight.quote}
-          </p>
-          <div className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500/20 to-blue-500/20 px-4 py-2 backdrop-blur-sm">
-            <div className="h-2 w-2 rounded-full bg-cyan-400" />
-            <span className="font-display text-xs tracking-wider text-cyan-400">
-              {insight.category}
-            </span>
-          </div>
+        <p className="mb-6 font-serif text-lg leading-relaxed text-stone-700">
+          {insight.quote}
+        </p>
+        
+        <div className="inline-flex items-center gap-2 rounded-md bg-stone-100 px-3 py-1.5">
+          <div className="h-1.5 w-1.5 rounded-full bg-stone-500" />
+          <span className="font-display text-xs font-medium text-stone-600">
+            {insight.category}
+          </span>
         </div>
-
-        {/* Corner glow */}
-        <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-cyan-500/10 blur-2xl opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-
-        {/* Bottom gradient line */}
-        <motion.div
-          className="absolute bottom-0 left-0 h-1 rounded-full bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500"
-          initial={{ width: "0%" }}
-          whileInView={{ width: "40%" }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.5 + index * 0.1, duration: 0.8 }}
-        />
       </div>
     </motion.div>
   );
@@ -168,10 +139,10 @@ const ToClientsSection = () => {
         >
           <Link
             to="/insights"
-            className="group relative inline-flex items-center gap-3 overflow-hidden rounded-xl border border-cyan-500/50 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 px-8 py-4 font-display text-sm font-semibold tracking-wider text-cyan-400 backdrop-blur-sm transition-all hover:border-cyan-400 hover:from-cyan-500/20 hover:to-blue-500/20"
+            className="group inline-flex items-center gap-2 rounded-lg border border-stone-300 bg-white px-6 py-3 font-display text-sm font-medium text-stone-700 shadow-sm transition-all hover:border-stone-400 hover:bg-stone-50"
           >
-            <span className="relative z-10">VIEW ALL INSIGHTS</span>
-            <motion.svg
+            <span>VIEW ALL INSIGHTS</span>
+            <svg
               xmlns="http://www.w3.org/2000/svg"
               width="16"
               height="16"
@@ -185,7 +156,7 @@ const ToClientsSection = () => {
             >
               <line x1="5" y1="12" x2="19" y2="12" />
               <polyline points="12 5 19 12 12 19" />
-            </motion.svg>
+            </svg>
           </Link>
         </motion.div>
       </div>
