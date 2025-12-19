@@ -22,7 +22,7 @@ import {
   Zap, Clock, Webhook, FileText, Mail, Database,
   GitBranch, CheckCircle2, XCircle,
   Settings, GripVertical, Loader2,
-  Workflow as WorkflowIcon
+  Workflow as WorkflowIcon, FlaskConical
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -50,6 +50,13 @@ interface Workflow {
   steps?: WorkflowStep[];
 }
 
+interface TestResult {
+  stepId: string;
+  status: "pending" | "running" | "success" | "error";
+  message?: string;
+  duration?: number;
+}
+
 const iconMap: Record<string, React.ElementType> = {
   Webhook, Clock, Zap, Mail, Database, FileText, GitBranch, CheckCircle2
 };
@@ -72,12 +79,14 @@ const SortableStep = ({
   step, 
   index, 
   totalSteps,
-  onDelete 
+  onDelete,
+  testStatus
 }: { 
   step: WorkflowStep; 
   index: number;
   totalSteps: number;
   onDelete: (id: string) => void;
+  testStatus?: TestResult;
 }) => {
   const {
     attributes,
@@ -96,7 +105,16 @@ const SortableStep = ({
 
   const StepIcon = iconMap[step.icon_name] || Zap;
 
-  const getStepStatusIcon = (status: string) => {
+  const getStepStatusIcon = (status: string, testStat?: TestResult) => {
+    // Prioritize test status if available
+    if (testStat) {
+      switch (testStat.status) {
+        case "success": return <CheckCircle2 className="h-4 w-4 text-green-600" />;
+        case "error": return <XCircle className="h-4 w-4 text-red-600" />;
+        case "running": return <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />;
+        case "pending": return <div className="h-4 w-4 rounded-full border-2 border-dashed border-stone-300" />;
+      }
+    }
     switch (status) {
       case "success": return <CheckCircle2 className="h-4 w-4 text-green-600" />;
       case "error": return <XCircle className="h-4 w-4 text-red-600" />;
@@ -109,23 +127,44 @@ const SortableStep = ({
     <div ref={setNodeRef} style={style} className="group">
       <div className="flex items-center gap-3">
         <div className="flex flex-col items-center">
-          {getStepStatusIcon(step.status)}
+          {getStepStatusIcon(step.status, testStatus)}
           {index < totalSteps - 1 && (
             <div className="my-1 h-8 w-px bg-stone-200" />
           )}
         </div>
 
-        <div className="flex-1 rounded-lg border border-stone-200 bg-white p-4 shadow-sm transition-all group-hover:border-stone-300 group-hover:shadow-md">
+        <div className={`flex-1 rounded-lg border p-4 shadow-sm transition-all group-hover:shadow-md ${
+          testStatus?.status === "running" ? "border-blue-300 bg-blue-50" :
+          testStatus?.status === "success" ? "border-green-200 bg-green-50" :
+          testStatus?.status === "error" ? "border-red-200 bg-red-50" :
+          "border-stone-200 bg-white group-hover:border-stone-300"
+        }`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-stone-100">
-                <StepIcon className="h-5 w-5 text-stone-600" />
+              <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+                testStatus?.status === "running" ? "bg-blue-100" :
+                testStatus?.status === "success" ? "bg-green-100" :
+                testStatus?.status === "error" ? "bg-red-100" :
+                "bg-stone-100"
+              }`}>
+                <StepIcon className={`h-5 w-5 ${
+                  testStatus?.status === "running" ? "text-blue-600" :
+                  testStatus?.status === "success" ? "text-green-600" :
+                  testStatus?.status === "error" ? "text-red-600" :
+                  "text-stone-600"
+                }`} />
               </div>
               <div>
                 <span className="text-xs font-medium uppercase tracking-wider text-stone-400">
                   {step.step_type}
                 </span>
                 <h4 className="font-medium text-stone-800">{step.name}</h4>
+                {testStatus?.duration && (
+                  <span className="text-xs text-stone-500">{testStatus.duration}ms</span>
+                )}
+                {testStatus?.message && testStatus.status === "error" && (
+                  <p className="text-xs text-red-600">{testStatus.message}</p>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
@@ -169,6 +208,8 @@ const WorkflowBuilder = ({ userId }: WorkflowBuilderProps) => {
   const [showAddStep, setShowAddStep] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testResults, setTestResults] = useState<TestResult[]>([]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -351,6 +392,67 @@ const WorkflowBuilder = ({ userId }: WorkflowBuilderProps) => {
     }
   };
 
+  // Simulate workflow test execution
+  const runWorkflowTest = async () => {
+    if (!selectedWorkflow || steps.length === 0) return;
+    
+    setTesting(true);
+    setTestResults(steps.map(s => ({ stepId: s.id, status: "pending" as const })));
+    
+    // Simulate each step execution with realistic delays
+    for (let i = 0; i < steps.length; i++) {
+      const step = steps[i];
+      
+      // Update to running
+      setTestResults(prev => 
+        prev.map(r => r.stepId === step.id ? { ...r, status: "running" as const } : r)
+      );
+      
+      // Simulate execution time (500-2000ms)
+      const duration = Math.floor(Math.random() * 1500) + 500;
+      await new Promise(resolve => setTimeout(resolve, duration));
+      
+      // 90% success rate simulation
+      const isSuccess = Math.random() > 0.1;
+      
+      setTestResults(prev => 
+        prev.map(r => r.stepId === step.id ? { 
+          ...r, 
+          status: isSuccess ? "success" as const : "error" as const,
+          duration,
+          message: isSuccess ? "Executed successfully" : "Simulated error for testing"
+        } : r)
+      );
+      
+      // If a step fails, stop the test
+      if (!isSuccess) {
+        toast({ 
+          title: "Test failed", 
+          description: `Step "${step.name}" encountered an error`, 
+          variant: "destructive" 
+        });
+        break;
+      }
+    }
+    
+    // Update workflow last_run timestamp
+    await supabase
+      .from("workflows")
+      .update({ last_run: new Date().toISOString() })
+      .eq("id", selectedWorkflow.id);
+    
+    const allSuccess = testResults.every(r => r.status === "success");
+    if (allSuccess || testResults.filter(r => r.status === "success").length === steps.length) {
+      toast({ title: "Test completed", description: "All steps executed successfully" });
+    }
+    
+    setTesting(false);
+  };
+
+  const getTestStatus = (stepId: string) => {
+    return testResults.find(r => r.stepId === stepId);
+  };
+
   if (loading) {
     return (
       <div className="flex h-96 items-center justify-center">
@@ -429,6 +531,19 @@ const WorkflowBuilder = ({ userId }: WorkflowBuilderProps) => {
                 <Button 
                   variant="outline" 
                   size="sm"
+                  onClick={runWorkflowTest}
+                  disabled={testing || steps.length === 0}
+                  className="bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                >
+                  {testing ? (
+                    <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> Testing...</>
+                  ) : (
+                    <><FlaskConical className="mr-1 h-4 w-4" /> Test Run</>
+                  )}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
                   onClick={() => toggleWorkflowStatus(selectedWorkflow.id)}
                 >
                   {selectedWorkflow.status === "active" ? (
@@ -476,6 +591,7 @@ const WorkflowBuilder = ({ userId }: WorkflowBuilderProps) => {
                           index={index}
                           totalSteps={steps.length}
                           onDelete={deleteStep}
+                          testStatus={getTestStatus(step.id)}
                         />
                       ))}
                     </div>
