@@ -6,8 +6,9 @@ import {
   Zap, Database, Globe, FileText, Image,
   CheckCircle2, AlertTriangle, Clock, Loader2,
   Pencil, X, Check, Save, Users, Target, Cpu, AlertCircle,
-  Search, Filter
+  Search, Filter, Square, CheckSquare
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -70,6 +71,8 @@ const AgentManagement = ({ userId }: AgentManagementProps) => {
   const [agentToDelete, setAgentToDelete] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [selectedAgentIds, setSelectedAgentIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
 
   const fetchAgents = useCallback(async () => {
     const { data, error } = await supabase
@@ -287,6 +290,62 @@ const AgentManagement = ({ userId }: AgentManagementProps) => {
     return matchesSearch && matchesStatus;
   });
 
+  // Bulk selection helpers
+  const toggleAgentSelection = (id: string) => {
+    setSelectedAgentIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedAgentIds.size === filteredAgents.length) {
+      setSelectedAgentIds(new Set());
+    } else {
+      setSelectedAgentIds(new Set(filteredAgents.map(a => a.id)));
+    }
+  };
+
+  // Bulk delete agents
+  const bulkDeleteAgents = async () => {
+    const idsToDelete = Array.from(selectedAgentIds);
+    
+    for (const id of idsToDelete) {
+      await supabase.from("agents").delete().eq("id", id);
+    }
+    
+    setAgents(prev => prev.filter(a => !selectedAgentIds.has(a.id)));
+    if (selectedAgent && selectedAgentIds.has(selectedAgent.id)) {
+      setSelectedAgent(null);
+    }
+    setSelectedAgentIds(new Set());
+    setBulkDeleteDialogOpen(false);
+    toast({ title: "Agents deleted", description: `Deleted ${idsToDelete.length} agents` });
+  };
+
+  // Bulk activate/deactivate agents
+  const bulkUpdateStatus = async (newStatus: "active" | "inactive") => {
+    const idsToUpdate = Array.from(selectedAgentIds);
+    
+    for (const id of idsToUpdate) {
+      await supabase.from("agents").update({ status: newStatus, last_active: new Date().toISOString() }).eq("id", id);
+    }
+    
+    setAgents(prev => prev.map(a => 
+      selectedAgentIds.has(a.id) ? { ...a, status: newStatus } : a
+    ));
+    if (selectedAgent && selectedAgentIds.has(selectedAgent.id)) {
+      setSelectedAgent(prev => prev ? { ...prev, status: newStatus } : prev);
+    }
+    setSelectedAgentIds(new Set());
+    toast({ title: `Agents ${newStatus}`, description: `Updated ${idsToUpdate.length} agents` });
+  };
+
   if (loading) {
     return (
       <div className="flex h-96 items-center justify-center">
@@ -333,6 +392,52 @@ const AgentManagement = ({ userId }: AgentManagementProps) => {
             </Select>
           </div>
 
+          {/* Bulk Actions Bar */}
+          {filteredAgents.length > 0 && (
+            <div className="flex items-center justify-between border-b border-stone-100 px-4 py-2 bg-stone-50">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={selectedAgentIds.size === filteredAgents.length && filteredAgents.length > 0}
+                  onCheckedChange={toggleSelectAll}
+                />
+                <span className="text-xs text-stone-500">
+                  {selectedAgentIds.size > 0 ? `${selectedAgentIds.size} selected` : "Select all"}
+                </span>
+              </div>
+              {selectedAgentIds.size > 0 && (
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs text-green-600 hover:text-green-700 hover:bg-green-50"
+                    onClick={() => bulkUpdateStatus("active")}
+                  >
+                    <Power className="mr-1 h-3 w-3" />
+                    Activate
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs text-stone-600 hover:text-stone-700 hover:bg-stone-100"
+                    onClick={() => bulkUpdateStatus("inactive")}
+                  >
+                    <PowerOff className="mr-1 h-3 w-3" />
+                    Deactivate
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                    onClick={() => setBulkDeleteDialogOpen(true)}
+                  >
+                    <Trash2 className="mr-1 h-3 w-3" />
+                    Delete
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="divide-y divide-stone-100 max-h-[500px] overflow-y-auto">
             {filteredAgents.length === 0 ? (
               <div className="p-8 text-center text-stone-500">
@@ -349,21 +454,29 @@ const AgentManagement = ({ userId }: AgentManagementProps) => {
                     selectedAgent?.id === agent.id ? "bg-stone-50 border-l-4 border-l-stone-600" : ""
                   }`}
                 >
-                  <button
-                    onClick={() => setSelectedAgent(agent)}
-                    className="w-full text-left"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${getTypeColor(agent.agent_type)}`}>
-                        <Bot className="h-5 w-5" />
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      checked={selectedAgentIds.has(agent.id)}
+                      onCheckedChange={() => toggleAgentSelection(agent.id)}
+                      className="mt-1"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <button
+                      onClick={() => setSelectedAgent(agent)}
+                      className="flex-1 text-left"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${getTypeColor(agent.agent_type)}`}>
+                          <Bot className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-stone-800">{agent.name}</h4>
+                          <p className="mt-0.5 text-xs text-stone-500 line-clamp-1">{agent.description}</p>
+                          <div className="mt-2">{getStatusBadge(agent.status)}</div>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="font-medium text-stone-800">{agent.name}</h4>
-                        <p className="mt-0.5 text-xs text-stone-500 line-clamp-1">{agent.description}</p>
-                        <div className="mt-2">{getStatusBadge(agent.status)}</div>
-                      </div>
-                    </div>
-                  </button>
+                    </button>
+                  </div>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -615,6 +728,30 @@ const AgentManagement = ({ userId }: AgentManagementProps) => {
               className="bg-red-600 hover:bg-red-700"
             >
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-red-500" />
+              Delete {selectedAgentIds.size} Agents
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {selectedAgentIds.size} agent{selectedAgentIds.size > 1 ? 's' : ''}? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={bulkDeleteAgents}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete All
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
