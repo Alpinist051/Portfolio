@@ -22,11 +22,21 @@ import {
   Zap, Clock, Webhook, FileText, Mail, Database,
   GitBranch, CheckCircle2, XCircle,
   Settings, GripVertical, Loader2,
-  Workflow as WorkflowIcon, FlaskConical
+  Workflow as WorkflowIcon, FlaskConical, Terminal, AlertCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface WorkflowStep {
   id: string;
@@ -55,6 +65,13 @@ interface TestResult {
   status: "pending" | "running" | "success" | "error";
   message?: string;
   duration?: number;
+}
+
+interface TestLog {
+  timestamp: string;
+  stepName: string;
+  type: "info" | "success" | "error" | "warning";
+  message: string;
 }
 
 const iconMap: Record<string, React.ElementType> = {
@@ -210,6 +227,10 @@ const WorkflowBuilder = ({ userId }: WorkflowBuilderProps) => {
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testResults, setTestResults] = useState<TestResult[]>([]);
+  const [testLogs, setTestLogs] = useState<TestLog[]>([]);
+  const [showLogs, setShowLogs] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [workflowToDelete, setWorkflowToDelete] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -392,21 +413,40 @@ const WorkflowBuilder = ({ userId }: WorkflowBuilderProps) => {
     }
   };
 
+  // Add log helper
+  const addLog = (stepName: string, type: TestLog["type"], message: string) => {
+    setTestLogs(prev => [...prev, {
+      timestamp: new Date().toISOString(),
+      stepName,
+      type,
+      message
+    }]);
+  };
+
   // Simulate workflow test execution
   const runWorkflowTest = async () => {
     if (!selectedWorkflow || steps.length === 0) return;
     
     setTesting(true);
+    setShowLogs(true);
+    setTestLogs([]);
     setTestResults(steps.map(s => ({ stepId: s.id, status: "pending" as const })));
+    
+    addLog("System", "info", `Starting workflow test: ${selectedWorkflow.name}`);
+    addLog("System", "info", `Total steps: ${steps.length}`);
     
     // Simulate each step execution with realistic delays
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i];
       
+      addLog(step.name, "info", `Initializing step ${i + 1}/${steps.length}...`);
+      
       // Update to running
       setTestResults(prev => 
         prev.map(r => r.stepId === step.id ? { ...r, status: "running" as const } : r)
       );
+      
+      addLog(step.name, "info", `Executing ${step.step_type}: ${step.name}`);
       
       // Simulate execution time (500-2000ms)
       const duration = Math.floor(Math.random() * 1500) + 500;
@@ -414,6 +454,14 @@ const WorkflowBuilder = ({ userId }: WorkflowBuilderProps) => {
       
       // 90% success rate simulation
       const isSuccess = Math.random() > 0.1;
+      
+      if (isSuccess) {
+        addLog(step.name, "success", `Step completed in ${duration}ms`);
+        addLog(step.name, "info", `Output: { "status": "ok", "data": {...} }`);
+      } else {
+        addLog(step.name, "error", `Step failed after ${duration}ms`);
+        addLog(step.name, "error", `Error: Connection timeout - simulated failure`);
+      }
       
       setTestResults(prev => 
         prev.map(r => r.stepId === step.id ? { 
@@ -426,6 +474,7 @@ const WorkflowBuilder = ({ userId }: WorkflowBuilderProps) => {
       
       // If a step fails, stop the test
       if (!isSuccess) {
+        addLog("System", "error", `Workflow test aborted due to step failure`);
         toast({ 
           title: "Test failed", 
           description: `Step "${step.name}" encountered an error`, 
@@ -441,12 +490,35 @@ const WorkflowBuilder = ({ userId }: WorkflowBuilderProps) => {
       .update({ last_run: new Date().toISOString() })
       .eq("id", selectedWorkflow.id);
     
-    const allSuccess = testResults.every(r => r.status === "success");
-    if (allSuccess || testResults.filter(r => r.status === "success").length === steps.length) {
+    const successCount = testResults.filter(r => r.status === "success").length;
+    if (successCount === steps.length) {
+      addLog("System", "success", `Workflow test completed successfully!`);
       toast({ title: "Test completed", description: "All steps executed successfully" });
     }
     
     setTesting(false);
+  };
+
+  // Delete workflow
+  const deleteWorkflow = async (id: string) => {
+    // First delete all steps
+    await supabase.from("workflow_steps").delete().eq("workflow_id", id);
+    
+    // Then delete the workflow
+    const { error } = await supabase.from("workflows").delete().eq("id", id);
+    
+    if (error) {
+      toast({ title: "Error", description: "Failed to delete workflow", variant: "destructive" });
+    } else {
+      setWorkflows(prev => prev.filter(w => w.id !== id));
+      if (selectedWorkflow?.id === id) {
+        setSelectedWorkflow(null);
+        setSteps([]);
+      }
+      toast({ title: "Workflow deleted" });
+    }
+    setDeleteDialogOpen(false);
+    setWorkflowToDelete(null);
   };
 
   const getTestStatus = (stepId: string) => {
@@ -488,30 +560,46 @@ const WorkflowBuilder = ({ userId }: WorkflowBuilderProps) => {
               </div>
             ) : (
               workflows.map((workflow) => (
-                <motion.button
+                <motion.div
                   key={workflow.id}
-                  onClick={() => setSelectedWorkflow(workflow)}
                   whileHover={{ backgroundColor: "rgb(250 250 249)" }}
-                  className={`w-full p-4 text-left transition-colors ${
+                  className={`group relative w-full p-4 text-left transition-colors ${
                     selectedWorkflow?.id === workflow.id ? "bg-stone-50 border-l-4 border-l-stone-600" : ""
                   }`}
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h4 className="font-medium text-stone-800">{workflow.name}</h4>
-                      <p className="mt-1 text-sm text-stone-500 line-clamp-1">{workflow.description}</p>
-                      <div className="mt-2 flex items-center gap-3">
-                        <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${getStatusColor(workflow.status)}`}>
-                          {workflow.status}
-                        </span>
+                  <button
+                    onClick={() => setSelectedWorkflow(workflow)}
+                    className="w-full text-left"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-stone-800">{workflow.name}</h4>
+                        <p className="mt-1 text-sm text-stone-500 line-clamp-1">{workflow.description}</p>
+                        <div className="mt-2 flex items-center gap-3">
+                          <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${getStatusColor(workflow.status)}`}>
+                            {workflow.status}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <span className="text-lg font-semibold text-stone-700">{workflow.success_rate}%</span>
+                        <span className="text-xs text-stone-400">success</span>
                       </div>
                     </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <span className="text-lg font-semibold text-stone-700">{workflow.success_rate}%</span>
-                      <span className="text-xs text-stone-400">success</span>
-                    </div>
-                  </div>
-                </motion.button>
+                  </button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-2 top-2 h-7 w-7 p-0 text-stone-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setWorkflowToDelete(workflow.id);
+                      setDeleteDialogOpen(true);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </motion.div>
               ))
             )}
           </div>
@@ -610,6 +698,55 @@ const WorkflowBuilder = ({ userId }: WorkflowBuilderProps) => {
                   <span className="font-medium">Add Step</span>
                 </motion.button>
               )}
+
+              {/* Test Logs Panel */}
+              {showLogs && testLogs.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  className="mt-4 rounded-lg border border-stone-200 bg-stone-900 overflow-hidden"
+                >
+                  <div className="flex items-center justify-between border-b border-stone-700 px-4 py-2">
+                    <div className="flex items-center gap-2">
+                      <Terminal className="h-4 w-4 text-emerald-400" />
+                      <span className="text-sm font-medium text-stone-200">Test Execution Logs</span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowLogs(false)}
+                      className="h-6 text-stone-400 hover:text-stone-200"
+                    >
+                      Hide
+                    </Button>
+                  </div>
+                  <div className="max-h-48 overflow-y-auto p-3 font-mono text-xs">
+                    {testLogs.map((log, index) => (
+                      <div key={index} className="flex gap-2 py-0.5">
+                        <span className="text-stone-500 shrink-0">
+                          {new Date(log.timestamp).toLocaleTimeString()}
+                        </span>
+                        <span className={`shrink-0 ${
+                          log.type === "success" ? "text-emerald-400" :
+                          log.type === "error" ? "text-red-400" :
+                          log.type === "warning" ? "text-amber-400" :
+                          "text-blue-400"
+                        }`}>
+                          [{log.stepName}]
+                        </span>
+                        <span className={
+                          log.type === "success" ? "text-emerald-300" :
+                          log.type === "error" ? "text-red-300" :
+                          log.type === "warning" ? "text-amber-300" :
+                          "text-stone-300"
+                        }>
+                          {log.message}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
             </div>
 
             {/* Add Step Modal */}
@@ -696,6 +833,30 @@ const WorkflowBuilder = ({ userId }: WorkflowBuilderProps) => {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-red-500" />
+              Delete Workflow
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this workflow? This action cannot be undone and will also delete all steps in this workflow.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => workflowToDelete && deleteWorkflow(workflowToDelete)}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

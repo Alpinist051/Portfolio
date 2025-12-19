@@ -5,13 +5,30 @@ import {
   Brain, Wrench, MessageSquare, Shield, Link2,
   Zap, Database, Globe, FileText, Image,
   CheckCircle2, AlertTriangle, Clock, Loader2,
-  Pencil, X, Check, Save
+  Pencil, X, Check, Save, Users, Target, Cpu, AlertCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Agent {
   id: string;
@@ -48,6 +65,8 @@ const AgentManagement = ({ userId }: AgentManagementProps) => {
   const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({ name: "", description: "" });
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [agentToDelete, setAgentToDelete] = useState<string | null>(null);
 
   const fetchAgents = useCallback(async () => {
     const { data, error } = await supabase
@@ -153,6 +172,42 @@ const AgentManagement = ({ userId }: AgentManagementProps) => {
     }
   };
 
+  // Delete agent
+  const deleteAgent = async (id: string) => {
+    const { error } = await supabase.from("agents").delete().eq("id", id);
+    
+    if (error) {
+      toast({ title: "Error", description: "Failed to delete agent", variant: "destructive" });
+    } else {
+      setAgents(prev => prev.filter(a => a.id !== id));
+      if (selectedAgent?.id === id) {
+        setSelectedAgent(agents.find(a => a.id !== id) || null);
+      }
+      toast({ title: "Agent deleted" });
+    }
+    setDeleteDialogOpen(false);
+    setAgentToDelete(null);
+  };
+
+  // Update agent type
+  const updateAgentType = async (newType: Agent["agent_type"]) => {
+    if (!selectedAgent) return;
+
+    const { error } = await supabase
+      .from("agents")
+      .update({ agent_type: newType })
+      .eq("id", selectedAgent.id);
+
+    if (error) {
+      toast({ title: "Error", description: "Failed to update type", variant: "destructive" });
+    } else {
+      const updatedAgent = { ...selectedAgent, agent_type: newType };
+      setSelectedAgent(updatedAgent);
+      setAgents(prev => prev.map(a => a.id === selectedAgent.id ? updatedAgent : a));
+      toast({ title: "Agent type updated" });
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "active":
@@ -251,25 +306,41 @@ const AgentManagement = ({ userId }: AgentManagementProps) => {
               </div>
             ) : (
               agents.map((agent) => (
-                <motion.button
+                <motion.div
                   key={agent.id}
-                  onClick={() => setSelectedAgent(agent)}
                   whileHover={{ backgroundColor: "rgb(250 250 249)" }}
-                  className={`w-full p-4 text-left transition-colors ${
+                  className={`group relative w-full p-4 text-left transition-colors ${
                     selectedAgent?.id === agent.id ? "bg-stone-50 border-l-4 border-l-stone-600" : ""
                   }`}
                 >
-                  <div className="flex items-start gap-3">
-                    <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${getTypeColor(agent.agent_type)}`}>
-                      <Bot className="h-5 w-5" />
+                  <button
+                    onClick={() => setSelectedAgent(agent)}
+                    className="w-full text-left"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${getTypeColor(agent.agent_type)}`}>
+                        <Bot className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-stone-800">{agent.name}</h4>
+                        <p className="mt-0.5 text-xs text-stone-500 line-clamp-1">{agent.description}</p>
+                        <div className="mt-2">{getStatusBadge(agent.status)}</div>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-medium text-stone-800">{agent.name}</h4>
-                      <p className="mt-0.5 text-xs text-stone-500 line-clamp-1">{agent.description}</p>
-                      <div className="mt-2">{getStatusBadge(agent.status)}</div>
-                    </div>
-                  </div>
-                </motion.button>
+                  </button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-2 top-2 h-7 w-7 p-0 text-stone-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setAgentToDelete(agent.id);
+                      setDeleteDialogOpen(true);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </motion.div>
               ))
             )}
           </div>
@@ -323,9 +394,40 @@ const AgentManagement = ({ userId }: AgentManagementProps) => {
                         </div>
                         <p className="mt-1 text-stone-600">{selectedAgent.description}</p>
                         <div className="mt-3 flex items-center gap-4 text-sm text-stone-500">
-                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${getTypeColor(selectedAgent.agent_type)}`}>
-                            {selectedAgent.agent_type}
-                          </span>
+                          <Select 
+                            value={selectedAgent.agent_type} 
+                            onValueChange={(value) => updateAgentType(value as Agent["agent_type"])}
+                          >
+                            <SelectTrigger className={`h-7 w-auto gap-2 rounded-full border-0 px-3 text-xs font-medium ${getTypeColor(selectedAgent.agent_type)}`}>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="assistant">
+                                <div className="flex items-center gap-2">
+                                  <Bot className="h-4 w-4" />
+                                  Assistant
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="analyst">
+                                <div className="flex items-center gap-2">
+                                  <Brain className="h-4 w-4" />
+                                  Analyst
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="executor">
+                                <div className="flex items-center gap-2">
+                                  <Target className="h-4 w-4" />
+                                  Executor
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="coordinator">
+                                <div className="flex items-center gap-2">
+                                  <Users className="h-4 w-4" />
+                                  Coordinator
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
                           <span className="flex items-center gap-1">
                             <Clock className="h-3.5 w-3.5" />
                             {selectedAgent.last_active ? new Date(selectedAgent.last_active).toLocaleString() : "Never"}
@@ -457,6 +559,30 @@ const AgentManagement = ({ userId }: AgentManagementProps) => {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-red-500" />
+              Delete Agent
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this agent? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => agentToDelete && deleteAgent(agentToDelete)}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
