@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Projects from "./pages/Projects";
 import Insights from "./pages/Insights";
-import Requirements from "./pages/Requirements";
+import Platform from "./pages/Platform";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,7 +21,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/insights" element={<Insights />} />
-          <Route path="/requirements" element={<Requirements />} />
+          <Route path="/platform" element={<Platform />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
