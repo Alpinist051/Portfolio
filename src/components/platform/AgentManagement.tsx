@@ -4,9 +4,12 @@ import {
   Bot, Plus, Settings, Trash2, Power, PowerOff,
   Brain, Wrench, MessageSquare, Shield, Link2,
   Zap, Database, Globe, FileText, Image,
-  CheckCircle2, AlertTriangle, Clock, Loader2
+  CheckCircle2, AlertTriangle, Clock, Loader2,
+  Pencil, X, Check, Save
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -43,6 +46,8 @@ const AgentManagement = ({ userId }: AgentManagementProps) => {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({ name: "", description: "" });
 
   const fetchAgents = useCallback(async () => {
     const { data, error } = await supabase
@@ -89,6 +94,62 @@ const AgentManagement = ({ userId }: AgentManagementProps) => {
         setSelectedAgent((prev) => prev ? { ...prev, status: newStatus } : prev);
       }
       toast({ title: "Agent updated" });
+    }
+  };
+
+  const startEditing = () => {
+    if (selectedAgent) {
+      setEditForm({ name: selectedAgent.name, description: selectedAgent.description });
+      setIsEditing(true);
+    }
+  };
+
+  const cancelEditing = () => {
+    setIsEditing(false);
+    setEditForm({ name: "", description: "" });
+  };
+
+  const saveAgentDetails = async () => {
+    if (!selectedAgent) return;
+    
+    setSaving(true);
+    const { error } = await supabase
+      .from("agents")
+      .update({ name: editForm.name, description: editForm.description })
+      .eq("id", selectedAgent.id);
+
+    if (error) {
+      toast({ title: "Error", description: "Failed to save changes", variant: "destructive" });
+    } else {
+      const updatedAgent = { ...selectedAgent, name: editForm.name, description: editForm.description };
+      setSelectedAgent(updatedAgent);
+      setAgents(prev => prev.map(a => a.id === selectedAgent.id ? updatedAgent : a));
+      setIsEditing(false);
+      toast({ title: "Agent updated" });
+    }
+    setSaving(false);
+  };
+
+  const toggleTool = async (toolId: string) => {
+    if (!selectedAgent) return;
+    
+    const isEnabled = selectedAgent.tools.includes(toolId);
+    const newTools = isEnabled 
+      ? selectedAgent.tools.filter(t => t !== toolId)
+      : [...selectedAgent.tools, toolId];
+
+    const { error } = await supabase
+      .from("agents")
+      .update({ tools: newTools })
+      .eq("id", selectedAgent.id);
+
+    if (error) {
+      toast({ title: "Error", description: "Failed to update tools", variant: "destructive" });
+    } else {
+      const updatedAgent = { ...selectedAgent, tools: newTools };
+      setSelectedAgent(updatedAgent);
+      setAgents(prev => prev.map(a => a.id === selectedAgent.id ? updatedAgent : a));
+      toast({ title: isEnabled ? "Tool disabled" : "Tool enabled" });
     }
   };
 
@@ -225,21 +286,53 @@ const AgentManagement = ({ userId }: AgentManagementProps) => {
                   <div className={`flex h-14 w-14 items-center justify-center rounded-xl ${getTypeColor(selectedAgent.agent_type)}`}>
                     <Bot className="h-7 w-7" />
                   </div>
-                  <div>
-                    <div className="flex items-center gap-3">
-                      <h2 className="font-display text-xl font-semibold text-stone-800">{selectedAgent.name}</h2>
-                      {getStatusBadge(selectedAgent.status)}
-                    </div>
-                    <p className="mt-1 text-stone-600">{selectedAgent.description}</p>
-                    <div className="mt-3 flex items-center gap-4 text-sm text-stone-500">
-                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${getTypeColor(selectedAgent.agent_type)}`}>
-                        {selectedAgent.agent_type}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3.5 w-3.5" />
-                        {selectedAgent.last_active ? new Date(selectedAgent.last_active).toLocaleString() : "Never"}
-                      </span>
-                    </div>
+                  <div className="flex-1">
+                    {isEditing ? (
+                      <div className="space-y-3">
+                        <Input
+                          value={editForm.name}
+                          onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                          className="font-display text-xl font-semibold"
+                          placeholder="Agent name"
+                        />
+                        <Textarea
+                          value={editForm.description}
+                          onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                          className="text-sm"
+                          placeholder="Agent description"
+                          rows={2}
+                        />
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={saveAgentDetails} disabled={saving} className="bg-stone-800 hover:bg-stone-700">
+                            {saving ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Check className="mr-1 h-4 w-4" />}
+                            Save
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={cancelEditing}>
+                            <X className="mr-1 h-4 w-4" /> Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-3">
+                          <h2 className="font-display text-xl font-semibold text-stone-800">{selectedAgent.name}</h2>
+                          {getStatusBadge(selectedAgent.status)}
+                          <Button variant="ghost" size="sm" onClick={startEditing} className="h-8 w-8 p-0">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <p className="mt-1 text-stone-600">{selectedAgent.description}</p>
+                        <div className="mt-3 flex items-center gap-4 text-sm text-stone-500">
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${getTypeColor(selectedAgent.agent_type)}`}>
+                            {selectedAgent.agent_type}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3.5 w-3.5" />
+                            {selectedAgent.last_active ? new Date(selectedAgent.last_active).toLocaleString() : "Never"}
+                          </span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -249,9 +342,6 @@ const AgentManagement = ({ userId }: AgentManagementProps) => {
                     ) : (
                       <><Power className="mr-1 h-4 w-4" /> Activate</>
                     )}
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <Settings className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
@@ -279,25 +369,30 @@ const AgentManagement = ({ userId }: AgentManagementProps) => {
                     <Wrench className="h-5 w-5 text-stone-500" />
                     Tools & APIs
                   </h3>
-                  <Button variant="ghost" size="sm"><Plus className="h-4 w-4" /></Button>
+                  <span className="text-xs text-stone-400">Click to toggle</span>
                 </div>
                 <div className="space-y-2">
                   {availableTools.map((tool) => {
                     const isEnabled = selectedAgent.tools.includes(tool.id);
                     const Icon = tool.icon;
                     return (
-                      <div
+                      <button
                         key={tool.id}
-                        className={`flex items-center justify-between rounded-lg border p-3 ${
-                          isEnabled ? "border-green-200 bg-green-50" : "border-stone-100 bg-stone-50"
+                        onClick={() => toggleTool(tool.id)}
+                        className={`flex w-full items-center justify-between rounded-lg border p-3 transition-all hover:shadow-sm ${
+                          isEnabled ? "border-green-200 bg-green-50 hover:bg-green-100" : "border-stone-100 bg-stone-50 hover:bg-stone-100"
                         }`}
                       >
                         <div className="flex items-center gap-3">
                           <Icon className={`h-4 w-4 ${isEnabled ? "text-green-600" : "text-stone-400"}`} />
                           <span className={isEnabled ? "text-green-700" : "text-stone-500"}>{tool.name}</span>
                         </div>
-                        {isEnabled && <CheckCircle2 className="h-4 w-4 text-green-600" />}
-                      </div>
+                        {isEnabled ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        ) : (
+                          <div className="h-4 w-4 rounded-full border-2 border-stone-300" />
+                        )}
+                      </button>
                     );
                   })}
                 </div>
