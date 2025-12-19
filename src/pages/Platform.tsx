@@ -1,22 +1,75 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import WorkflowBuilder from "@/components/platform/WorkflowBuilder";
 import AgentManagement from "@/components/platform/AgentManagement";
 import DashboardMonitoring from "@/components/platform/DashboardMonitoring";
-import { Workflow, Bot, Activity, Layers } from "lucide-react";
+import AuthForm from "@/components/platform/AuthForm";
+import { Workflow, Bot, Activity, Layers, LogOut, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 type TabType = "workflows" | "agents" | "dashboard";
 
+interface User {
+  id: string;
+  email?: string;
+}
+
 const Platform = () => {
   const [activeTab, setActiveTab] = useState<TabType>("workflows");
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Check current session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+  };
 
   const tabs = [
     { id: "workflows" as TabType, label: "Workflow Builder", icon: Workflow },
     { id: "agents" as TabType, label: "Agent Management", icon: Bot },
     { id: "dashboard" as TabType, label: "Dashboard", icon: Activity },
   ];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-stone-50">
+        <Navigation />
+        <div className="flex h-[80vh] items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-stone-400" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-stone-50">
+        <Navigation />
+        <main className="container mx-auto flex min-h-[80vh] items-center justify-center px-4 py-20">
+          <AuthForm onSuccess={() => {}} />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-stone-50">
@@ -27,18 +80,24 @@ const Platform = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8 text-center"
+          className="mb-8 flex items-center justify-between"
         >
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-4 py-2 text-sm text-stone-600 shadow-sm">
-            <Layers className="h-4 w-4" />
-            <span>Automation Platform</span>
+          <div className="text-center flex-1">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-4 py-2 text-sm text-stone-600 shadow-sm">
+              <Layers className="h-4 w-4" />
+              <span>Automation Platform</span>
+            </div>
+            <h1 className="font-display text-3xl font-bold text-stone-800 md:text-4xl">
+              Workflow Automation & AI Agents
+            </h1>
+            <p className="mx-auto mt-3 max-w-2xl text-stone-600">
+              Build, manage, and monitor intelligent workflows with AI-powered agents
+            </p>
           </div>
-          <h1 className="font-display text-3xl font-bold text-stone-800 md:text-4xl">
-            Workflow Automation & AI Agents
-          </h1>
-          <p className="mx-auto mt-3 max-w-2xl text-stone-600">
-            Build, manage, and monitor intelligent workflows with AI-powered agents
-          </p>
+          <Button variant="outline" size="sm" onClick={handleSignOut} className="absolute right-4 top-24">
+            <LogOut className="mr-2 h-4 w-4" />
+            Sign Out
+          </Button>
         </motion.div>
 
         {/* Tab Navigation */}
@@ -79,8 +138,8 @@ const Platform = () => {
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
           >
-            {activeTab === "workflows" && <WorkflowBuilder />}
-            {activeTab === "agents" && <AgentManagement />}
+            {activeTab === "workflows" && <WorkflowBuilder userId={user.id} />}
+            {activeTab === "agents" && <AgentManagement userId={user.id} />}
             {activeTab === "dashboard" && <DashboardMonitoring />}
           </motion.div>
         </AnimatePresence>
