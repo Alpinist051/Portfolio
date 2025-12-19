@@ -23,8 +23,9 @@ import {
   GitBranch, CheckCircle2, XCircle,
   Settings, GripVertical, Loader2,
   Workflow as WorkflowIcon, FlaskConical, Terminal, AlertCircle,
-  Search, Filter, Calendar
+  Search, Filter, Calendar, Square, CheckSquare
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -250,6 +251,8 @@ const WorkflowBuilder = ({ userId }: WorkflowBuilderProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [showSchedulePopover, setShowSchedulePopover] = useState(false);
+  const [selectedWorkflowIds, setSelectedWorkflowIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -621,6 +624,64 @@ const WorkflowBuilder = ({ userId }: WorkflowBuilderProps) => {
     return matchesSearch && matchesStatus;
   });
 
+  // Bulk selection helpers
+  const toggleWorkflowSelection = (id: string) => {
+    setSelectedWorkflowIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedWorkflowIds.size === filteredWorkflows.length) {
+      setSelectedWorkflowIds(new Set());
+    } else {
+      setSelectedWorkflowIds(new Set(filteredWorkflows.map(w => w.id)));
+    }
+  };
+
+  // Bulk delete workflows
+  const bulkDeleteWorkflows = async () => {
+    const idsToDelete = Array.from(selectedWorkflowIds);
+    
+    for (const id of idsToDelete) {
+      await supabase.from("workflow_steps").delete().eq("workflow_id", id);
+      await supabase.from("workflows").delete().eq("id", id);
+    }
+    
+    setWorkflows(prev => prev.filter(w => !selectedWorkflowIds.has(w.id)));
+    if (selectedWorkflow && selectedWorkflowIds.has(selectedWorkflow.id)) {
+      setSelectedWorkflow(null);
+      setSteps([]);
+    }
+    setSelectedWorkflowIds(new Set());
+    setBulkDeleteDialogOpen(false);
+    toast({ title: "Workflows deleted", description: `Deleted ${idsToDelete.length} workflows` });
+  };
+
+  // Bulk activate/pause workflows
+  const bulkUpdateStatus = async (newStatus: "active" | "paused") => {
+    const idsToUpdate = Array.from(selectedWorkflowIds);
+    
+    for (const id of idsToUpdate) {
+      await supabase.from("workflows").update({ status: newStatus }).eq("id", id);
+    }
+    
+    setWorkflows(prev => prev.map(w => 
+      selectedWorkflowIds.has(w.id) ? { ...w, status: newStatus } : w
+    ));
+    if (selectedWorkflow && selectedWorkflowIds.has(selectedWorkflow.id)) {
+      setSelectedWorkflow(prev => prev ? { ...prev, status: newStatus } : prev);
+    }
+    setSelectedWorkflowIds(new Set());
+    toast({ title: `Workflows ${newStatus}`, description: `Updated ${idsToUpdate.length} workflows` });
+  };
+
   const getTestStatus = (stepId: string) => {
     return testResults.find(r => r.stepId === stepId);
   };
@@ -675,6 +736,52 @@ const WorkflowBuilder = ({ userId }: WorkflowBuilderProps) => {
               </SelectContent>
             </Select>
           </div>
+
+          {/* Bulk Actions Bar */}
+          {filteredWorkflows.length > 0 && (
+            <div className="flex items-center justify-between border-b border-stone-100 px-4 py-2 bg-stone-50">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={selectedWorkflowIds.size === filteredWorkflows.length && filteredWorkflows.length > 0}
+                  onCheckedChange={toggleSelectAll}
+                />
+                <span className="text-xs text-stone-500">
+                  {selectedWorkflowIds.size > 0 ? `${selectedWorkflowIds.size} selected` : "Select all"}
+                </span>
+              </div>
+              {selectedWorkflowIds.size > 0 && (
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs text-green-600 hover:text-green-700 hover:bg-green-50"
+                    onClick={() => bulkUpdateStatus("active")}
+                  >
+                    <Play className="mr-1 h-3 w-3" />
+                    Activate
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                    onClick={() => bulkUpdateStatus("paused")}
+                  >
+                    <Pause className="mr-1 h-3 w-3" />
+                    Pause
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                    onClick={() => setBulkDeleteDialogOpen(true)}
+                  >
+                    <Trash2 className="mr-1 h-3 w-3" />
+                    Delete
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
           
           <div className="divide-y divide-stone-100 max-h-[500px] overflow-y-auto">
             {filteredWorkflows.length === 0 ? (
@@ -692,32 +799,40 @@ const WorkflowBuilder = ({ userId }: WorkflowBuilderProps) => {
                     selectedWorkflow?.id === workflow.id ? "bg-stone-50 border-l-4 border-l-stone-600" : ""
                   }`}
                 >
-                  <button
-                    onClick={() => setSelectedWorkflow(workflow)}
-                    className="w-full text-left"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h4 className="font-medium text-stone-800">{workflow.name}</h4>
-                        <p className="mt-1 text-sm text-stone-500 line-clamp-1">{workflow.description}</p>
-                        <div className="mt-2 flex items-center gap-2">
-                          <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${getStatusColor(workflow.status)}`}>
-                            {workflow.status}
-                          </span>
-                          {workflow.scheduled_cron && (
-                            <span className="flex items-center gap-1 text-xs text-blue-600">
-                              <Calendar className="h-3 w-3" />
-                              Scheduled
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      checked={selectedWorkflowIds.has(workflow.id)}
+                      onCheckedChange={() => toggleWorkflowSelection(workflow.id)}
+                      className="mt-1"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <button
+                      onClick={() => setSelectedWorkflow(workflow)}
+                      className="flex-1 text-left"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-stone-800">{workflow.name}</h4>
+                          <p className="mt-1 text-sm text-stone-500 line-clamp-1">{workflow.description}</p>
+                          <div className="mt-2 flex items-center gap-2">
+                            <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${getStatusColor(workflow.status)}`}>
+                              {workflow.status}
                             </span>
-                          )}
+                            {workflow.scheduled_cron && (
+                              <span className="flex items-center gap-1 text-xs text-blue-600">
+                                <Calendar className="h-3 w-3" />
+                                Scheduled
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                          <span className="text-lg font-semibold text-stone-700">{workflow.success_rate}%</span>
+                          <span className="text-xs text-stone-400">success</span>
                         </div>
                       </div>
-                      <div className="flex flex-col items-end gap-1">
-                        <span className="text-lg font-semibold text-stone-700">{workflow.success_rate}%</span>
-                        <span className="text-xs text-stone-400">success</span>
-                      </div>
-                    </div>
-                  </button>
+                    </button>
+                  </div>
                   <div className="absolute right-2 top-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Button
                       variant="ghost"
@@ -1065,6 +1180,30 @@ const WorkflowBuilder = ({ userId }: WorkflowBuilderProps) => {
               className="bg-red-600 hover:bg-red-700"
             >
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-red-500" />
+              Delete {selectedWorkflowIds.size} Workflows
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {selectedWorkflowIds.size} workflow{selectedWorkflowIds.size > 1 ? 's' : ''}? This action cannot be undone and will also delete all steps in these workflows.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={bulkDeleteWorkflows}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete All
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
