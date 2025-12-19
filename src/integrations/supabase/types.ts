@@ -14,7 +14,137 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      agents: {
+        Row: {
+          agent_type: string
+          coordinates_with: string[] | null
+          created_at: string
+          description: string | null
+          id: string
+          knowledge: string[] | null
+          last_active: string | null
+          name: string
+          status: string
+          success_rate: number | null
+          tasks_completed: number | null
+          tools: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_type?: string
+          coordinates_with?: string[] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          knowledge?: string[] | null
+          last_active?: string | null
+          name?: string
+          status?: string
+          success_rate?: number | null
+          tasks_completed?: number | null
+          tools?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_type?: string
+          coordinates_with?: string[] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          knowledge?: string[] | null
+          last_active?: string | null
+          name?: string
+          status?: string
+          success_rate?: number | null
+          tasks_completed?: number | null
+          tools?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      workflow_steps: {
+        Row: {
+          config: Json | null
+          created_at: string
+          icon_name: string
+          id: string
+          name: string
+          status: string
+          step_order: number
+          step_type: string
+          workflow_id: string
+        }
+        Insert: {
+          config?: Json | null
+          created_at?: string
+          icon_name?: string
+          id?: string
+          name: string
+          status?: string
+          step_order?: number
+          step_type: string
+          workflow_id: string
+        }
+        Update: {
+          config?: Json | null
+          created_at?: string
+          icon_name?: string
+          id?: string
+          name?: string
+          status?: string
+          step_order?: number
+          step_type?: string
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_steps_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflows: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          last_run: string | null
+          name: string
+          status: string
+          success_rate: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          last_run?: string | null
+          name?: string
+          status?: string
+          success_rate?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          last_run?: string | null
+          name?: string
+          status?: string
+          success_rate?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
