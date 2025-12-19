@@ -23,6 +23,7 @@ const Navigation = () => {
     { href: "#certifications", label: "CERTS", isPage: false },
     { href: "#contact", label: "CONTACT", isPage: false },
     { href: "/insights", label: "INSIGHTS", isPage: true },
+    { href: "/requirements", label: "REQUIREMENTS", isPage: true },
   ];
 
   const handleNavClick = (item: { href: string; label: string; isPage: boolean }) => {
