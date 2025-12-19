@@ -56,9 +56,10 @@ const AgentManagement = ({ userId }: AgentManagementProps) => {
       return;
     }
 
-    setAgents(data || []);
-    if (data && data.length > 0 && !selectedAgent) {
-      setSelectedAgent(data[0]);
+    const typedData = (data || []) as Agent[];
+    setAgents(typedData);
+    if (typedData.length > 0 && !selectedAgent) {
+      setSelectedAgent(typedData[0]);
     }
     setLoading(false);
   }, [userId, selectedAgent, toast]);
@@ -151,8 +152,9 @@ const AgentManagement = ({ userId }: AgentManagementProps) => {
     if (error) {
       toast({ title: "Error", description: "Failed to create agent", variant: "destructive" });
     } else if (data) {
-      setAgents((prev) => [data, ...prev]);
-      setSelectedAgent(data);
+      const typedData = data as Agent;
+      setAgents((prev) => [typedData, ...prev]);
+      setSelectedAgent(typedData);
       toast({ title: "Agent created", description: "Configure the agent settings" });
     }
     setSaving(false);
