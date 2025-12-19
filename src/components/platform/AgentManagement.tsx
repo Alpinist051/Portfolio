@@ -1,34 +1,29 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { 
+import {
   Bot, Plus, Settings, Trash2, Power, PowerOff,
   Brain, Wrench, MessageSquare, Shield, Link2,
   Zap, Database, Globe, FileText, Image,
-  CheckCircle2, AlertTriangle, Clock
+  CheckCircle2, AlertTriangle, Clock, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Agent {
   id: string;
+  user_id: string;
   name: string;
   description: string;
   status: "active" | "inactive" | "error";
-  type: "assistant" | "analyst" | "executor" | "coordinator";
+  agent_type: "assistant" | "analyst" | "executor" | "coordinator";
   tools: string[];
   knowledge: string[];
-  coordinatesWith: string[];
-  successRate: number;
-  tasksCompleted: number;
-  lastActive: string;
+  coordinates_with: string[];
+  success_rate: number;
+  tasks_completed: number;
+  last_active: string | null;
 }
-
-const agentTypes = [
-  { type: "assistant", name: "Assistant", icon: MessageSquare, color: "blue" },
-  { type: "analyst", name: "Analyst", icon: Brain, color: "purple" },
-  { type: "executor", name: "Executor", icon: Zap, color: "green" },
-  { type: "coordinator", name: "Coordinator", icon: Link2, color: "amber" },
-];
 
 const availableTools = [
   { id: "web_search", name: "Web Search", icon: Globe },
@@ -38,94 +33,67 @@ const availableTools = [
   { id: "api_call", name: "API Calls", icon: Wrench },
 ];
 
-const AgentManagement = () => {
+interface AgentManagementProps {
+  userId: string;
+}
+
+const AgentManagement = ({ userId }: AgentManagementProps) => {
   const { toast } = useToast();
-  const [agents, setAgents] = useState<Agent[]>([
-    {
-      id: "1",
-      name: "Lead Qualifier",
-      description: "Analyzes incoming leads and scores them based on fit criteria",
-      status: "active",
-      type: "analyst",
-      tools: ["database", "web_search"],
-      knowledge: ["Sales playbook", "ICP definition", "Scoring rubric"],
-      coordinatesWith: ["Sales Router", "Email Composer"],
-      successRate: 94,
-      tasksCompleted: 1247,
-      lastActive: "Just now"
-    },
-    {
-      id: "2",
-      name: "Sales Router",
-      description: "Routes qualified leads to appropriate sales representatives",
-      status: "active",
-      type: "coordinator",
-      tools: ["database", "api_call"],
-      knowledge: ["Team assignments", "Territory mapping", "Capacity rules"],
-      coordinatesWith: ["Lead Qualifier"],
-      successRate: 98,
-      tasksCompleted: 892,
-      lastActive: "2 min ago"
-    },
-    {
-      id: "3",
-      name: "Email Composer",
-      description: "Drafts personalized outreach emails based on lead context",
-      status: "active",
-      type: "assistant",
-      tools: ["web_search", "file_ops"],
-      knowledge: ["Brand voice", "Email templates", "Compliance rules"],
-      coordinatesWith: ["Lead Qualifier", "Content Reviewer"],
-      successRate: 89,
-      tasksCompleted: 756,
-      lastActive: "5 min ago"
-    },
-    {
-      id: "4",
-      name: "Content Reviewer",
-      description: "Reviews and approves generated content for compliance",
-      status: "inactive",
-      type: "analyst",
-      tools: ["file_ops"],
-      knowledge: ["Brand guidelines", "Legal requirements", "Approval criteria"],
-      coordinatesWith: ["Email Composer"],
-      successRate: 100,
-      tasksCompleted: 423,
-      lastActive: "1 hour ago"
-    },
-    {
-      id: "5",
-      name: "Report Generator",
-      description: "Creates automated reports from system data",
-      status: "error",
-      type: "executor",
-      tools: ["database", "file_ops", "image_gen"],
-      knowledge: ["Report templates", "KPI definitions", "Chart standards"],
-      coordinatesWith: [],
-      successRate: 76,
-      tasksCompleted: 89,
-      lastActive: "Error state"
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const fetchAgents = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("agents")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      toast({ title: "Error", description: "Failed to load agents", variant: "destructive" });
+      return;
     }
-  ]);
 
-  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(agents[0]);
-  const [showNewAgent, setShowNewAgent] = useState(false);
+    setAgents(data || []);
+    if (data && data.length > 0 && !selectedAgent) {
+      setSelectedAgent(data[0]);
+    }
+    setLoading(false);
+  }, [userId, selectedAgent, toast]);
 
-  const toggleAgentStatus = (id: string) => {
-    setAgents(prev => prev.map(a => 
-      a.id === id 
-        ? { ...a, status: a.status === "active" ? "inactive" : "active" }
-        : a
-    ));
-    toast({
-      title: "Agent updated",
-      description: "Status changed successfully",
-    });
+  useEffect(() => {
+    fetchAgents();
+  }, [fetchAgents]);
+
+  const toggleAgentStatus = async (id: string) => {
+    const agent = agents.find((a) => a.id === id);
+    if (!agent) return;
+
+    const newStatus = agent.status === "active" ? "inactive" : "active";
+
+    const { error } = await supabase
+      .from("agents")
+      .update({ status: newStatus, last_active: new Date().toISOString() })
+      .eq("id", id);
+
+    if (error) {
+      toast({ title: "Error", description: "Failed to update status", variant: "destructive" });
+    } else {
+      setAgents((prev) =>
+        prev.map((a) => (a.id === id ? { ...a, status: newStatus } : a))
+      );
+      if (selectedAgent?.id === id) {
+        setSelectedAgent((prev) => prev ? { ...prev, status: newStatus } : prev);
+      }
+      toast({ title: "Agent updated" });
+    }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "active": 
+      case "active":
         return (
           <span className="flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-green-500" />
@@ -146,7 +114,8 @@ const AgentManagement = () => {
             Error
           </span>
         );
-      default: return null;
+      default:
+        return null;
     }
   };
 
@@ -160,28 +129,42 @@ const AgentManagement = () => {
     }
   };
 
-  const addNewAgent = () => {
-    const newAgent: Agent = {
-      id: Date.now().toString(),
-      name: "New Agent",
-      description: "Configure this agent's purpose",
-      status: "inactive",
-      type: "assistant",
-      tools: [],
-      knowledge: [],
-      coordinatesWith: [],
-      successRate: 0,
-      tasksCompleted: 0,
-      lastActive: "Never"
-    };
-    setAgents(prev => [...prev, newAgent]);
-    setSelectedAgent(newAgent);
-    setShowNewAgent(false);
-    toast({
-      title: "Agent created",
-      description: "Configure the agent settings",
-    });
+  const addNewAgent = async () => {
+    setSaving(true);
+    const { data, error } = await supabase
+      .from("agents")
+      .insert({
+        user_id: userId,
+        name: "New Agent",
+        description: "Configure this agent's purpose",
+        status: "inactive",
+        agent_type: "assistant",
+        tools: [],
+        knowledge: [],
+        coordinates_with: [],
+        success_rate: 0,
+        tasks_completed: 0,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      toast({ title: "Error", description: "Failed to create agent", variant: "destructive" });
+    } else if (data) {
+      setAgents((prev) => [data, ...prev]);
+      setSelectedAgent(data);
+      toast({ title: "Agent created", description: "Configure the agent settings" });
+    }
+    setSaving(false);
   };
+
+  if (loading) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-stone-400" />
+      </div>
+    );
+  }
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
@@ -190,38 +173,42 @@ const AgentManagement = () => {
         <div className="rounded-xl border border-stone-200 bg-white shadow-sm">
           <div className="flex items-center justify-between border-b border-stone-100 p-4">
             <h3 className="font-display text-lg font-semibold text-stone-800">AI Agents</h3>
-            <Button size="sm" onClick={addNewAgent} className="bg-stone-800 hover:bg-stone-700">
-              <Plus className="mr-1 h-4 w-4" />
+            <Button size="sm" onClick={addNewAgent} className="bg-stone-800 hover:bg-stone-700" disabled={saving}>
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="mr-1 h-4 w-4" />}
               New
             </Button>
           </div>
-          
-          <div className="divide-y divide-stone-100">
-            {agents.map((agent) => (
-              <motion.button
-                key={agent.id}
-                onClick={() => setSelectedAgent(agent)}
-                whileHover={{ backgroundColor: "rgb(250 250 249)" }}
-                className={`w-full p-4 text-left transition-colors ${
-                  selectedAgent?.id === agent.id ? "bg-stone-50 border-l-4 border-l-stone-600" : ""
-                }`}
-              >
-                <div className="flex items-start justify-between">
+
+          <div className="divide-y divide-stone-100 max-h-[600px] overflow-y-auto">
+            {agents.length === 0 ? (
+              <div className="p-8 text-center text-stone-500">
+                <Bot className="mx-auto mb-2 h-8 w-8 text-stone-300" />
+                <p>No agents yet</p>
+                <p className="text-sm">Create your first AI agent</p>
+              </div>
+            ) : (
+              agents.map((agent) => (
+                <motion.button
+                  key={agent.id}
+                  onClick={() => setSelectedAgent(agent)}
+                  whileHover={{ backgroundColor: "rgb(250 250 249)" }}
+                  className={`w-full p-4 text-left transition-colors ${
+                    selectedAgent?.id === agent.id ? "bg-stone-50 border-l-4 border-l-stone-600" : ""
+                  }`}
+                >
                   <div className="flex items-start gap-3">
-                    <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${getTypeColor(agent.type)}`}>
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${getTypeColor(agent.agent_type)}`}>
                       <Bot className="h-5 w-5" />
                     </div>
                     <div>
                       <h4 className="font-medium text-stone-800">{agent.name}</h4>
                       <p className="mt-0.5 text-xs text-stone-500 line-clamp-1">{agent.description}</p>
-                      <div className="mt-2">
-                        {getStatusBadge(agent.status)}
-                      </div>
+                      <div className="mt-2">{getStatusBadge(agent.status)}</div>
                     </div>
                   </div>
-                </div>
-              </motion.button>
-            ))}
+                </motion.button>
+              ))
+            )}
           </div>
         </div>
       </div>
@@ -230,11 +217,10 @@ const AgentManagement = () => {
       <div className="lg:col-span-2">
         {selectedAgent ? (
           <div className="space-y-6">
-            {/* Agent Header */}
             <div className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm">
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-4">
-                  <div className={`flex h-14 w-14 items-center justify-center rounded-xl ${getTypeColor(selectedAgent.type)}`}>
+                  <div className={`flex h-14 w-14 items-center justify-center rounded-xl ${getTypeColor(selectedAgent.agent_type)}`}>
                     <Bot className="h-7 w-7" />
                   </div>
                   <div>
@@ -244,22 +230,18 @@ const AgentManagement = () => {
                     </div>
                     <p className="mt-1 text-stone-600">{selectedAgent.description}</p>
                     <div className="mt-3 flex items-center gap-4 text-sm text-stone-500">
-                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${getTypeColor(selectedAgent.type)}`}>
-                        {selectedAgent.type}
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${getTypeColor(selectedAgent.agent_type)}`}>
+                        {selectedAgent.agent_type}
                       </span>
                       <span className="flex items-center gap-1">
                         <Clock className="h-3.5 w-3.5" />
-                        {selectedAgent.lastActive}
+                        {selectedAgent.last_active ? new Date(selectedAgent.last_active).toLocaleString() : "Never"}
                       </span>
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => toggleAgentStatus(selectedAgent.id)}
-                  >
+                  <Button variant="outline" size="sm" onClick={() => toggleAgentStatus(selectedAgent.id)}>
                     {selectedAgent.status === "active" ? (
                       <><PowerOff className="mr-1 h-4 w-4" /> Deactivate</>
                     ) : (
@@ -272,14 +254,13 @@ const AgentManagement = () => {
                 </div>
               </div>
 
-              {/* Stats */}
               <div className="mt-6 grid grid-cols-3 gap-4 border-t border-stone-100 pt-6">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-stone-800">{selectedAgent.successRate}%</p>
+                  <p className="text-2xl font-bold text-stone-800">{selectedAgent.success_rate}%</p>
                   <p className="text-sm text-stone-500">Success Rate</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-stone-800">{selectedAgent.tasksCompleted.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-stone-800">{selectedAgent.tasks_completed.toLocaleString()}</p>
                   <p className="text-sm text-stone-500">Tasks Completed</p>
                 </div>
                 <div className="text-center">
@@ -289,37 +270,29 @@ const AgentManagement = () => {
               </div>
             </div>
 
-            {/* Tools & Knowledge */}
             <div className="grid gap-6 md:grid-cols-2">
-              {/* Tools */}
               <div className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm">
                 <div className="mb-4 flex items-center justify-between">
                   <h3 className="flex items-center gap-2 font-display text-lg font-semibold text-stone-800">
                     <Wrench className="h-5 w-5 text-stone-500" />
                     Tools & APIs
                   </h3>
-                  <Button variant="ghost" size="sm">
-                    <Plus className="h-4 w-4" />
-                  </Button>
+                  <Button variant="ghost" size="sm"><Plus className="h-4 w-4" /></Button>
                 </div>
                 <div className="space-y-2">
                   {availableTools.map((tool) => {
                     const isEnabled = selectedAgent.tools.includes(tool.id);
                     const Icon = tool.icon;
                     return (
-                      <div 
+                      <div
                         key={tool.id}
                         className={`flex items-center justify-between rounded-lg border p-3 ${
-                          isEnabled 
-                            ? "border-green-200 bg-green-50" 
-                            : "border-stone-100 bg-stone-50"
+                          isEnabled ? "border-green-200 bg-green-50" : "border-stone-100 bg-stone-50"
                         }`}
                       >
                         <div className="flex items-center gap-3">
                           <Icon className={`h-4 w-4 ${isEnabled ? "text-green-600" : "text-stone-400"}`} />
-                          <span className={isEnabled ? "text-green-700" : "text-stone-500"}>
-                            {tool.name}
-                          </span>
+                          <span className={isEnabled ? "text-green-700" : "text-stone-500"}>{tool.name}</span>
                         </div>
                         {isEnabled && <CheckCircle2 className="h-4 w-4 text-green-600" />}
                       </div>
@@ -328,24 +301,18 @@ const AgentManagement = () => {
                 </div>
               </div>
 
-              {/* Knowledge */}
               <div className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm">
                 <div className="mb-4 flex items-center justify-between">
                   <h3 className="flex items-center gap-2 font-display text-lg font-semibold text-stone-800">
                     <Brain className="h-5 w-5 text-stone-500" />
                     Knowledge Base
                   </h3>
-                  <Button variant="ghost" size="sm">
-                    <Plus className="h-4 w-4" />
-                  </Button>
+                  <Button variant="ghost" size="sm"><Plus className="h-4 w-4" /></Button>
                 </div>
                 <div className="space-y-2">
                   {selectedAgent.knowledge.length > 0 ? (
                     selectedAgent.knowledge.map((item, index) => (
-                      <div 
-                        key={index}
-                        className="flex items-center justify-between rounded-lg border border-stone-100 bg-stone-50 p-3"
-                      >
+                      <div key={index} className="flex items-center justify-between rounded-lg border border-stone-100 bg-stone-50 p-3">
                         <div className="flex items-center gap-3">
                           <FileText className="h-4 w-4 text-stone-400" />
                           <span className="text-stone-600">{item}</span>
@@ -356,30 +323,24 @@ const AgentManagement = () => {
                       </div>
                     ))
                   ) : (
-                    <p className="text-center text-sm text-stone-400 py-4">No knowledge sources added</p>
+                    <p className="py-4 text-center text-sm text-stone-400">No knowledge sources added</p>
                   )}
                 </div>
               </div>
             </div>
 
-            {/* Coordination */}
             <div className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm">
               <div className="mb-4 flex items-center justify-between">
                 <h3 className="flex items-center gap-2 font-display text-lg font-semibold text-stone-800">
                   <Link2 className="h-5 w-5 text-stone-500" />
                   Coordinates With
                 </h3>
-                <Button variant="ghost" size="sm">
-                  <Plus className="h-4 w-4" />
-                </Button>
+                <Button variant="ghost" size="sm"><Plus className="h-4 w-4" /></Button>
               </div>
               <div className="flex flex-wrap gap-2">
-                {selectedAgent.coordinatesWith.length > 0 ? (
-                  selectedAgent.coordinatesWith.map((agentName, index) => (
-                    <span 
-                      key={index}
-                      className="flex items-center gap-2 rounded-full border border-stone-200 bg-stone-50 px-3 py-1.5 text-sm text-stone-600"
-                    >
+                {selectedAgent.coordinates_with.length > 0 ? (
+                  selectedAgent.coordinates_with.map((agentName, index) => (
+                    <span key={index} className="flex items-center gap-2 rounded-full border border-stone-200 bg-stone-50 px-3 py-1.5 text-sm text-stone-600">
                       <Bot className="h-3.5 w-3.5" />
                       {agentName}
                     </span>
