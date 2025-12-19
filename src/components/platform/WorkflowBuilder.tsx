@@ -190,9 +190,10 @@ const WorkflowBuilder = ({ userId }: WorkflowBuilderProps) => {
       return;
     }
 
-    setWorkflows(data || []);
-    if (data && data.length > 0 && !selectedWorkflow) {
-      setSelectedWorkflow(data[0]);
+    const typedData = (data || []) as Workflow[];
+    setWorkflows(typedData);
+    if (typedData.length > 0 && !selectedWorkflow) {
+      setSelectedWorkflow(typedData[0]);
     }
     setLoading(false);
   }, [userId, selectedWorkflow, toast]);
@@ -210,7 +211,7 @@ const WorkflowBuilder = ({ userId }: WorkflowBuilderProps) => {
       return;
     }
 
-    setSteps(data || []);
+    setSteps((data || []) as WorkflowStep[]);
   }, [toast]);
 
   useEffect(() => {
@@ -266,8 +267,9 @@ const WorkflowBuilder = ({ userId }: WorkflowBuilderProps) => {
     if (error) {
       toast({ title: "Error", description: "Failed to create workflow", variant: "destructive" });
     } else if (data) {
-      setWorkflows((prev) => [data, ...prev]);
-      setSelectedWorkflow(data);
+      const typedData = data as Workflow;
+      setWorkflows((prev) => [typedData, ...prev]);
+      setSelectedWorkflow(typedData);
       setSteps([]);
       toast({ title: "Workflow created", description: "Start adding steps" });
     }
@@ -310,7 +312,7 @@ const WorkflowBuilder = ({ userId }: WorkflowBuilderProps) => {
     if (error) {
       toast({ title: "Error", description: "Failed to add step", variant: "destructive" });
     } else if (data) {
-      setSteps((prev) => [...prev, data]);
+      setSteps((prev) => [...prev, data as WorkflowStep]);
       setShowAddStep(false);
       toast({ title: "Step added", description: `${stepOption.name} added` });
     }
