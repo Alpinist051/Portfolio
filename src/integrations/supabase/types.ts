@@ -116,6 +116,8 @@ export type Database = {
           id: string
           last_run: string | null
           name: string
+          next_run: string | null
+          scheduled_cron: string | null
           status: string
           success_rate: number | null
           updated_at: string
@@ -127,6 +129,8 @@ export type Database = {
           id?: string
           last_run?: string | null
           name?: string
+          next_run?: string | null
+          scheduled_cron?: string | null
           status?: string
           success_rate?: number | null
           updated_at?: string
@@ -138,6 +142,8 @@ export type Database = {
           id?: string
           last_run?: string | null
           name?: string
+          next_run?: string | null
+          scheduled_cron?: string | null
           status?: string
           success_rate?: number | null
           updated_at?: string

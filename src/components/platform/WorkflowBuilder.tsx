@@ -22,9 +22,11 @@ import {
   Zap, Clock, Webhook, FileText, Mail, Database,
   GitBranch, CheckCircle2, XCircle,
   Settings, GripVertical, Loader2,
-  Workflow as WorkflowIcon, FlaskConical, Terminal, AlertCircle
+  Workflow as WorkflowIcon, FlaskConical, Terminal, AlertCircle,
+  Search, Filter, Calendar
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -37,6 +39,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface WorkflowStep {
   id: string;
@@ -57,6 +71,8 @@ interface Workflow {
   status: "active" | "paused" | "draft";
   success_rate: number;
   last_run: string | null;
+  scheduled_cron: string | null;
+  next_run: string | null;
   steps?: WorkflowStep[];
 }
 
@@ -231,6 +247,9 @@ const WorkflowBuilder = ({ userId }: WorkflowBuilderProps) => {
   const [showLogs, setShowLogs] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [workflowToDelete, setWorkflowToDelete] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [showSchedulePopover, setShowSchedulePopover] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -521,6 +540,87 @@ const WorkflowBuilder = ({ userId }: WorkflowBuilderProps) => {
     setWorkflowToDelete(null);
   };
 
+  // Clone workflow with all steps
+  const cloneWorkflow = async (workflow: Workflow) => {
+    setSaving(true);
+    
+    // Create new workflow
+    const { data: newWorkflow, error: workflowError } = await supabase
+      .from("workflows")
+      .insert({
+        user_id: userId,
+        name: `${workflow.name} (Copy)`,
+        description: workflow.description,
+        status: "draft",
+        scheduled_cron: null,
+      })
+      .select()
+      .single();
+
+    if (workflowError || !newWorkflow) {
+      toast({ title: "Error", description: "Failed to clone workflow", variant: "destructive" });
+      setSaving(false);
+      return;
+    }
+
+    // Clone all steps
+    const { data: originalSteps } = await supabase
+      .from("workflow_steps")
+      .select("*")
+      .eq("workflow_id", workflow.id)
+      .order("step_order", { ascending: true });
+
+    if (originalSteps && originalSteps.length > 0) {
+      const newSteps = originalSteps.map(step => ({
+        workflow_id: newWorkflow.id,
+        step_type: step.step_type,
+        name: step.name,
+        icon_name: step.icon_name,
+        config: step.config,
+        step_order: step.step_order,
+        status: "idle",
+      }));
+
+      await supabase.from("workflow_steps").insert(newSteps);
+    }
+
+    const typedWorkflow = newWorkflow as Workflow;
+    setWorkflows(prev => [typedWorkflow, ...prev]);
+    setSelectedWorkflow(typedWorkflow);
+    toast({ title: "Workflow cloned", description: `Created "${typedWorkflow.name}"` });
+    setSaving(false);
+  };
+
+  // Update workflow schedule
+  const updateSchedule = async (cronExpression: string | null) => {
+    if (!selectedWorkflow) return;
+
+    const nextRun = cronExpression ? new Date(Date.now() + 60000).toISOString() : null;
+
+    const { error } = await supabase
+      .from("workflows")
+      .update({ scheduled_cron: cronExpression, next_run: nextRun })
+      .eq("id", selectedWorkflow.id);
+
+    if (error) {
+      toast({ title: "Error", description: "Failed to update schedule", variant: "destructive" });
+    } else {
+      const updatedWorkflow = { ...selectedWorkflow, scheduled_cron: cronExpression, next_run: nextRun };
+      setSelectedWorkflow(updatedWorkflow);
+      setWorkflows(prev => prev.map(w => w.id === selectedWorkflow.id ? updatedWorkflow : w));
+      toast({ title: cronExpression ? "Schedule set" : "Schedule cleared" });
+    }
+    setShowSchedulePopover(false);
+  };
+
+  // Filter workflows
+  const filteredWorkflows = workflows.filter(workflow => {
+    const matchesSearch = workflow.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         workflow.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === "all" || workflow.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
   const getTestStatus = (stepId: string) => {
     return testResults.find(r => r.stepId === stepId);
   };
@@ -550,16 +650,41 @@ const WorkflowBuilder = ({ userId }: WorkflowBuilderProps) => {
               New
             </Button>
           </div>
+
+          {/* Search and Filter */}
+          <div className="border-b border-stone-100 p-3 space-y-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
+              <Input
+                placeholder="Search workflows..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-9"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="h-9">
+                <Filter className="mr-2 h-4 w-4 text-stone-400" />
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="paused">Paused</SelectItem>
+                <SelectItem value="draft">Draft</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           
-          <div className="divide-y divide-stone-100 max-h-[600px] overflow-y-auto">
-            {workflows.length === 0 ? (
+          <div className="divide-y divide-stone-100 max-h-[500px] overflow-y-auto">
+            {filteredWorkflows.length === 0 ? (
               <div className="p-8 text-center text-stone-500">
                 <WorkflowIcon className="mx-auto mb-2 h-8 w-8 text-stone-300" />
-                <p>No workflows yet</p>
-                <p className="text-sm">Create your first workflow</p>
+                <p>{searchQuery || statusFilter !== "all" ? "No matching workflows" : "No workflows yet"}</p>
+                <p className="text-sm">{searchQuery || statusFilter !== "all" ? "Try different filters" : "Create your first workflow"}</p>
               </div>
             ) : (
-              workflows.map((workflow) => (
+              filteredWorkflows.map((workflow) => (
                 <motion.div
                   key={workflow.id}
                   whileHover={{ backgroundColor: "rgb(250 250 249)" }}
@@ -575,10 +700,16 @@ const WorkflowBuilder = ({ userId }: WorkflowBuilderProps) => {
                       <div className="flex-1">
                         <h4 className="font-medium text-stone-800">{workflow.name}</h4>
                         <p className="mt-1 text-sm text-stone-500 line-clamp-1">{workflow.description}</p>
-                        <div className="mt-2 flex items-center gap-3">
+                        <div className="mt-2 flex items-center gap-2">
                           <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${getStatusColor(workflow.status)}`}>
                             {workflow.status}
                           </span>
+                          {workflow.scheduled_cron && (
+                            <span className="flex items-center gap-1 text-xs text-blue-600">
+                              <Calendar className="h-3 w-3" />
+                              Scheduled
+                            </span>
+                          )}
                         </div>
                       </div>
                       <div className="flex flex-col items-end gap-1">
@@ -587,18 +718,32 @@ const WorkflowBuilder = ({ userId }: WorkflowBuilderProps) => {
                       </div>
                     </div>
                   </button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-2 top-2 h-7 w-7 p-0 text-stone-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setWorkflowToDelete(workflow.id);
-                      setDeleteDialogOpen(true);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="absolute right-2 top-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0 text-stone-400 hover:text-blue-500"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        cloneWorkflow(workflow);
+                      }}
+                      title="Clone workflow"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0 text-stone-400 hover:text-red-500"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setWorkflowToDelete(workflow.id);
+                        setDeleteDialogOpen(true);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </motion.div>
               ))
             )}
@@ -640,7 +785,74 @@ const WorkflowBuilder = ({ userId }: WorkflowBuilderProps) => {
                     <><Play className="mr-1 h-4 w-4" /> Start</>
                   )}
                 </Button>
-                <Button variant="outline" size="sm">
+                <Popover open={showSchedulePopover} onOpenChange={setShowSchedulePopover}>
+                  <PopoverTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className={selectedWorkflow.scheduled_cron ? "bg-blue-50 text-blue-700 border-blue-200" : ""}
+                    >
+                      <Calendar className="mr-1 h-4 w-4" />
+                      {selectedWorkflow.scheduled_cron ? "Scheduled" : "Schedule"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64" align="end">
+                    <div className="space-y-3">
+                      <h4 className="font-medium text-sm">Schedule Workflow</h4>
+                      <p className="text-xs text-stone-500">Select how often to run this workflow</p>
+                      <div className="space-y-2">
+                        <Button 
+                          variant={selectedWorkflow.scheduled_cron === "*/5 * * * *" ? "default" : "outline"} 
+                          size="sm" 
+                          className="w-full justify-start"
+                          onClick={() => updateSchedule("*/5 * * * *")}
+                        >
+                          <Clock className="mr-2 h-4 w-4" /> Every 5 minutes
+                        </Button>
+                        <Button 
+                          variant={selectedWorkflow.scheduled_cron === "0 * * * *" ? "default" : "outline"} 
+                          size="sm" 
+                          className="w-full justify-start"
+                          onClick={() => updateSchedule("0 * * * *")}
+                        >
+                          <Clock className="mr-2 h-4 w-4" /> Every hour
+                        </Button>
+                        <Button 
+                          variant={selectedWorkflow.scheduled_cron === "0 0 * * *" ? "default" : "outline"} 
+                          size="sm" 
+                          className="w-full justify-start"
+                          onClick={() => updateSchedule("0 0 * * *")}
+                        >
+                          <Clock className="mr-2 h-4 w-4" /> Daily at midnight
+                        </Button>
+                        <Button 
+                          variant={selectedWorkflow.scheduled_cron === "0 9 * * 1" ? "default" : "outline"} 
+                          size="sm" 
+                          className="w-full justify-start"
+                          onClick={() => updateSchedule("0 9 * * 1")}
+                        >
+                          <Clock className="mr-2 h-4 w-4" /> Weekly (Mon 9AM)
+                        </Button>
+                      </div>
+                      {selectedWorkflow.scheduled_cron && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="w-full text-red-600 hover:text-red-700"
+                          onClick={() => updateSchedule(null)}
+                        >
+                          Clear Schedule
+                        </Button>
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => cloneWorkflow(selectedWorkflow)}
+                  disabled={saving}
+                >
                   <Copy className="mr-1 h-4 w-4" /> Clone
                 </Button>
               </div>
