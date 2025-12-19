@@ -5,7 +5,8 @@ import {
   Brain, Wrench, MessageSquare, Shield, Link2,
   Zap, Database, Globe, FileText, Image,
   CheckCircle2, AlertTriangle, Clock, Loader2,
-  Pencil, X, Check, Save, Users, Target, Cpu, AlertCircle
+  Pencil, X, Check, Save, Users, Target, Cpu, AlertCircle,
+  Search, Filter
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -67,6 +68,8 @@ const AgentManagement = ({ userId }: AgentManagementProps) => {
   const [editForm, setEditForm] = useState({ name: "", description: "" });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [agentToDelete, setAgentToDelete] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   const fetchAgents = useCallback(async () => {
     const { data, error } = await supabase
@@ -276,6 +279,14 @@ const AgentManagement = ({ userId }: AgentManagementProps) => {
     setSaving(false);
   };
 
+  // Filter agents
+  const filteredAgents = agents.filter(agent => {
+    const matchesSearch = agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         agent.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === "all" || agent.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
   if (loading) {
     return (
       <div className="flex h-96 items-center justify-center">
@@ -297,15 +308,40 @@ const AgentManagement = ({ userId }: AgentManagementProps) => {
             </Button>
           </div>
 
-          <div className="divide-y divide-stone-100 max-h-[600px] overflow-y-auto">
-            {agents.length === 0 ? (
+          {/* Search and Filter */}
+          <div className="border-b border-stone-100 p-3 space-y-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
+              <Input
+                placeholder="Search agents..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-9"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="h-9">
+                <Filter className="mr-2 h-4 w-4 text-stone-400" />
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="error">Error</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="divide-y divide-stone-100 max-h-[500px] overflow-y-auto">
+            {filteredAgents.length === 0 ? (
               <div className="p-8 text-center text-stone-500">
                 <Bot className="mx-auto mb-2 h-8 w-8 text-stone-300" />
-                <p>No agents yet</p>
-                <p className="text-sm">Create your first AI agent</p>
+                <p>{searchQuery || statusFilter !== "all" ? "No matching agents" : "No agents yet"}</p>
+                <p className="text-sm">{searchQuery || statusFilter !== "all" ? "Try different filters" : "Create your first AI agent"}</p>
               </div>
             ) : (
-              agents.map((agent) => (
+              filteredAgents.map((agent) => (
                 <motion.div
                   key={agent.id}
                   whileHover={{ backgroundColor: "rgb(250 250 249)" }}
