@@ -597,18 +597,55 @@ const AgentManagement = ({ userId }: AgentManagementProps) => {
                 </div>
               </div>
 
-              <div className="mt-6 grid grid-cols-3 gap-4 border-t border-stone-100 pt-6">
+              <div className="mt-6 grid grid-cols-4 gap-4 border-t border-stone-100 pt-6">
                 <div className="text-center">
+                  <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
+                    <CheckCircle2 className="h-5 w-5 text-green-600" />
+                  </div>
                   <p className="text-2xl font-bold text-stone-800">{selectedAgent.success_rate}%</p>
-                  <p className="text-sm text-stone-500">Success Rate</p>
+                  <p className="text-xs text-stone-500">Success Rate</p>
                 </div>
                 <div className="text-center">
+                  <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
+                    <Zap className="h-5 w-5 text-blue-600" />
+                  </div>
                   <p className="text-2xl font-bold text-stone-800">{selectedAgent.tasks_completed.toLocaleString()}</p>
-                  <p className="text-sm text-stone-500">Tasks Completed</p>
+                  <p className="text-xs text-stone-500">Tasks Done</p>
                 </div>
                 <div className="text-center">
+                  <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-purple-100">
+                    <Wrench className="h-5 w-5 text-purple-600" />
+                  </div>
                   <p className="text-2xl font-bold text-stone-800">{selectedAgent.tools.length}</p>
-                  <p className="text-sm text-stone-500">Tools Enabled</p>
+                  <p className="text-xs text-stone-500">Tools Active</p>
+                </div>
+                <div className="text-center">
+                  <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-amber-100">
+                    <Users className="h-5 w-5 text-amber-600" />
+                  </div>
+                  <p className="text-2xl font-bold text-stone-800">{selectedAgent.coordinates_with.length}</p>
+                  <p className="text-xs text-stone-500">Connections</p>
+                </div>
+              </div>
+
+              {/* Agent Type Description */}
+              <div className="mt-6 rounded-lg bg-stone-50 p-4 border border-stone-100">
+                <div className="flex items-start gap-3">
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${getTypeColor(selectedAgent.agent_type)}`}>
+                    {selectedAgent.agent_type === "assistant" && <Bot className="h-5 w-5" />}
+                    {selectedAgent.agent_type === "analyst" && <Brain className="h-5 w-5" />}
+                    {selectedAgent.agent_type === "executor" && <Target className="h-5 w-5" />}
+                    {selectedAgent.agent_type === "coordinator" && <Users className="h-5 w-5" />}
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-medium text-stone-800 capitalize">{selectedAgent.agent_type} Agent</h4>
+                    <p className="mt-1 text-sm text-stone-600">
+                      {selectedAgent.agent_type === "assistant" && "General-purpose agent for conversations, answering questions, and assisting with various tasks."}
+                      {selectedAgent.agent_type === "analyst" && "Data-focused agent that analyzes information, identifies patterns, and generates actionable insights."}
+                      {selectedAgent.agent_type === "executor" && "Action-oriented agent that performs specific tasks, runs operations, and manages automated processes."}
+                      {selectedAgent.agent_type === "coordinator" && "Orchestration agent that manages other agents, delegates tasks, and ensures smooth operations."}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
