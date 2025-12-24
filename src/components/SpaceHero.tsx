@@ -14,94 +14,37 @@ interface Particle {
 
 const SpaceHero = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const textCanvasRef = useRef<HTMLCanvasElement>(null);
   const [showVideo, setShowVideo] = useState(false);
   const [animationComplete, setAnimationComplete] = useState(false);
   const particlesRef = useRef<Particle[]>([]);
   const animationRef = useRef<number>();
-  const progressRef = useRef(0);
 
   const createParticle = useCallback((x: number, y: number): Particle => {
     const colors = [
-      { r: 255, g: 220, b: 50 },  // Yellow
-      { r: 255, g: 150, b: 0 },   // Orange
-      { r: 255, g: 80, b: 0 },    // Red-orange
-      { r: 255, g: 50, b: 0 },    // Red
-      { r: 255, g: 255, b: 200 }, // White-yellow (hot core)
+      { r: 255, g: 220, b: 50 },
+      { r: 255, g: 150, b: 0 },
+      { r: 255, g: 80, b: 0 },
+      { r: 255, g: 50, b: 0 },
+      { r: 255, g: 255, b: 200 },
     ];
     
     return {
-      x: x + (Math.random() - 0.5) * 8,
-      y: y + (Math.random() - 0.5) * 8,
-      vx: (Math.random() - 0.5) * 3,
-      vy: -Math.random() * 4 - 2,
+      x: x + (Math.random() - 0.5) * 10,
+      y: y + (Math.random() - 0.5) * 40,
+      vx: (Math.random() - 0.5) * 4,
+      vy: -Math.random() * 5 - 2,
       life: 1,
-      maxLife: 0.5 + Math.random() * 0.5,
-      size: 3 + Math.random() * 6,
+      maxLife: 0.4 + Math.random() * 0.4,
+      size: 4 + Math.random() * 8,
       color: colors[Math.floor(Math.random() * colors.length)],
     };
   }, []);
 
-  const getTextPath = useCallback((ctx: CanvasRenderingContext2D, text: string, fontSize: number) => {
-    ctx.font = `bold ${fontSize}px "Space Grotesk", sans-serif`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    
-    const metrics = ctx.measureText(text);
-    const points: { x: number; y: number }[] = [];
-    
-    // Create temporary canvas to extract text pixels
-    const tempCanvas = document.createElement("canvas");
-    const tempCtx = tempCanvas.getContext("2d")!;
-    tempCanvas.width = metrics.width + 40;
-    tempCanvas.height = fontSize + 40;
-    
-    tempCtx.font = ctx.font;
-    tempCtx.textAlign = "center";
-    tempCtx.textBaseline = "middle";
-    tempCtx.fillStyle = "white";
-    tempCtx.fillText(text, tempCanvas.width / 2, tempCanvas.height / 2);
-    
-    const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-    const data = imageData.data;
-    
-    // Sample edge points from the text
-    for (let y = 0; y < tempCanvas.height; y += 2) {
-      for (let x = 0; x < tempCanvas.width; x += 2) {
-        const i = (y * tempCanvas.width + x) * 4;
-        if (data[i + 3] > 128) {
-          // Check if it's an edge pixel
-          const neighbors = [
-            (y > 0) ? data[((y - 1) * tempCanvas.width + x) * 4 + 3] : 0,
-            (y < tempCanvas.height - 1) ? data[((y + 1) * tempCanvas.width + x) * 4 + 3] : 0,
-            (x > 0) ? data[(y * tempCanvas.width + x - 1) * 4 + 3] : 0,
-            (x < tempCanvas.width - 1) ? data[(y * tempCanvas.width + x + 1) * 4 + 3] : 0,
-          ];
-          
-          if (neighbors.some(n => n < 128)) {
-            points.push({ x, y });
-          }
-        }
-      }
-    }
-    
-    // Sort points to create a path-like order (left to right, with some vertical grouping)
-    points.sort((a, b) => {
-      const xDiff = Math.floor(a.x / 10) - Math.floor(b.x / 10);
-      if (xDiff !== 0) return xDiff;
-      return a.y - b.y;
-    });
-    
-    return { points, width: tempCanvas.width, height: tempCanvas.height };
-  }, []);
-
   useEffect(() => {
     const canvas = canvasRef.current;
-    const textCanvas = textCanvasRef.current;
-    if (!canvas || !textCanvas) return;
+    if (!canvas) return;
 
     const ctx = canvas.getContext("2d")!;
-    const textCtx = textCanvas.getContext("2d")!;
     
     const resize = () => {
       const dpr = window.devicePixelRatio || 1;
@@ -110,12 +53,6 @@ const SpaceHero = () => {
       canvas.style.width = `${window.innerWidth}px`;
       canvas.style.height = `${window.innerHeight}px`;
       ctx.scale(dpr, dpr);
-      
-      textCanvas.width = window.innerWidth * dpr;
-      textCanvas.height = window.innerHeight * dpr;
-      textCanvas.style.width = `${window.innerWidth}px`;
-      textCanvas.style.height = `${window.innerHeight}px`;
-      textCtx.scale(dpr, dpr);
     };
     
     resize();
@@ -126,12 +63,15 @@ const SpaceHero = () => {
     const centerX = window.innerWidth / 2;
     const centerY = window.innerHeight / 2;
     
-    const { points, width, height } = getTextPath(textCtx, text, fontSize);
-    const offsetX = centerX - width / 2;
-    const offsetY = centerY - height / 2;
+    // Measure text width
+    ctx.font = `bold ${fontSize}px "Space Grotesk", sans-serif`;
+    const textMetrics = ctx.measureText(text);
+    const textWidth = textMetrics.width;
+    const textLeft = centerX - textWidth / 2;
+    const textRight = centerX + textWidth / 2;
     
     let lastTime = 0;
-    const duration = 4000; // 4 seconds to write
+    const duration = 2500; // 2.5 seconds - faster
     const startTime = performance.now();
     
     const animate = (currentTime: number) => {
@@ -140,62 +80,69 @@ const SpaceHero = () => {
       
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      progressRef.current = progress;
       
-      // Clear canvases
+      // Clear canvas
       ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-      textCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
       
-      // Draw revealed text with gradient
-      const currentPointIndex = Math.floor(progress * points.length);
+      // Calculate flame position (left to right across text)
+      const flameX = textLeft + progress * textWidth;
+      const flameY = centerY;
       
-      // Create clipping path for revealed text
-      textCtx.save();
-      textCtx.beginPath();
+      // Draw text with clipping mask (reveal from left to right)
+      ctx.save();
       
-      for (let i = 0; i <= currentPointIndex && i < points.length; i++) {
-        const point = points[i];
-        textCtx.arc(offsetX + point.x, offsetY + point.y, 15, 0, Math.PI * 2);
-      }
-      textCtx.clip();
+      // Create clipping rectangle for revealed portion
+      ctx.beginPath();
+      ctx.rect(0, 0, flameX + 10, window.innerHeight);
+      ctx.clip();
       
       // Draw gradient text
-      const gradient = textCtx.createLinearGradient(0, centerY - fontSize / 2, 0, centerY + fontSize / 2);
+      const gradient = ctx.createLinearGradient(0, centerY - fontSize / 2, 0, centerY + fontSize / 2);
       gradient.addColorStop(0, "#ffffff");
       gradient.addColorStop(0.3, "#ffd700");
       gradient.addColorStop(0.6, "#ff8c00");
       gradient.addColorStop(1, "#ff4500");
       
-      textCtx.font = `bold ${fontSize}px "Space Grotesk", sans-serif`;
-      textCtx.textAlign = "center";
-      textCtx.textBaseline = "middle";
-      textCtx.fillStyle = gradient;
-      textCtx.shadowColor = "rgba(255, 100, 0, 0.8)";
-      textCtx.shadowBlur = 30;
-      textCtx.fillText(text, centerX, centerY);
-      textCtx.restore();
+      ctx.font = `bold ${fontSize}px "Space Grotesk", sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = gradient;
+      ctx.shadowColor = "rgba(255, 100, 0, 0.8)";
+      ctx.shadowBlur = 40;
+      ctx.fillText(text, centerX, centerY);
+      ctx.shadowBlur = 20;
+      ctx.fillText(text, centerX, centerY);
       
-      // Add particles at flame tip
-      if (progress < 1 && currentPointIndex < points.length) {
-        const currentPoint = points[currentPointIndex];
-        const flameX = offsetX + currentPoint.x;
-        const flameY = offsetY + currentPoint.y;
-        
-        // Add new particles
-        for (let i = 0; i < 8; i++) {
+      ctx.restore();
+      
+      // Add particles at flame position
+      if (progress < 1) {
+        for (let i = 0; i < 6; i++) {
           particlesRef.current.push(createParticle(flameX, flameY));
         }
         
-        // Draw main flame glow at tip
-        const flameGradient = ctx.createRadialGradient(flameX, flameY, 0, flameX, flameY, 60);
-        flameGradient.addColorStop(0, "rgba(255, 255, 200, 0.9)");
-        flameGradient.addColorStop(0.2, "rgba(255, 200, 50, 0.7)");
-        flameGradient.addColorStop(0.5, "rgba(255, 100, 0, 0.4)");
-        flameGradient.addColorStop(1, "rgba(255, 50, 0, 0)");
+        // Draw main flame glow at writing edge
+        const flameGradient = ctx.createRadialGradient(flameX, flameY, 0, flameX, flameY, 80);
+        flameGradient.addColorStop(0, "rgba(255, 255, 220, 0.95)");
+        flameGradient.addColorStop(0.15, "rgba(255, 220, 100, 0.8)");
+        flameGradient.addColorStop(0.4, "rgba(255, 120, 0, 0.5)");
+        flameGradient.addColorStop(0.7, "rgba(255, 50, 0, 0.2)");
+        flameGradient.addColorStop(1, "rgba(255, 30, 0, 0)");
         
         ctx.fillStyle = flameGradient;
         ctx.beginPath();
-        ctx.arc(flameX, flameY, 60, 0, Math.PI * 2);
+        ctx.arc(flameX, flameY, 80, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Inner hot core
+        const coreGradient = ctx.createRadialGradient(flameX, flameY, 0, flameX, flameY, 25);
+        coreGradient.addColorStop(0, "rgba(255, 255, 255, 1)");
+        coreGradient.addColorStop(0.5, "rgba(255, 255, 200, 0.8)");
+        coreGradient.addColorStop(1, "rgba(255, 200, 100, 0)");
+        
+        ctx.fillStyle = coreGradient;
+        ctx.beginPath();
+        ctx.arc(flameX, flameY, 25, 0, Math.PI * 2);
         ctx.fill();
       }
       
@@ -206,28 +153,28 @@ const SpaceHero = () => {
         
         particle.x += particle.vx;
         particle.y += particle.vy;
-        particle.vy -= 0.1; // Upward acceleration
+        particle.vy -= 0.15;
         particle.vx *= 0.98;
-        particle.size *= 0.97;
+        particle.size *= 0.96;
         
-        const alpha = particle.life * 0.8;
-        ctx.beginPath();
-        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        const alpha = particle.life * 0.9;
         
         const particleGradient = ctx.createRadialGradient(
           particle.x, particle.y, 0,
           particle.x, particle.y, particle.size
         );
         particleGradient.addColorStop(0, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${alpha})`);
+        particleGradient.addColorStop(0.6, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${alpha * 0.5})`);
         particleGradient.addColorStop(1, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, 0)`);
         
         ctx.fillStyle = particleGradient;
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
         ctx.fill();
         
         return true;
       });
       
-      // Continue animation or trigger video
       if (progress < 1 || particlesRef.current.length > 0) {
         animationRef.current = requestAnimationFrame(animate);
       } else {
@@ -244,7 +191,7 @@ const SpaceHero = () => {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [createParticle, getTextPath]);
+  }, [createParticle]);
 
   return (
     <section className="relative h-screen w-full overflow-hidden bg-[#020205]">
@@ -275,15 +222,9 @@ const SpaceHero = () => {
         </motion.div>
       )}
 
-      {/* Flame particles canvas */}
+      {/* Main canvas for text and flames */}
       <canvas
         ref={canvasRef}
-        className="absolute inset-0 z-20 pointer-events-none"
-      />
-      
-      {/* Text canvas */}
-      <canvas
-        ref={textCanvasRef}
         className="absolute inset-0 z-10"
       />
 
