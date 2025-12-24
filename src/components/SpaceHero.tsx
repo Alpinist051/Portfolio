@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface Spark {
   id: number;
@@ -13,6 +13,12 @@ interface Spark {
 const SpaceHero = () => {
   const [stage, setStage] = useState(0);
   const [sparks, setSparks] = useState<Spark[]>([]);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [typedText, setTypedText] = useState("");
+  const [showCursor, setShowCursor] = useState(true);
+  const containerRef = useRef<HTMLElement>(null);
+
+  const fullText = "AI / ML ENGINEER  •  FULL STACK DEVELOPER";
 
   useEffect(() => {
     const timer1 = setTimeout(() => setStage(1), 500);
@@ -41,10 +47,60 @@ const SpaceHero = () => {
     };
   }, []);
 
-  const subtitleWords = ["AI / ML ENGINEER", "&", "FULL STACK DEVELOPER"];
+  // Typewriter effect
+  useEffect(() => {
+    if (stage < 2) return;
+
+    const startDelay = setTimeout(() => {
+      let currentIndex = 0;
+      const typeInterval = setInterval(() => {
+        if (currentIndex <= fullText.length) {
+          setTypedText(fullText.slice(0, currentIndex));
+          currentIndex++;
+        } else {
+          clearInterval(typeInterval);
+        }
+      }, 60);
+
+      return () => clearInterval(typeInterval);
+    }, 800);
+
+    return () => clearTimeout(startDelay);
+  }, [stage]);
+
+  // Cursor blink effect
+  useEffect(() => {
+    const cursorInterval = setInterval(() => {
+      setShowCursor((prev) => !prev);
+    }, 530);
+
+    return () => clearInterval(cursorInterval);
+  }, []);
+
+  // Mouse parallax effect
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!containerRef.current) return;
+      
+      const rect = containerRef.current.getBoundingClientRect();
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      
+      const x = (e.clientX - rect.left - centerX) / centerX;
+      const y = (e.clientY - rect.top - centerY) / centerY;
+      
+      setMousePosition({ x, y });
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
 
   return (
-    <section className="relative h-screen w-full overflow-hidden bg-[#020205]">
+    <section 
+      ref={containerRef}
+      className="relative h-screen w-full overflow-hidden bg-[#020205]"
+    >
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#020205] via-[#0a0a15] to-[#020205]" />
 
@@ -77,8 +133,13 @@ const SpaceHero = () => {
       {/* Main content */}
       <div className="relative z-10 flex h-full flex-col items-center justify-center">
         {/* SENIOR text container with sparks */}
-        <div className="relative">
-          {/* Floating particle sparks */}
+        <motion.div 
+          className="relative"
+          style={{
+            transform: `translate(${mousePosition.x * -15}px, ${mousePosition.y * -15}px)`,
+          }}
+        >
+          {/* Floating particle sparks with parallax */}
           {stage >= 1 && sparks.map((spark) => (
             <motion.div
               key={spark.id}
@@ -88,6 +149,7 @@ const SpaceHero = () => {
                 top: `${spark.y}%`,
                 width: spark.size,
                 height: spark.size,
+                transform: `translate(${mousePosition.x * (20 + spark.id * 2)}px, ${mousePosition.y * (20 + spark.id * 2)}px)`,
               }}
               initial={{ opacity: 0, scale: 0 }}
               animate={{
@@ -158,34 +220,34 @@ const SpaceHero = () => {
               </motion.div>
             )}
 
-            {/* 3D shadow layers */}
-            <span
+            {/* 3D shadow layers with parallax */}
+            <motion.span
               className="absolute font-display text-7xl font-bold tracking-wider sm:text-8xl md:text-9xl lg:text-[11rem]"
               style={{
                 color: "rgba(40, 15, 0, 0.8)",
-                transform: "translate(8px, 10px)",
+                transform: `translate(${8 + mousePosition.x * 5}px, ${10 + mousePosition.y * 5}px)`,
               }}
             >
               SENIOR
-            </span>
-            <span
+            </motion.span>
+            <motion.span
               className="absolute font-display text-7xl font-bold tracking-wider sm:text-8xl md:text-9xl lg:text-[11rem]"
               style={{
                 color: "rgba(80, 30, 0, 0.6)",
-                transform: "translate(5px, 6px)",
+                transform: `translate(${5 + mousePosition.x * 3}px, ${6 + mousePosition.y * 3}px)`,
               }}
             >
               SENIOR
-            </span>
-            <span
+            </motion.span>
+            <motion.span
               className="absolute font-display text-7xl font-bold tracking-wider sm:text-8xl md:text-9xl lg:text-[11rem]"
               style={{
                 color: "rgba(120, 50, 0, 0.4)",
-                transform: "translate(3px, 3px)",
+                transform: `translate(${3 + mousePosition.x * 1.5}px, ${3 + mousePosition.y * 1.5}px)`,
               }}
             >
               SENIOR
-            </span>
+            </motion.span>
 
             {/* Main glossy text with animated glow */}
             <motion.span
@@ -230,58 +292,55 @@ const SpaceHero = () => {
               SENIOR
             </span>
           </motion.div>
-        </div>
+        </motion.div>
 
-        {/* Enhanced Subtitle with word-by-word animation */}
+        {/* Typewriter subtitle */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={stage >= 2 ? { opacity: 1 } : { opacity: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="mt-10 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-center"
+          className="mt-10 text-center"
+          style={{
+            transform: `translate(${mousePosition.x * -8}px, ${mousePosition.y * -8}px)`,
+          }}
         >
-          {subtitleWords.map((word, index) => (
-            <motion.span
-              key={index}
-              initial={{ opacity: 0, y: 30, rotateX: -90 }}
-              animate={
-                stage >= 2
-                  ? { opacity: 1, y: 0, rotateX: 0 }
-                  : { opacity: 0, y: 30, rotateX: -90 }
-              }
-              transition={{
-                duration: 0.8,
-                delay: 0.5 + index * 0.2,
-                ease: [0.22, 1, 0.36, 1],
-              }}
-              className={`font-body tracking-widest ${
-                word === "&"
-                  ? "text-lg sm:text-xl md:text-2xl"
-                  : "text-base sm:text-lg md:text-xl"
-              }`}
+          <div className="relative inline-block">
+            <span
+              className="font-body text-base tracking-[0.3em] sm:text-lg md:text-xl"
               style={{
-                background:
-                  word === "&"
-                    ? "linear-gradient(90deg, #ff8c00, #ffd700, #ff8c00)"
-                    : "linear-gradient(90deg, #a0a0a0, #ffffff, #a0a0a0)",
+                background: "linear-gradient(90deg, #888888, #ffffff, #888888)",
                 backgroundClip: "text",
                 WebkitBackgroundClip: "text",
                 color: "transparent",
-                textShadow: word === "&" ? "0 0 20px rgba(255, 150, 0, 0.5)" : "none",
+                textShadow: "0 0 30px rgba(255, 150, 0, 0.3)",
               }}
             >
-              {word}
-            </motion.span>
-          ))}
+              {typedText}
+            </span>
+            {/* Blinking cursor */}
+            <span
+              className="inline-block w-[2px] h-5 sm:h-6 md:h-7 ml-1 align-middle"
+              style={{
+                backgroundColor: showCursor && typedText.length < fullText.length ? "#ffd700" : "transparent",
+                boxShadow: showCursor && typedText.length < fullText.length ? "0 0 10px rgba(255, 200, 0, 0.8)" : "none",
+              }}
+            />
+          </div>
         </motion.div>
 
         {/* Animated underline */}
         <motion.div
           initial={{ scaleX: 0, opacity: 0 }}
-          animate={stage >= 2 ? { scaleX: 1, opacity: 1 } : { scaleX: 0, opacity: 0 }}
-          transition={{ duration: 1, delay: 1.2, ease: [0.22, 1, 0.36, 1] }}
-          className="mt-4 h-[2px] w-64 sm:w-80 md:w-96 origin-center"
+          animate={
+            stage >= 2 && typedText.length === fullText.length
+              ? { scaleX: 1, opacity: 1 }
+              : { scaleX: 0, opacity: 0 }
+          }
+          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          className="mt-4 h-[2px] w-64 sm:w-80 md:w-[500px] origin-center"
           style={{
             background: "linear-gradient(90deg, transparent, rgba(255, 150, 0, 0.8), rgba(255, 200, 50, 1), rgba(255, 150, 0, 0.8), transparent)",
+            transform: `translate(${mousePosition.x * -5}px, 0)`,
           }}
         />
 
@@ -289,7 +348,7 @@ const SpaceHero = () => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={stage >= 2 ? { opacity: 1 } : { opacity: 0 }}
-          transition={{ duration: 0.8, delay: 1.5 }}
+          transition={{ duration: 0.8, delay: 2.5 }}
           className="absolute bottom-10 left-1/2 -translate-x-1/2"
         >
           <motion.div
