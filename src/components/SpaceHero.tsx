@@ -318,45 +318,38 @@ const SpaceHero = () => {
       
       ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
       
-      const currentPointIndex = Math.floor(progress * allPoints.length);
+      // Ensure we don't go out of bounds
+      const maxIndex = allPoints.length - 1;
+      const currentPointIndex = Math.min(Math.floor(progress * allPoints.length), maxIndex);
       
       // Track reveal progress per letter
       let currentLetterIndex = -1;
-      if (currentPointIndex < allPoints.length) {
+      if (allPoints.length > 0 && currentPointIndex >= 0 && currentPointIndex <= maxIndex) {
         currentLetterIndex = allPoints[currentPointIndex].letterIndex;
       }
       
       // Update letter reveal status
       for (let i = 0; i < letterData.length; i++) {
-        if (i < currentLetterIndex) {
+        if (currentLetterIndex >= 0 && i < currentLetterIndex) {
           letterRevealProgress[i] = 1;
         } else if (i === currentLetterIndex) {
-          // Calculate progress within this letter
-          const letterStartIdx = allPoints.findIndex(p => p.letterIndex === i);
-          let letterEndIdx = letterStartIdx;
-          for (let j = allPoints.length - 1; j >= 0; j--) {
-            if (allPoints[j].letterIndex === i) {
-              letterEndIdx = j;
-              break;
-            }
-          }
-          const letterProgress = (currentPointIndex - letterStartIdx) / (letterEndIdx - letterStartIdx + 1);
-          letterRevealProgress[i] = Math.max(letterRevealProgress[i], letterProgress);
+          letterRevealProgress[i] = 1; // Show full letter when flame reaches it
         }
       }
       
       // Draw letters that are being revealed or completed
       letterData.forEach((data, index) => {
-        if (letterRevealProgress[index] > 0.1) {
+        if (letterRevealProgress[index] > 0) {
           draw3DGlossyLetter(data.char, data.x, centerY, currentTime);
         }
       });
       
       // Draw flame at current stroke position
-      if (progress < 1 && currentPointIndex < allPoints.length) {
-        const { point } = allPoints[currentPointIndex];
-        const flameX = point.x;
-        const flameY = point.y;
+      if (progress < 1 && allPoints.length > 0 && currentPointIndex >= 0 && currentPointIndex < allPoints.length) {
+        const currentPoint = allPoints[currentPointIndex];
+        if (currentPoint && currentPoint.point) {
+          const flameX = currentPoint.point.x;
+          const flameY = currentPoint.point.y;
         
         // Add particles
         for (let i = 0; i < 12; i++) {
@@ -395,6 +388,7 @@ const SpaceHero = () => {
         ctx.beginPath();
         ctx.arc(flameX, flameY, 12, 0, Math.PI * 2);
         ctx.fill();
+        }
       }
       
       // Update particles
