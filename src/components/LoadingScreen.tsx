@@ -442,9 +442,9 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
           className="relative"
         >
           <h1 className="font-display text-5xl font-bold tracking-wider md:text-7xl">
-            <span className="text-neon">INIT</span>
+            <span className="text-neon">LOAD</span>
             <span className="text-foreground">_</span>
-            <span className="text-neon-magenta">SYS</span>
+            <span className="text-neon-magenta">FUTURE</span>
           </h1>
           <motion.div
             className="absolute -inset-4 -z-10 rounded-lg bg-primary/5"
@@ -523,7 +523,7 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
 
       {/* Corner decorations */}
       <div className="absolute left-8 top-8 z-10 font-display text-xs text-muted-foreground opacity-50">
-        <div>SYS.BOOT v2.4.1</div>
+        <div>IVAN.TAN v0.0.1</div>
         <motion.div 
           className="text-primary"
           animate={isShaking ? { opacity: [1, 0.3, 1] } : {}}

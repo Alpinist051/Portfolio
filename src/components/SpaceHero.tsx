@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
+import CityBackground from "./CityBackground";
 
 interface Spark {
   id: number;
@@ -81,14 +82,14 @@ const SpaceHero = () => {
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!containerRef.current) return;
-      
+
       const rect = containerRef.current.getBoundingClientRect();
       const centerX = rect.width / 2;
       const centerY = rect.height / 2;
-      
+
       const x = (e.clientX - rect.left - centerX) / centerX;
       const y = (e.clientY - rect.top - centerY) / centerY;
-      
+
       setMousePosition({ x, y });
     };
 
@@ -97,7 +98,7 @@ const SpaceHero = () => {
   }, []);
 
   return (
-    <section 
+    <section
       ref={containerRef}
       className="relative h-screen w-full overflow-hidden bg-[#020205]"
     >
@@ -115,6 +116,7 @@ const SpaceHero = () => {
         transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
         className="absolute inset-0 z-0 overflow-hidden"
       >
+        {/* In your SpaceHero component video element */}
         <video
           autoPlay
           muted
@@ -122,19 +124,28 @@ const SpaceHero = () => {
           playsInline
           preload="auto"
           className="h-full w-full object-cover opacity-70"
+          onError={(e) => {
+            // Fallback to a local video or placeholder
+            const target = e.target as HTMLVideoElement;
+            target.src = "/fallback-video.mp4"; // Add a local video file
+            // OR use a solid color as backup
+            // target.style.display = 'none';
+            // target.parentElement.style.backgroundColor = '#0a0a15';
+          }}
         >
           <source
-            src="https://cdn.pixabay.com/video/2020/02/10/32112-391539067_large.mp4"
+            src="https://adstorm.co/videos/AdStormAdvertiser.webm"
             type="video/mp4"
           />
+          {/* Add a backup source if needed */}
+          {/* <source src="/local-background.mp4" type="video/mp4" /> */}
         </video>
         <div className="absolute inset-0 bg-gradient-to-t from-[#020205] via-transparent to-[#020205]/80" />
       </motion.div>
-
       {/* Main content */}
       <div className="relative z-10 flex h-full flex-col items-center justify-center">
         {/* SENIOR text container with sparks */}
-        <motion.div 
+        <motion.div
           className="relative"
           style={{
             transform: `translate(${mousePosition.x * -15}px, ${mousePosition.y * -15}px)`,
@@ -169,18 +180,16 @@ const SpaceHero = () => {
               <div
                 className="h-full w-full rounded-full"
                 style={{
-                  background: `radial-gradient(circle, ${
-                    spark.id % 3 === 0
-                      ? "rgba(255, 220, 100, 1)"
-                      : spark.id % 3 === 1
+                  background: `radial-gradient(circle, ${spark.id % 3 === 0
+                    ? "rgba(255, 220, 100, 1)"
+                    : spark.id % 3 === 1
                       ? "rgba(255, 150, 50, 1)"
                       : "rgba(255, 255, 200, 1)"
-                  }, transparent)`,
-                  boxShadow: `0 0 ${spark.size * 2}px ${
-                    spark.id % 2 === 0
-                      ? "rgba(255, 200, 50, 0.8)"
-                      : "rgba(255, 100, 0, 0.8)"
-                  }`,
+                    }, transparent)`,
+                  boxShadow: `0 0 ${spark.size * 2}px ${spark.id % 2 === 0
+                    ? "rgba(255, 200, 50, 0.8)"
+                    : "rgba(255, 100, 0, 0.8)"
+                    }`,
                 }}
               />
             </motion.div>
@@ -262,12 +271,12 @@ const SpaceHero = () => {
               animate={
                 stage >= 2
                   ? {
-                      textShadow: [
-                        "0 0 60px rgba(255, 100, 0, 0.5), 0 0 120px rgba(255, 50, 0, 0.3)",
-                        "0 0 80px rgba(255, 120, 0, 0.7), 0 0 150px rgba(255, 70, 0, 0.5)",
-                        "0 0 60px rgba(255, 100, 0, 0.5), 0 0 120px rgba(255, 50, 0, 0.3)",
-                      ],
-                    }
+                    textShadow: [
+                      "0 0 60px rgba(255, 100, 0, 0.5), 0 0 120px rgba(255, 50, 0, 0.3)",
+                      "0 0 80px rgba(255, 120, 0, 0.7), 0 0 150px rgba(255, 70, 0, 0.5)",
+                      "0 0 60px rgba(255, 100, 0, 0.5), 0 0 120px rgba(255, 50, 0, 0.3)",
+                    ],
+                  }
                   : {}
               }
               transition={{
