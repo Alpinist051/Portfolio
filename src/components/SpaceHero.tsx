@@ -26,127 +26,119 @@ const SpaceHero = () => {
 
   const createParticle = useCallback((x: number, y: number): Particle => {
     const colors = [
-      { r: 255, g: 220, b: 80 },
+      { r: 255, g: 230, b: 100 },
       { r: 255, g: 180, b: 50 },
-      { r: 255, g: 120, b: 20 },
-      { r: 255, g: 80, b: 0 },
-      { r: 255, g: 255, b: 220 },
+      { r: 255, g: 140, b: 30 },
+      { r: 255, g: 100, b: 10 },
+      { r: 255, g: 255, b: 230 },
     ];
     
     return {
-      x: x + (Math.random() - 0.5) * 12,
-      y: y + (Math.random() - 0.5) * 12,
-      vx: (Math.random() - 0.5) * 6,
-      vy: -Math.random() * 8 - 4,
+      x: x + (Math.random() - 0.5) * 8,
+      y: y + (Math.random() - 0.5) * 8,
+      vx: (Math.random() - 0.5) * 5,
+      vy: -Math.random() * 7 - 3,
       life: 1,
-      maxLife: 0.25 + Math.random() * 0.35,
-      size: 4 + Math.random() * 10,
+      maxLife: 0.2 + Math.random() * 0.3,
+      size: 3 + Math.random() * 8,
       color: colors[Math.floor(Math.random() * colors.length)],
     };
   }, []);
 
-  // Define stroke paths for each letter (normalized 0-1 coordinates)
-  const getLetterPaths = useCallback((letterWidth: number, letterHeight: number) => {
-    const h = letterHeight;
-    const w = letterWidth;
-    
+  // Accurate handwriting stroke paths for each letter
+  const getLetterPaths = useCallback((w: number, h: number) => {
+    // Helper to create smooth curve points
+    const bezierPoints = (p0: StrokePoint, p1: StrokePoint, p2: StrokePoint, p3: StrokePoint, steps: number): StrokePoint[] => {
+      const points: StrokePoint[] = [];
+      for (let t = 0; t <= 1; t += 1 / steps) {
+        const x = Math.pow(1-t, 3) * p0.x + 3 * Math.pow(1-t, 2) * t * p1.x + 3 * (1-t) * Math.pow(t, 2) * p2.x + Math.pow(t, 3) * p3.x;
+        const y = Math.pow(1-t, 3) * p0.y + 3 * Math.pow(1-t, 2) * t * p1.y + 3 * (1-t) * Math.pow(t, 2) * p2.y + Math.pow(t, 3) * p3.y;
+        points.push({ x, y });
+      }
+      return points;
+    };
+
+    const arcPoints = (cx: number, cy: number, rx: number, ry: number, startAngle: number, endAngle: number, steps: number): StrokePoint[] => {
+      const points: StrokePoint[] = [];
+      const angleStep = (endAngle - startAngle) / steps;
+      for (let i = 0; i <= steps; i++) {
+        const angle = startAngle + i * angleStep;
+        points.push({ x: cx + rx * Math.cos(angle), y: cy + ry * Math.sin(angle) });
+      }
+      return points;
+    };
+
     return {
+      // S: Top curve right-to-left, then bottom curve left-to-right
       'S': [
-        // Top curve
-        { x: w * 0.85, y: h * 0.15 },
-        { x: w * 0.7, y: h * 0.05 },
-        { x: w * 0.4, y: h * 0.05 },
-        { x: w * 0.15, y: h * 0.15 },
-        { x: w * 0.1, y: h * 0.3 },
-        // Middle curve
-        { x: w * 0.2, y: h * 0.45 },
-        { x: w * 0.5, y: h * 0.5 },
-        { x: w * 0.8, y: h * 0.55 },
-        { x: w * 0.9, y: h * 0.7 },
-        // Bottom curve
-        { x: w * 0.85, y: h * 0.85 },
-        { x: w * 0.6, y: h * 0.95 },
-        { x: w * 0.3, y: h * 0.95 },
-        { x: w * 0.1, y: h * 0.85 },
+        ...arcPoints(w * 0.5, h * 0.22, w * 0.35, h * 0.18, -0.3, Math.PI + 0.3, 15),
+        ...arcPoints(w * 0.5, h * 0.78, w * 0.35, h * 0.18, Math.PI - 0.3, 2 * Math.PI + 0.3, 15),
       ],
+      
+      // E: Vertical down, back up, middle stroke, back, top stroke, back, bottom stroke
       'E': [
-        // Vertical stroke
-        { x: w * 0.15, y: h * 0.05 },
-        { x: w * 0.15, y: h * 0.5 },
-        { x: w * 0.15, y: h * 0.95 },
-        // Bottom horizontal
-        { x: w * 0.5, y: h * 0.95 },
-        { x: w * 0.85, y: h * 0.95 },
+        // Vertical stroke (top to bottom)
+        ...Array.from({ length: 12 }, (_, i) => ({ x: w * 0.2, y: h * 0.1 + (h * 0.8) * (i / 11) })),
+        // Top horizontal (left to right)
+        ...Array.from({ length: 8 }, (_, i) => ({ x: w * 0.2 + (w * 0.6) * (i / 7), y: h * 0.1 })),
         // Back to middle
-        { x: w * 0.15, y: h * 0.5 },
+        { x: w * 0.2, y: h * 0.5 },
         // Middle horizontal
-        { x: w * 0.5, y: h * 0.5 },
-        { x: w * 0.75, y: h * 0.5 },
-        // Back to top
-        { x: w * 0.15, y: h * 0.05 },
-        // Top horizontal
-        { x: w * 0.5, y: h * 0.05 },
-        { x: w * 0.85, y: h * 0.05 },
+        ...Array.from({ length: 6 }, (_, i) => ({ x: w * 0.2 + (w * 0.5) * (i / 5), y: h * 0.5 })),
+        // Back to bottom
+        { x: w * 0.2, y: h * 0.9 },
+        // Bottom horizontal
+        ...Array.from({ length: 8 }, (_, i) => ({ x: w * 0.2 + (w * 0.6) * (i / 7), y: h * 0.9 })),
       ],
+      
+      // N: Down left side, diagonal to top right, down right side
       'N': [
-        // Left vertical
-        { x: w * 0.15, y: h * 0.95 },
-        { x: w * 0.15, y: h * 0.5 },
-        { x: w * 0.15, y: h * 0.05 },
-        // Diagonal
-        { x: w * 0.4, y: h * 0.35 },
-        { x: w * 0.6, y: h * 0.65 },
-        { x: w * 0.85, y: h * 0.95 },
-        // Right vertical
-        { x: w * 0.85, y: h * 0.5 },
-        { x: w * 0.85, y: h * 0.05 },
+        // Left vertical (top to bottom)
+        ...Array.from({ length: 10 }, (_, i) => ({ x: w * 0.15, y: h * 0.1 + (h * 0.8) * (i / 9) })),
+        // Back to top
+        { x: w * 0.15, y: h * 0.1 },
+        // Diagonal (top-left to bottom-right)
+        ...Array.from({ length: 12 }, (_, i) => ({ 
+          x: w * 0.15 + (w * 0.7) * (i / 11), 
+          y: h * 0.1 + (h * 0.8) * (i / 11) 
+        })),
+        // Right vertical (bottom to top)
+        ...Array.from({ length: 10 }, (_, i) => ({ x: w * 0.85, y: h * 0.9 - (h * 0.8) * (i / 9) })),
       ],
+      
+      // I: Top serif, down, bottom serif
       'I': [
-        // Top serif
-        { x: w * 0.2, y: h * 0.05 },
-        { x: w * 0.5, y: h * 0.05 },
-        { x: w * 0.8, y: h * 0.05 },
-        // Vertical
-        { x: w * 0.5, y: h * 0.05 },
-        { x: w * 0.5, y: h * 0.5 },
-        { x: w * 0.5, y: h * 0.95 },
-        // Bottom serif
-        { x: w * 0.2, y: h * 0.95 },
-        { x: w * 0.8, y: h * 0.95 },
-      ],
-      'O': [
-        // Circular path
-        { x: w * 0.5, y: h * 0.05 },
-        { x: w * 0.75, y: h * 0.1 },
-        { x: w * 0.9, y: h * 0.25 },
-        { x: w * 0.95, y: h * 0.5 },
-        { x: w * 0.9, y: h * 0.75 },
-        { x: w * 0.75, y: h * 0.9 },
-        { x: w * 0.5, y: h * 0.95 },
+        // Top serif (left to right)
+        ...Array.from({ length: 5 }, (_, i) => ({ x: w * 0.25 + (w * 0.5) * (i / 4), y: h * 0.1 })),
+        // To center top
+        { x: w * 0.5, y: h * 0.1 },
+        // Vertical down
+        ...Array.from({ length: 10 }, (_, i) => ({ x: w * 0.5, y: h * 0.1 + (h * 0.8) * (i / 9) })),
+        // Bottom serif (left to right)
         { x: w * 0.25, y: h * 0.9 },
-        { x: w * 0.1, y: h * 0.75 },
-        { x: w * 0.05, y: h * 0.5 },
-        { x: w * 0.1, y: h * 0.25 },
-        { x: w * 0.25, y: h * 0.1 },
-        { x: w * 0.5, y: h * 0.05 },
+        ...Array.from({ length: 5 }, (_, i) => ({ x: w * 0.25 + (w * 0.5) * (i / 4), y: h * 0.9 })),
       ],
+      
+      // O: Full circle starting from top, clockwise
+      'O': arcPoints(w * 0.5, h * 0.5, w * 0.4, h * 0.4, -Math.PI / 2, Math.PI * 1.5, 24),
+      
+      // R: Down, up, curve around, diagonal leg
       'R': [
-        // Vertical stroke
-        { x: w * 0.15, y: h * 0.95 },
-        { x: w * 0.15, y: h * 0.5 },
-        { x: w * 0.15, y: h * 0.05 },
-        // Top curve
-        { x: w * 0.4, y: h * 0.05 },
-        { x: w * 0.7, y: h * 0.08 },
-        { x: w * 0.85, y: h * 0.2 },
-        { x: w * 0.85, y: h * 0.35 },
-        { x: w * 0.7, y: h * 0.48 },
-        { x: w * 0.4, y: h * 0.52 },
-        { x: w * 0.15, y: h * 0.52 },
-        // Leg
-        { x: w * 0.4, y: h * 0.52 },
-        { x: w * 0.6, y: h * 0.7 },
-        { x: w * 0.85, y: h * 0.95 },
+        // Vertical stroke (top to bottom)
+        ...Array.from({ length: 10 }, (_, i) => ({ x: w * 0.15, y: h * 0.1 + (h * 0.8) * (i / 9) })),
+        // Back to top
+        { x: w * 0.15, y: h * 0.1 },
+        // Top horizontal
+        ...Array.from({ length: 4 }, (_, i) => ({ x: w * 0.15 + (w * 0.35) * (i / 3), y: h * 0.1 })),
+        // Curve around (bowl of R)
+        ...arcPoints(w * 0.5, h * 0.3, w * 0.3, h * 0.2, -Math.PI / 2, Math.PI / 2, 10),
+        // Back to stem at middle
+        ...Array.from({ length: 3 }, (_, i) => ({ x: w * 0.5 - (w * 0.35) * (i / 2), y: h * 0.5 })),
+        // Diagonal leg
+        ...Array.from({ length: 8 }, (_, i) => ({ 
+          x: w * 0.35 + (w * 0.5) * (i / 7), 
+          y: h * 0.5 + (h * 0.4) * (i / 7) 
+        })),
       ],
     };
   }, []);
@@ -171,25 +163,22 @@ const SpaceHero = () => {
 
     const text = "SENIOR";
     const letters = text.split("");
-    const fontSize = Math.min(window.innerWidth * 0.13, 150);
+    const fontSize = Math.min(window.innerWidth * 0.12, 140);
     const centerX = window.innerWidth / 2;
     const centerY = window.innerHeight / 2;
     
     ctx.font = `bold ${fontSize}px "Space Grotesk", sans-serif`;
     const totalWidth = ctx.measureText(text).width;
-    const letterSpacing = 12;
+    const letterSpacing = fontSize * 0.08;
     
-    // Calculate letter positions
     const letterData: { char: string; x: number; width: number; path: StrokePoint[] }[] = [];
     let currentX = centerX - totalWidth / 2 - (letterSpacing * (letters.length - 1)) / 2;
     
-    const paths = getLetterPaths(fontSize * 0.7, fontSize);
-    
     letters.forEach((letter) => {
       const width = ctx.measureText(letter).width;
+      const paths = getLetterPaths(width, fontSize);
       const letterPath = paths[letter as keyof typeof paths] || [];
       
-      // Offset path points to letter position
       const offsetPath = letterPath.map(p => ({
         x: currentX + p.x,
         y: centerY - fontSize / 2 + p.y
@@ -199,7 +188,7 @@ const SpaceHero = () => {
       currentX += width + letterSpacing;
     });
     
-    // Flatten all paths into one continuous path
+    // Create continuous path with all points
     const allPoints: { point: StrokePoint; letterIndex: number }[] = [];
     letterData.forEach((data, letterIndex) => {
       data.path.forEach(point => {
@@ -208,99 +197,114 @@ const SpaceHero = () => {
     });
     
     let lastTime = performance.now();
-    const totalDuration = 2800;
+    const totalDuration = 3000;
     const startTime = performance.now();
-    const revealedLetters = new Set<number>();
+    const letterRevealProgress: number[] = new Array(letters.length).fill(0);
     
-    const drawMetallicLetter = (
+    const draw3DGlossyLetter = (
       letter: string,
       x: number,
       y: number,
-      revealProgress: number,
       time: number
     ) => {
-      if (revealProgress <= 0) return;
-      
       ctx.save();
+      ctx.font = `bold ${fontSize}px "Space Grotesk", sans-serif`;
+      ctx.textBaseline = "middle";
       
-      const baseY = y;
-      
-      // Deep shadow layers for 3D depth
-      for (let i = 5; i >= 1; i--) {
-        ctx.fillStyle = `rgba(40, 15, 0, ${0.15 + (5 - i) * 0.05})`;
-        ctx.font = `bold ${fontSize}px "Space Grotesk", sans-serif`;
-        ctx.textBaseline = "middle";
-        ctx.fillText(letter, x + i * 1.5, baseY + i * 2);
+      // Layer 1-6: Deep 3D extrusion shadows
+      for (let i = 8; i >= 1; i--) {
+        const shadowAlpha = 0.08 + (8 - i) * 0.03;
+        ctx.fillStyle = `rgba(30, 10, 0, ${shadowAlpha})`;
+        ctx.fillText(letter, x + i * 1.2, y + i * 1.8);
       }
       
-      // Bronze/copper base layer
-      const baseGradient = ctx.createLinearGradient(x, baseY - fontSize / 2, x, baseY + fontSize / 2);
-      baseGradient.addColorStop(0, "#cd7f32");
-      baseGradient.addColorStop(0.3, "#b87333");
-      baseGradient.addColorStop(0.5, "#a0522d");
-      baseGradient.addColorStop(0.7, "#8b4513");
-      baseGradient.addColorStop(1, "#654321");
+      // Layer 7: Dark bronze base
+      const darkBase = ctx.createLinearGradient(x, y - fontSize/2, x, y + fontSize/2);
+      darkBase.addColorStop(0, "#8b4513");
+      darkBase.addColorStop(0.5, "#654321");
+      darkBase.addColorStop(1, "#3d2314");
+      ctx.fillStyle = darkBase;
+      ctx.fillText(letter, x + 3, y + 4);
       
-      ctx.fillStyle = baseGradient;
-      ctx.fillText(letter, x + 2, baseY + 2);
+      // Layer 8: Bronze mid layer
+      const bronzeLayer = ctx.createLinearGradient(x, y - fontSize/2, x, y + fontSize/2);
+      bronzeLayer.addColorStop(0, "#cd853f");
+      bronzeLayer.addColorStop(0.3, "#b8860b");
+      bronzeLayer.addColorStop(0.7, "#996515");
+      bronzeLayer.addColorStop(1, "#8b4513");
+      ctx.fillStyle = bronzeLayer;
+      ctx.fillText(letter, x + 1.5, y + 2);
       
-      // Main metallic gold layer
-      const metallicGradient = ctx.createLinearGradient(x, baseY - fontSize / 2, x + fontSize * 0.3, baseY + fontSize / 2);
-      metallicGradient.addColorStop(0, "#fff8dc");
-      metallicGradient.addColorStop(0.1, "#ffd700");
-      metallicGradient.addColorStop(0.25, "#ffb347");
-      metallicGradient.addColorStop(0.4, "#ff8c00");
-      metallicGradient.addColorStop(0.55, "#ff6600");
-      metallicGradient.addColorStop(0.7, "#ff4500");
-      metallicGradient.addColorStop(0.85, "#cc3300");
-      metallicGradient.addColorStop(1, "#8b0000");
+      // Layer 9: Main golden metallic gradient
+      const mainGradient = ctx.createLinearGradient(x - fontSize * 0.2, y - fontSize/2, x + fontSize * 0.4, y + fontSize/2);
+      mainGradient.addColorStop(0, "#fffacd");
+      mainGradient.addColorStop(0.08, "#ffd700");
+      mainGradient.addColorStop(0.2, "#ffb347");
+      mainGradient.addColorStop(0.35, "#ff8c00");
+      mainGradient.addColorStop(0.5, "#ff6b00");
+      mainGradient.addColorStop(0.65, "#ff4500");
+      mainGradient.addColorStop(0.8, "#dc143c");
+      mainGradient.addColorStop(1, "#8b0000");
+      ctx.fillStyle = mainGradient;
+      ctx.fillText(letter, x, y);
       
-      ctx.fillStyle = metallicGradient;
-      ctx.fillText(letter, x, baseY);
-      
-      // Glossy top highlight (bevel effect)
+      // Layer 10: Glass-like top reflection
       ctx.save();
       ctx.beginPath();
-      const highlightHeight = fontSize * 0.35;
-      ctx.rect(x - 20, baseY - fontSize / 2 - 10, fontSize * 2, highlightHeight);
+      ctx.rect(x - fontSize, y - fontSize/2 - 5, fontSize * 3, fontSize * 0.45);
       ctx.clip();
       
-      const topShine = ctx.createLinearGradient(x, baseY - fontSize / 2, x, baseY - fontSize / 2 + highlightHeight);
-      topShine.addColorStop(0, "rgba(255, 255, 255, 0.9)");
-      topShine.addColorStop(0.3, "rgba(255, 255, 240, 0.6)");
-      topShine.addColorStop(0.6, "rgba(255, 230, 180, 0.3)");
-      topShine.addColorStop(1, "rgba(255, 200, 100, 0)");
-      
-      ctx.fillStyle = topShine;
-      ctx.fillText(letter, x, baseY);
+      const glassTop = ctx.createLinearGradient(x, y - fontSize/2, x, y - fontSize * 0.05);
+      glassTop.addColorStop(0, "rgba(255, 255, 255, 0.95)");
+      glassTop.addColorStop(0.2, "rgba(255, 255, 250, 0.8)");
+      glassTop.addColorStop(0.5, "rgba(255, 250, 230, 0.5)");
+      glassTop.addColorStop(0.8, "rgba(255, 230, 180, 0.2)");
+      glassTop.addColorStop(1, "rgba(255, 200, 100, 0)");
+      ctx.fillStyle = glassTop;
+      ctx.fillText(letter, x, y);
       ctx.restore();
       
-      // Moving specular highlight
-      const specularX = x + Math.sin(time * 0.002) * 20;
-      const specularGradient = ctx.createRadialGradient(
-        specularX, baseY - fontSize * 0.2, 0,
-        specularX, baseY - fontSize * 0.2, fontSize * 0.4
+      // Layer 11: Animated specular highlight (glassy shine)
+      const shineOffset = Math.sin(time * 0.0015) * fontSize * 0.3;
+      const specGradient = ctx.createRadialGradient(
+        x + fontSize * 0.2 + shineOffset, y - fontSize * 0.15, 0,
+        x + fontSize * 0.2 + shineOffset, y - fontSize * 0.15, fontSize * 0.5
       );
-      specularGradient.addColorStop(0, "rgba(255, 255, 255, 0.5)");
-      specularGradient.addColorStop(0.5, "rgba(255, 255, 200, 0.2)");
-      specularGradient.addColorStop(1, "rgba(255, 220, 150, 0)");
+      specGradient.addColorStop(0, "rgba(255, 255, 255, 0.7)");
+      specGradient.addColorStop(0.3, "rgba(255, 255, 255, 0.3)");
+      specGradient.addColorStop(0.6, "rgba(255, 255, 220, 0.1)");
+      specGradient.addColorStop(1, "rgba(255, 220, 150, 0)");
       
       ctx.save();
       ctx.globalCompositeOperation = "overlay";
-      ctx.fillStyle = specularGradient;
-      ctx.fillText(letter, x, baseY);
+      ctx.fillStyle = specGradient;
+      ctx.fillText(letter, x, y);
       ctx.restore();
       
-      // Edge highlight (rim light)
-      ctx.strokeStyle = "rgba(255, 255, 220, 0.5)";
-      ctx.lineWidth = 1.5;
-      ctx.strokeText(letter, x - 0.5, baseY - 0.5);
+      // Layer 12: Bottom reflection (glass effect)
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(x - fontSize, y + fontSize * 0.15, fontSize * 3, fontSize * 0.4);
+      ctx.clip();
       
-      // Outer glow
-      ctx.shadowColor = "rgba(255, 100, 0, 0.7)";
-      ctx.shadowBlur = 30;
-      ctx.fillStyle = "rgba(0,0,0,0)";
-      ctx.fillText(letter, x, baseY);
+      const bottomReflect = ctx.createLinearGradient(x, y + fontSize * 0.15, x, y + fontSize/2);
+      bottomReflect.addColorStop(0, "rgba(255, 200, 150, 0)");
+      bottomReflect.addColorStop(0.5, "rgba(255, 180, 100, 0.15)");
+      bottomReflect.addColorStop(1, "rgba(255, 220, 180, 0.3)");
+      ctx.fillStyle = bottomReflect;
+      ctx.fillText(letter, x, y);
+      ctx.restore();
+      
+      // Layer 13: Edge highlights
+      ctx.strokeStyle = "rgba(255, 255, 240, 0.6)";
+      ctx.lineWidth = 1;
+      ctx.strokeText(letter, x - 0.5, y - 1);
+      
+      // Layer 14: Outer glow
+      ctx.shadowColor = "rgba(255, 120, 0, 0.8)";
+      ctx.shadowBlur = 35;
+      ctx.fillStyle = "transparent";
+      ctx.fillText(letter, x, y);
       
       ctx.restore();
     };
@@ -314,91 +318,102 @@ const SpaceHero = () => {
       
       ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
       
-      // Calculate current point index
       const currentPointIndex = Math.floor(progress * allPoints.length);
       
-      // Track which letters should be fully revealed
-      for (let i = 0; i <= currentPointIndex && i < allPoints.length; i++) {
-        revealedLetters.add(allPoints[i].letterIndex);
+      // Track reveal progress per letter
+      let currentLetterIndex = -1;
+      if (currentPointIndex < allPoints.length) {
+        currentLetterIndex = allPoints[currentPointIndex].letterIndex;
       }
       
-      // Draw revealed letters
+      // Update letter reveal status
+      for (let i = 0; i < letterData.length; i++) {
+        if (i < currentLetterIndex) {
+          letterRevealProgress[i] = 1;
+        } else if (i === currentLetterIndex) {
+          // Calculate progress within this letter
+          const letterStartIdx = allPoints.findIndex(p => p.letterIndex === i);
+          let letterEndIdx = letterStartIdx;
+          for (let j = allPoints.length - 1; j >= 0; j--) {
+            if (allPoints[j].letterIndex === i) {
+              letterEndIdx = j;
+              break;
+            }
+          }
+          const letterProgress = (currentPointIndex - letterStartIdx) / (letterEndIdx - letterStartIdx + 1);
+          letterRevealProgress[i] = Math.max(letterRevealProgress[i], letterProgress);
+        }
+      }
+      
+      // Draw letters that are being revealed or completed
       letterData.forEach((data, index) => {
-        if (revealedLetters.has(index)) {
-          drawMetallicLetter(data.char, data.x, centerY, 1, currentTime);
+        if (letterRevealProgress[index] > 0.1) {
+          draw3DGlossyLetter(data.char, data.x, centerY, currentTime);
         }
       });
       
       // Draw flame at current stroke position
       if (progress < 1 && currentPointIndex < allPoints.length) {
-        const currentData = allPoints[currentPointIndex];
-        const flameX = currentData.point.x;
-        const flameY = currentData.point.y;
+        const { point } = allPoints[currentPointIndex];
+        const flameX = point.x;
+        const flameY = point.y;
         
         // Add particles
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 12; i++) {
           particlesRef.current.push(createParticle(flameX, flameY));
         }
         
-        // Outer flame glow
-        const outerGlow = ctx.createRadialGradient(flameX, flameY, 0, flameX, flameY, 100);
-        outerGlow.addColorStop(0, "rgba(255, 200, 100, 0.6)");
-        outerGlow.addColorStop(0.3, "rgba(255, 120, 0, 0.4)");
-        outerGlow.addColorStop(0.6, "rgba(255, 60, 0, 0.2)");
-        outerGlow.addColorStop(1, "rgba(200, 30, 0, 0)");
-        
+        // Large outer glow
+        const outerGlow = ctx.createRadialGradient(flameX, flameY, 0, flameX, flameY, 90);
+        outerGlow.addColorStop(0, "rgba(255, 220, 150, 0.7)");
+        outerGlow.addColorStop(0.25, "rgba(255, 150, 50, 0.5)");
+        outerGlow.addColorStop(0.5, "rgba(255, 80, 0, 0.3)");
+        outerGlow.addColorStop(1, "rgba(200, 50, 0, 0)");
         ctx.fillStyle = outerGlow;
         ctx.beginPath();
-        ctx.arc(flameX, flameY, 100, 0, Math.PI * 2);
+        ctx.arc(flameX, flameY, 90, 0, Math.PI * 2);
         ctx.fill();
         
-        // Main flame
-        const flameGradient = ctx.createRadialGradient(flameX, flameY, 0, flameX, flameY, 50);
-        flameGradient.addColorStop(0, "rgba(255, 255, 255, 1)");
-        flameGradient.addColorStop(0.15, "rgba(255, 255, 200, 0.95)");
-        flameGradient.addColorStop(0.35, "rgba(255, 220, 100, 0.8)");
-        flameGradient.addColorStop(0.6, "rgba(255, 150, 50, 0.5)");
-        flameGradient.addColorStop(1, "rgba(255, 80, 0, 0)");
-        
-        ctx.fillStyle = flameGradient;
+        // Main flame body
+        const flame = ctx.createRadialGradient(flameX, flameY, 0, flameX, flameY, 40);
+        flame.addColorStop(0, "rgba(255, 255, 255, 1)");
+        flame.addColorStop(0.2, "rgba(255, 255, 220, 0.95)");
+        flame.addColorStop(0.4, "rgba(255, 230, 150, 0.8)");
+        flame.addColorStop(0.6, "rgba(255, 180, 80, 0.6)");
+        flame.addColorStop(1, "rgba(255, 100, 30, 0)");
+        ctx.fillStyle = flame;
         ctx.beginPath();
-        ctx.arc(flameX, flameY, 50, 0, Math.PI * 2);
+        ctx.arc(flameX, flameY, 40, 0, Math.PI * 2);
         ctx.fill();
         
-        // Hot white core
-        const coreGradient = ctx.createRadialGradient(flameX, flameY, 0, flameX, flameY, 15);
-        coreGradient.addColorStop(0, "rgba(255, 255, 255, 1)");
-        coreGradient.addColorStop(0.5, "rgba(255, 255, 255, 0.8)");
-        coreGradient.addColorStop(1, "rgba(255, 255, 220, 0)");
-        
-        ctx.fillStyle = coreGradient;
+        // White hot core
+        const core = ctx.createRadialGradient(flameX, flameY, 0, flameX, flameY, 12);
+        core.addColorStop(0, "rgba(255, 255, 255, 1)");
+        core.addColorStop(0.5, "rgba(255, 255, 255, 0.9)");
+        core.addColorStop(1, "rgba(255, 255, 240, 0)");
+        ctx.fillStyle = core;
         ctx.beginPath();
-        ctx.arc(flameX, flameY, 15, 0, Math.PI * 2);
+        ctx.arc(flameX, flameY, 12, 0, Math.PI * 2);
         ctx.fill();
       }
       
-      // Update and draw particles
+      // Update particles
       particlesRef.current = particlesRef.current.filter(particle => {
         particle.life -= deltaTime / particle.maxLife;
         if (particle.life <= 0) return false;
         
         particle.x += particle.vx;
         particle.y += particle.vy;
-        particle.vy -= 0.25;
-        particle.vx *= 0.96;
-        particle.size *= 0.94;
+        particle.vy -= 0.3;
+        particle.vx *= 0.95;
+        particle.size *= 0.93;
         
-        const alpha = particle.life * 0.9;
-        
-        const particleGradient = ctx.createRadialGradient(
-          particle.x, particle.y, 0,
-          particle.x, particle.y, particle.size
-        );
-        particleGradient.addColorStop(0, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${alpha})`);
-        particleGradient.addColorStop(0.5, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${alpha * 0.5})`);
-        particleGradient.addColorStop(1, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, 0)`);
-        
-        ctx.fillStyle = particleGradient;
+        const alpha = particle.life * 0.85;
+        const pg = ctx.createRadialGradient(particle.x, particle.y, 0, particle.x, particle.y, particle.size);
+        pg.addColorStop(0, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${alpha})`);
+        pg.addColorStop(0.5, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${alpha * 0.5})`);
+        pg.addColorStop(1, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, 0)`);
+        ctx.fillStyle = pg;
         ctx.beginPath();
         ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
         ctx.fill();
