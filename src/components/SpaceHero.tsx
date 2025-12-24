@@ -2,23 +2,24 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 
 const SpaceHero = () => {
-  const [showFlame, setShowFlame] = useState(false);
+  const [activeLetterIndex, setActiveLetterIndex] = useState(-1);
   const [showVideo, setShowVideo] = useState(false);
   const letters = "SENIOR".split("");
 
   useEffect(() => {
-    // Show flame after letters animation completes
-    const flameTimer = setTimeout(() => {
-      setShowFlame(true);
-    }, 1500);
+    // Sequentially reveal letters with flame effect
+    letters.forEach((_, index) => {
+      setTimeout(() => {
+        setActiveLetterIndex(index);
+      }, index * 400 + 500);
+    });
 
-    // Show video after flame effect
+    // Show video after all letters are revealed
     const videoTimer = setTimeout(() => {
       setShowVideo(true);
-    }, 2200);
+    }, letters.length * 400 + 1200);
 
     return () => {
-      clearTimeout(flameTimer);
       clearTimeout(videoTimer);
     };
   }, []);
@@ -54,69 +55,115 @@ const SpaceHero = () => {
 
       {/* Main content */}
       <div className="relative z-10 flex h-full flex-col items-center justify-center">
-        {/* SENIOR text with letter-by-letter animation */}
+        {/* SENIOR text with flame-writing animation */}
         <div className="relative flex items-center justify-center">
-          <div className="flex overflow-hidden">
-            {letters.map((letter, index) => (
-              <motion.span
-                key={index}
-                initial={{ y: 100, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{
-                  duration: 0.6,
-                  delay: index * 0.15,
-                  ease: [0.22, 1, 0.36, 1],
-                }}
-                className="font-display text-7xl font-bold tracking-wider text-white sm:text-8xl md:text-9xl lg:text-[12rem]"
-                style={{
-                  textShadow: showFlame
-                    ? "0 0 60px rgba(255, 100, 0, 0.8), 0 0 120px rgba(255, 50, 0, 0.6)"
-                    : "none",
-                }}
-              >
-                {letter}
-              </motion.span>
-            ))}
-          </div>
+          <div className="flex">
+            {letters.map((letter, index) => {
+              const isActive = index <= activeLetterIndex;
+              const isCurrentlyWriting = index === activeLetterIndex;
 
-          {/* Flame particles effect */}
-          {showFlame && (
-            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-              {[...Array(20)].map((_, i) => (
-                <motion.div
-                  key={i}
-                  initial={{
-                    opacity: 0,
-                    scale: 0,
-                    x: 0,
-                    y: 0,
-                  }}
-                  animate={{
-                    opacity: [0, 1, 0],
-                    scale: [0, 1.5, 0],
-                    x: (Math.random() - 0.5) * 400,
-                    y: -Math.random() * 300 - 50,
-                  }}
-                  transition={{
-                    duration: 1.2,
-                    delay: i * 0.05,
-                    ease: "easeOut",
-                  }}
-                  className="absolute h-4 w-4 rounded-full"
-                  style={{
-                    background: `radial-gradient(circle, ${
-                      i % 3 === 0
-                        ? "rgba(255, 200, 50, 0.9)"
-                        : i % 3 === 1
-                        ? "rgba(255, 100, 0, 0.9)"
-                        : "rgba(255, 50, 0, 0.9)"
-                    }, transparent)`,
-                    filter: "blur(2px)",
-                  }}
-                />
-              ))}
-            </div>
-          )}
+              return (
+                <div key={index} className="relative">
+                  {/* Flame cursor that writes the letter */}
+                  {isCurrentlyWriting && (
+                    <>
+                      {/* Main flame writing effect */}
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0 }}
+                        animate={{ 
+                          opacity: [0, 1, 1, 0.8],
+                          scale: [0.5, 1.2, 1, 0.8],
+                        }}
+                        transition={{ duration: 0.4, ease: "easeOut" }}
+                        className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center"
+                      >
+                        <div 
+                          className="h-32 w-32 sm:h-40 sm:w-40 md:h-48 md:w-48 lg:h-64 lg:w-64 rounded-full"
+                          style={{
+                            background: "radial-gradient(circle, rgba(255, 200, 50, 0.9) 0%, rgba(255, 100, 0, 0.7) 30%, rgba(255, 50, 0, 0.4) 60%, transparent 80%)",
+                            filter: "blur(8px)",
+                          }}
+                        />
+                      </motion.div>
+
+                      {/* Sparks flying from flame */}
+                      {[...Array(12)].map((_, i) => (
+                        <motion.div
+                          key={i}
+                          initial={{ 
+                            opacity: 1, 
+                            scale: 1,
+                            x: 0,
+                            y: 0,
+                          }}
+                          animate={{ 
+                            opacity: 0,
+                            scale: 0,
+                            x: (Math.random() - 0.5) * 150,
+                            y: -Math.random() * 120 - 20,
+                          }}
+                          transition={{ 
+                            duration: 0.6 + Math.random() * 0.4,
+                            delay: Math.random() * 0.2,
+                            ease: "easeOut",
+                          }}
+                          className="pointer-events-none absolute left-1/2 top-1/2 z-30 h-2 w-2 rounded-full"
+                          style={{
+                            background: i % 2 === 0 
+                              ? "rgba(255, 220, 100, 1)" 
+                              : "rgba(255, 150, 50, 1)",
+                            boxShadow: "0 0 6px rgba(255, 200, 50, 0.8)",
+                          }}
+                        />
+                      ))}
+                    </>
+                  )}
+
+                  {/* The letter itself */}
+                  <motion.span
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ 
+                      opacity: isActive ? 1 : 0,
+                      scale: isActive ? 1 : 0.8,
+                    }}
+                    transition={{
+                      duration: 0.3,
+                      ease: "easeOut",
+                    }}
+                    className="font-display text-7xl font-bold tracking-wider sm:text-8xl md:text-9xl lg:text-[12rem]"
+                    style={{
+                      color: isActive ? "transparent" : "transparent",
+                      backgroundImage: isActive 
+                        ? "linear-gradient(180deg, #fff 0%, #ffd700 50%, #ff6600 100%)"
+                        : "none",
+                      backgroundClip: "text",
+                      WebkitBackgroundClip: "text",
+                      textShadow: isActive
+                        ? "0 0 30px rgba(255, 150, 0, 0.6), 0 0 60px rgba(255, 80, 0, 0.4), 0 0 90px rgba(255, 50, 0, 0.3)"
+                        : "none",
+                      filter: isCurrentlyWriting ? "brightness(1.3)" : "brightness(1)",
+                    }}
+                  >
+                    {letter}
+                  </motion.span>
+
+                  {/* Residual heat glow under letter */}
+                  {isActive && !isCurrentlyWriting && (
+                    <motion.div
+                      initial={{ opacity: 0.8 }}
+                      animate={{ opacity: [0.6, 0.3, 0.4] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className="pointer-events-none absolute inset-0 -z-10"
+                      style={{
+                        background: "radial-gradient(ellipse at center bottom, rgba(255, 100, 0, 0.3) 0%, transparent 70%)",
+                        filter: "blur(10px)",
+                      }}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         {/* Subtitle */}
@@ -152,7 +199,7 @@ const SpaceHero = () => {
       </div>
 
       {/* Bottom glow effect */}
-      {showFlame && (
+      {activeLetterIndex >= 0 && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 0.5 }}
