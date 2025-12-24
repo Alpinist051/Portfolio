@@ -57,57 +57,33 @@ const certifications: Certification[] = [
 const CertificationCard = ({ cert, index }: { cert: Certification; index: number }) => {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30, rotateX: -10 }}
-      whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={{ duration: 0.6, delay: index * 0.1 }}
-      whileHover={{ y: -5, transition: { duration: 0.2 } }}
-      className="group relative h-full"
+      transition={{ duration: 0.5, delay: index * 0.1 }}
+      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+      className="group h-full"
     >
-      {/* Paper card */}
-      <div className="relative flex h-full flex-col overflow-hidden rounded-lg border border-stone-200 bg-white p-6 shadow-md transition-shadow hover:shadow-lg">
-        {/* Decorative stamp */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0, rotate: -20 }}
-          whileInView={{ opacity: 1, scale: 1, rotate: -12 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.3 + index * 0.1, type: "spring" }}
-          className="absolute right-4 top-4 flex h-14 w-14 items-center justify-center rounded-full border-2 border-dashed border-amber-500/60"
-        >
-          <span className="font-display text-[10px] font-bold tracking-wider text-amber-600/70">
-            VERIFIED
-          </span>
-        </motion.div>
-
-        {/* Content */}
-        <div className="relative z-10 flex flex-1 flex-col pr-16">
-          <h3 className="mb-2 font-serif text-lg font-semibold text-stone-800 transition-colors group-hover:text-amber-700 md:text-xl">
-            {cert.title}
-          </h3>
-          <p className="mb-3 font-body text-sm text-stone-600">{cert.issuer}</p>
-
-          <div className="mt-auto flex items-center gap-4 border-t border-stone-200 pt-3">
-            <div>
-              <span className="font-body text-xs text-stone-400">Issued</span>
-              <p className="font-serif text-sm font-medium text-stone-700">{cert.date}</p>
-            </div>
-            <div>
-              <span className="font-body text-xs text-stone-400">Credential ID</span>
-              <p className="font-body text-xs text-stone-500">{cert.credentialId}</p>
-            </div>
-          </div>
+      <div className="flex h-full flex-col rounded-xl border border-stone-200 border-l-4 border-l-transparent bg-white p-6 shadow-sm transition-all duration-300 hover:border-l-stone-600 hover:bg-stone-50 hover:shadow-md">
+        {/* Badge icon */}
+        <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-stone-100">
+          <svg className="h-5 w-5 text-stone-600" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+          </svg>
         </div>
 
-        {/* Paper corner fold */}
-        <div className="absolute -bottom-1 -right-1 h-6 w-6 rotate-180 bg-gradient-to-br from-stone-200 to-white" />
+        {/* Content */}
+        <h3 className="mb-2 font-display text-lg font-semibold text-stone-800 transition-colors group-hover:text-stone-900">
+          {cert.title}
+        </h3>
+        <p className="mb-4 font-body text-sm text-stone-500">{cert.issuer}</p>
 
-        {/* Underline animation */}
-        <motion.div
-          className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-amber-500 to-amber-300"
-          initial={{ width: "0%" }}
-          whileHover={{ width: "100%" }}
-          transition={{ duration: 0.3 }}
-        />
+        <div className="mt-auto flex items-center gap-3 border-t border-stone-100 pt-4">
+          <span className="rounded-md bg-stone-100 px-3 py-1 font-body text-xs font-medium text-stone-600">
+            {cert.date}
+          </span>
+          <span className="font-mono text-xs text-stone-400">{cert.credentialId}</span>
+        </div>
       </div>
     </motion.div>
   );

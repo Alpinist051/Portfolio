@@ -28,50 +28,28 @@ const insights = [
 const InsightCard = ({ insight, index }: { insight: typeof insights[0]; index: number }) => {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
+      initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={{ duration: 0.6, delay: index * 0.15 }}
-      whileHover={{ scale: 1.02 }}
-      className="group relative"
+      transition={{ duration: 0.5, delay: index * 0.1 }}
+      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+      className="group"
     >
-      <div className="relative overflow-hidden rounded-xl border border-stone-200 bg-white p-8 shadow-md">
+      <div className="rounded-xl border border-stone-200 border-l-4 border-l-transparent bg-white p-8 shadow-sm transition-all duration-300 hover:border-l-stone-600 hover:bg-stone-50 hover:shadow-md">
         {/* Quote icon */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0 }}
-          whileInView={{ opacity: 0.1, scale: 1 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.3 + index * 0.1 }}
-          className="absolute -left-4 -top-4 font-serif text-9xl text-amber-500/20"
-        >
-          "
-        </motion.div>
+        <span className="mb-4 block font-serif text-4xl text-stone-300">"</span>
 
         {/* Content */}
-        <div className="relative z-10">
-          <p className="mb-6 font-serif text-lg italic leading-relaxed text-stone-700 md:text-xl">
-            {insight.quote}
-          </p>
-          <div className="inline-block rounded-full border border-amber-300 bg-amber-50 px-3 py-1">
-            <span className="font-display text-xs tracking-wider text-amber-700">
-              {insight.category}
-            </span>
-          </div>
+        <p className="mb-6 font-serif text-lg leading-relaxed text-stone-700">
+          {insight.quote}
+        </p>
+        
+        <div className="inline-flex items-center gap-2 rounded-md bg-stone-100 px-3 py-1.5">
+          <div className="h-1.5 w-1.5 rounded-full bg-stone-500" />
+          <span className="font-display text-xs font-medium text-stone-600">
+            {insight.category}
+          </span>
         </div>
-
-        {/* Hover gradient */}
-        <motion.div
-          className="absolute inset-0 bg-gradient-to-br from-amber-50 to-stone-50 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-        />
-
-        {/* Bottom accent */}
-        <motion.div
-          className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-300"
-          initial={{ width: "0%" }}
-          whileInView={{ width: "30%" }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.5 + index * 0.1, duration: 0.8 }}
-        />
       </div>
     </motion.div>
   );
@@ -161,10 +139,10 @@ const ToClientsSection = () => {
         >
           <Link
             to="/insights"
-            className="group relative inline-flex items-center gap-2 overflow-hidden rounded-lg border border-amber-400 bg-amber-50 px-8 py-4 font-display text-sm font-semibold tracking-wider text-amber-700 transition-all hover:bg-amber-100"
+            className="group inline-flex items-center gap-2 rounded-lg border border-stone-300 bg-white px-6 py-3 font-display text-sm font-medium text-stone-700 shadow-sm transition-all hover:border-stone-400 hover:bg-stone-50"
           >
-            <span className="relative z-10">VIEW ALL INSIGHTS</span>
-            <motion.svg
+            <span>VIEW ALL INSIGHTS</span>
+            <svg
               xmlns="http://www.w3.org/2000/svg"
               width="16"
               height="16"
@@ -178,7 +156,7 @@ const ToClientsSection = () => {
             >
               <line x1="5" y1="12" x2="19" y2="12" />
               <polyline points="12 5 19 12 12 19" />
-            </motion.svg>
+            </svg>
           </Link>
         </motion.div>
       </div>

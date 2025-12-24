@@ -1,0 +1,800 @@
+import { useState, useEffect, useCallback } from "react";
+import { motion } from "framer-motion";
+import {
+  Bot, Plus, Settings, Trash2, Power, PowerOff,
+  Brain, Wrench, MessageSquare, Shield, Link2,
+  Zap, Database, Globe, FileText, Image,
+  CheckCircle2, AlertTriangle, Clock, Loader2,
+  Pencil, X, Check, Save, Users, Target, Cpu, AlertCircle,
+  Search, Filter, Square, CheckSquare
+} from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+interface Agent {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string;
+  status: "active" | "inactive" | "error";
+  agent_type: "assistant" | "analyst" | "executor" | "coordinator";
+  tools: string[];
+  knowledge: string[];
+  coordinates_with: string[];
+  success_rate: number;
+  tasks_completed: number;
+  last_active: string | null;
+}
+
+const availableTools = [
+  { id: "web_search", name: "Web Search", icon: Globe },
+  { id: "database", name: "Database Query", icon: Database },
+  { id: "file_ops", name: "File Operations", icon: FileText },
+  { id: "image_gen", name: "Image Generation", icon: Image },
+  { id: "api_call", name: "API Calls", icon: Wrench },
+];
+
+interface AgentManagementProps {
+  userId: string;
+}
+
+const AgentManagement = ({ userId }: AgentManagementProps) => {
+  const { toast } = useToast();
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({ name: "", description: "" });
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [agentToDelete, setAgentToDelete] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [selectedAgentIds, setSelectedAgentIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+
+  const fetchAgents = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("agents")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      toast({ title: "Error", description: "Failed to load agents", variant: "destructive" });
+      return;
+    }
+
+    const typedData = (data || []) as Agent[];
+    setAgents(typedData);
+    if (typedData.length > 0 && !selectedAgent) {
+      setSelectedAgent(typedData[0]);
+    }
+    setLoading(false);
+  }, [userId, selectedAgent, toast]);
+
+  useEffect(() => {
+    fetchAgents();
+  }, [fetchAgents]);
+
+  const toggleAgentStatus = async (id: string) => {
+    const agent = agents.find((a) => a.id === id);
+    if (!agent) return;
+
+    const newStatus = agent.status === "active" ? "inactive" : "active";
+
+    const { error } = await supabase
+      .from("agents")
+      .update({ status: newStatus, last_active: new Date().toISOString() })
+      .eq("id", id);
+
+    if (error) {
+      toast({ title: "Error", description: "Failed to update status", variant: "destructive" });
+    } else {
+      setAgents((prev) =>
+        prev.map((a) => (a.id === id ? { ...a, status: newStatus } : a))
+      );
+      if (selectedAgent?.id === id) {
+        setSelectedAgent((prev) => prev ? { ...prev, status: newStatus } : prev);
+      }
+      toast({ title: "Agent updated" });
+    }
+  };
+
+  const startEditing = () => {
+    if (selectedAgent) {
+      setEditForm({ name: selectedAgent.name, description: selectedAgent.description });
+      setIsEditing(true);
+    }
+  };
+
+  const cancelEditing = () => {
+    setIsEditing(false);
+    setEditForm({ name: "", description: "" });
+  };
+
+  const saveAgentDetails = async () => {
+    if (!selectedAgent) return;
+    
+    setSaving(true);
+    const { error } = await supabase
+      .from("agents")
+      .update({ name: editForm.name, description: editForm.description })
+      .eq("id", selectedAgent.id);
+
+    if (error) {
+      toast({ title: "Error", description: "Failed to save changes", variant: "destructive" });
+    } else {
+      const updatedAgent = { ...selectedAgent, name: editForm.name, description: editForm.description };
+      setSelectedAgent(updatedAgent);
+      setAgents(prev => prev.map(a => a.id === selectedAgent.id ? updatedAgent : a));
+      setIsEditing(false);
+      toast({ title: "Agent updated" });
+    }
+    setSaving(false);
+  };
+
+  const toggleTool = async (toolId: string) => {
+    if (!selectedAgent) return;
+    
+    const isEnabled = selectedAgent.tools.includes(toolId);
+    const newTools = isEnabled 
+      ? selectedAgent.tools.filter(t => t !== toolId)
+      : [...selectedAgent.tools, toolId];
+
+    const { error } = await supabase
+      .from("agents")
+      .update({ tools: newTools })
+      .eq("id", selectedAgent.id);
+
+    if (error) {
+      toast({ title: "Error", description: "Failed to update tools", variant: "destructive" });
+    } else {
+      const updatedAgent = { ...selectedAgent, tools: newTools };
+      setSelectedAgent(updatedAgent);
+      setAgents(prev => prev.map(a => a.id === selectedAgent.id ? updatedAgent : a));
+      toast({ title: isEnabled ? "Tool disabled" : "Tool enabled" });
+    }
+  };
+
+  // Delete agent
+  const deleteAgent = async (id: string) => {
+    const { error } = await supabase.from("agents").delete().eq("id", id);
+    
+    if (error) {
+      toast({ title: "Error", description: "Failed to delete agent", variant: "destructive" });
+    } else {
+      setAgents(prev => prev.filter(a => a.id !== id));
+      if (selectedAgent?.id === id) {
+        setSelectedAgent(agents.find(a => a.id !== id) || null);
+      }
+      toast({ title: "Agent deleted" });
+    }
+    setDeleteDialogOpen(false);
+    setAgentToDelete(null);
+  };
+
+  // Update agent type
+  const updateAgentType = async (newType: Agent["agent_type"]) => {
+    if (!selectedAgent) return;
+
+    const { error } = await supabase
+      .from("agents")
+      .update({ agent_type: newType })
+      .eq("id", selectedAgent.id);
+
+    if (error) {
+      toast({ title: "Error", description: "Failed to update type", variant: "destructive" });
+    } else {
+      const updatedAgent = { ...selectedAgent, agent_type: newType };
+      setSelectedAgent(updatedAgent);
+      setAgents(prev => prev.map(a => a.id === selectedAgent.id ? updatedAgent : a));
+      toast({ title: "Agent type updated" });
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "active":
+        return (
+          <span className="flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-green-500" />
+            Active
+          </span>
+        );
+      case "inactive":
+        return (
+          <span className="flex items-center gap-1 rounded-full bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-600">
+            <span className="h-1.5 w-1.5 rounded-full bg-stone-400" />
+            Inactive
+          </span>
+        );
+      case "error":
+        return (
+          <span className="flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+            <AlertTriangle className="h-3 w-3" />
+            Error
+          </span>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case "assistant": return "bg-blue-100 text-blue-700";
+      case "analyst": return "bg-purple-100 text-purple-700";
+      case "executor": return "bg-green-100 text-green-700";
+      case "coordinator": return "bg-amber-100 text-amber-700";
+      default: return "bg-stone-100 text-stone-700";
+    }
+  };
+
+  const addNewAgent = async () => {
+    setSaving(true);
+    const { data, error } = await supabase
+      .from("agents")
+      .insert({
+        user_id: userId,
+        name: "New Agent",
+        description: "Configure this agent's purpose",
+        status: "inactive",
+        agent_type: "assistant",
+        tools: [],
+        knowledge: [],
+        coordinates_with: [],
+        success_rate: 0,
+        tasks_completed: 0,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      toast({ title: "Error", description: "Failed to create agent", variant: "destructive" });
+    } else if (data) {
+      const typedData = data as Agent;
+      setAgents((prev) => [typedData, ...prev]);
+      setSelectedAgent(typedData);
+      toast({ title: "Agent created", description: "Configure the agent settings" });
+    }
+    setSaving(false);
+  };
+
+  // Filter agents
+  const filteredAgents = agents.filter(agent => {
+    const matchesSearch = agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         agent.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === "all" || agent.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  // Bulk selection helpers
+  const toggleAgentSelection = (id: string) => {
+    setSelectedAgentIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedAgentIds.size === filteredAgents.length) {
+      setSelectedAgentIds(new Set());
+    } else {
+      setSelectedAgentIds(new Set(filteredAgents.map(a => a.id)));
+    }
+  };
+
+  // Bulk delete agents
+  const bulkDeleteAgents = async () => {
+    const idsToDelete = Array.from(selectedAgentIds);
+    
+    for (const id of idsToDelete) {
+      await supabase.from("agents").delete().eq("id", id);
+    }
+    
+    setAgents(prev => prev.filter(a => !selectedAgentIds.has(a.id)));
+    if (selectedAgent && selectedAgentIds.has(selectedAgent.id)) {
+      setSelectedAgent(null);
+    }
+    setSelectedAgentIds(new Set());
+    setBulkDeleteDialogOpen(false);
+    toast({ title: "Agents deleted", description: `Deleted ${idsToDelete.length} agents` });
+  };
+
+  // Bulk activate/deactivate agents
+  const bulkUpdateStatus = async (newStatus: "active" | "inactive") => {
+    const idsToUpdate = Array.from(selectedAgentIds);
+    
+    for (const id of idsToUpdate) {
+      await supabase.from("agents").update({ status: newStatus, last_active: new Date().toISOString() }).eq("id", id);
+    }
+    
+    setAgents(prev => prev.map(a => 
+      selectedAgentIds.has(a.id) ? { ...a, status: newStatus } : a
+    ));
+    if (selectedAgent && selectedAgentIds.has(selectedAgent.id)) {
+      setSelectedAgent(prev => prev ? { ...prev, status: newStatus } : prev);
+    }
+    setSelectedAgentIds(new Set());
+    toast({ title: `Agents ${newStatus}`, description: `Updated ${idsToUpdate.length} agents` });
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-stone-400" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-3">
+      {/* Agent List */}
+      <div className="lg:col-span-1">
+        <div className="rounded-xl border border-stone-200 bg-white shadow-sm">
+          <div className="flex items-center justify-between border-b border-stone-100 p-4">
+            <h3 className="font-display text-lg font-semibold text-stone-800">AI Agents</h3>
+            <Button size="sm" onClick={addNewAgent} className="bg-stone-800 hover:bg-stone-700" disabled={saving}>
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="mr-1 h-4 w-4" />}
+              New
+            </Button>
+          </div>
+
+          {/* Search and Filter */}
+          <div className="border-b border-stone-100 p-3 space-y-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
+              <Input
+                placeholder="Search agents..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-9"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="h-9">
+                <Filter className="mr-2 h-4 w-4 text-stone-400" />
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="error">Error</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Bulk Actions Bar */}
+          {filteredAgents.length > 0 && (
+            <div className="flex items-center justify-between border-b border-stone-100 px-4 py-2 bg-stone-50">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={selectedAgentIds.size === filteredAgents.length && filteredAgents.length > 0}
+                  onCheckedChange={toggleSelectAll}
+                />
+                <span className="text-xs text-stone-500">
+                  {selectedAgentIds.size > 0 ? `${selectedAgentIds.size} selected` : "Select all"}
+                </span>
+              </div>
+              {selectedAgentIds.size > 0 && (
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs text-green-600 hover:text-green-700 hover:bg-green-50"
+                    onClick={() => bulkUpdateStatus("active")}
+                  >
+                    <Power className="mr-1 h-3 w-3" />
+                    Activate
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs text-stone-600 hover:text-stone-700 hover:bg-stone-100"
+                    onClick={() => bulkUpdateStatus("inactive")}
+                  >
+                    <PowerOff className="mr-1 h-3 w-3" />
+                    Deactivate
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                    onClick={() => setBulkDeleteDialogOpen(true)}
+                  >
+                    <Trash2 className="mr-1 h-3 w-3" />
+                    Delete
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="divide-y divide-stone-100 max-h-[500px] overflow-y-auto">
+            {filteredAgents.length === 0 ? (
+              <div className="p-8 text-center text-stone-500">
+                <Bot className="mx-auto mb-2 h-8 w-8 text-stone-300" />
+                <p>{searchQuery || statusFilter !== "all" ? "No matching agents" : "No agents yet"}</p>
+                <p className="text-sm">{searchQuery || statusFilter !== "all" ? "Try different filters" : "Create your first AI agent"}</p>
+              </div>
+            ) : (
+              filteredAgents.map((agent) => (
+                <motion.div
+                  key={agent.id}
+                  whileHover={{ backgroundColor: "rgb(250 250 249)" }}
+                  className={`group relative w-full p-4 text-left transition-colors ${
+                    selectedAgent?.id === agent.id ? "bg-stone-50 border-l-4 border-l-stone-600" : ""
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      checked={selectedAgentIds.has(agent.id)}
+                      onCheckedChange={() => toggleAgentSelection(agent.id)}
+                      className="mt-1"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <button
+                      onClick={() => setSelectedAgent(agent)}
+                      className="flex-1 text-left"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${getTypeColor(agent.agent_type)}`}>
+                          <Bot className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-stone-800">{agent.name}</h4>
+                          <p className="mt-0.5 text-xs text-stone-500 line-clamp-1">{agent.description}</p>
+                          <div className="mt-2">{getStatusBadge(agent.status)}</div>
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-2 top-2 h-7 w-7 p-0 text-stone-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setAgentToDelete(agent.id);
+                      setDeleteDialogOpen(true);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </motion.div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Agent Details */}
+      <div className="lg:col-span-2">
+        {selectedAgent ? (
+          <div className="space-y-6">
+            <div className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm">
+              <div className="flex items-start justify-between">
+                <div className="flex items-start gap-4">
+                  <div className={`flex h-14 w-14 items-center justify-center rounded-xl ${getTypeColor(selectedAgent.agent_type)}`}>
+                    <Bot className="h-7 w-7" />
+                  </div>
+                  <div className="flex-1">
+                    {isEditing ? (
+                      <div className="space-y-3">
+                        <Input
+                          value={editForm.name}
+                          onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                          className="font-display text-xl font-semibold"
+                          placeholder="Agent name"
+                        />
+                        <Textarea
+                          value={editForm.description}
+                          onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                          className="text-sm"
+                          placeholder="Agent description"
+                          rows={2}
+                        />
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={saveAgentDetails} disabled={saving} className="bg-stone-800 hover:bg-stone-700">
+                            {saving ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Check className="mr-1 h-4 w-4" />}
+                            Save
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={cancelEditing}>
+                            <X className="mr-1 h-4 w-4" /> Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-3">
+                          <h2 className="font-display text-xl font-semibold text-stone-800">{selectedAgent.name}</h2>
+                          {getStatusBadge(selectedAgent.status)}
+                          <Button variant="ghost" size="sm" onClick={startEditing} className="h-8 w-8 p-0">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <p className="mt-1 text-stone-600">{selectedAgent.description}</p>
+                        <div className="mt-3 flex items-center gap-4 text-sm text-stone-500">
+                          <Select 
+                            value={selectedAgent.agent_type} 
+                            onValueChange={(value) => updateAgentType(value as Agent["agent_type"])}
+                          >
+                            <SelectTrigger className={`h-7 w-auto gap-2 rounded-full border-0 px-3 text-xs font-medium ${getTypeColor(selectedAgent.agent_type)}`}>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="assistant">
+                                <div className="flex items-center gap-2">
+                                  <Bot className="h-4 w-4" />
+                                  Assistant
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="analyst">
+                                <div className="flex items-center gap-2">
+                                  <Brain className="h-4 w-4" />
+                                  Analyst
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="executor">
+                                <div className="flex items-center gap-2">
+                                  <Target className="h-4 w-4" />
+                                  Executor
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="coordinator">
+                                <div className="flex items-center gap-2">
+                                  <Users className="h-4 w-4" />
+                                  Coordinator
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3.5 w-3.5" />
+                            {selectedAgent.last_active ? new Date(selectedAgent.last_active).toLocaleString() : "Never"}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={() => toggleAgentStatus(selectedAgent.id)}>
+                    {selectedAgent.status === "active" ? (
+                      <><PowerOff className="mr-1 h-4 w-4" /> Deactivate</>
+                    ) : (
+                      <><Power className="mr-1 h-4 w-4" /> Activate</>
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="mt-6 grid grid-cols-4 gap-4 border-t border-stone-100 pt-6">
+                <div className="text-center">
+                  <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
+                    <CheckCircle2 className="h-5 w-5 text-green-600" />
+                  </div>
+                  <p className="text-2xl font-bold text-stone-800">{selectedAgent.success_rate}%</p>
+                  <p className="text-xs text-stone-500">Success Rate</p>
+                </div>
+                <div className="text-center">
+                  <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
+                    <Zap className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <p className="text-2xl font-bold text-stone-800">{selectedAgent.tasks_completed.toLocaleString()}</p>
+                  <p className="text-xs text-stone-500">Tasks Done</p>
+                </div>
+                <div className="text-center">
+                  <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-purple-100">
+                    <Wrench className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <p className="text-2xl font-bold text-stone-800">{selectedAgent.tools.length}</p>
+                  <p className="text-xs text-stone-500">Tools Active</p>
+                </div>
+                <div className="text-center">
+                  <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-amber-100">
+                    <Users className="h-5 w-5 text-amber-600" />
+                  </div>
+                  <p className="text-2xl font-bold text-stone-800">{selectedAgent.coordinates_with.length}</p>
+                  <p className="text-xs text-stone-500">Connections</p>
+                </div>
+              </div>
+
+              {/* Agent Type Description */}
+              <div className="mt-6 rounded-lg bg-stone-50 p-4 border border-stone-100">
+                <div className="flex items-start gap-3">
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${getTypeColor(selectedAgent.agent_type)}`}>
+                    {selectedAgent.agent_type === "assistant" && <Bot className="h-5 w-5" />}
+                    {selectedAgent.agent_type === "analyst" && <Brain className="h-5 w-5" />}
+                    {selectedAgent.agent_type === "executor" && <Target className="h-5 w-5" />}
+                    {selectedAgent.agent_type === "coordinator" && <Users className="h-5 w-5" />}
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-medium text-stone-800 capitalize">{selectedAgent.agent_type} Agent</h4>
+                    <p className="mt-1 text-sm text-stone-600">
+                      {selectedAgent.agent_type === "assistant" && "General-purpose agent for conversations, answering questions, and assisting with various tasks."}
+                      {selectedAgent.agent_type === "analyst" && "Data-focused agent that analyzes information, identifies patterns, and generates actionable insights."}
+                      {selectedAgent.agent_type === "executor" && "Action-oriented agent that performs specific tasks, runs operations, and manages automated processes."}
+                      {selectedAgent.agent_type === "coordinator" && "Orchestration agent that manages other agents, delegates tasks, and ensures smooth operations."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm">
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="flex items-center gap-2 font-display text-lg font-semibold text-stone-800">
+                    <Wrench className="h-5 w-5 text-stone-500" />
+                    Tools & APIs
+                  </h3>
+                  <span className="text-xs text-stone-400">Click to toggle</span>
+                </div>
+                <div className="space-y-2">
+                  {availableTools.map((tool) => {
+                    const isEnabled = selectedAgent.tools.includes(tool.id);
+                    const Icon = tool.icon;
+                    return (
+                      <button
+                        key={tool.id}
+                        onClick={() => toggleTool(tool.id)}
+                        className={`flex w-full items-center justify-between rounded-lg border p-3 transition-all hover:shadow-sm ${
+                          isEnabled ? "border-green-200 bg-green-50 hover:bg-green-100" : "border-stone-100 bg-stone-50 hover:bg-stone-100"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Icon className={`h-4 w-4 ${isEnabled ? "text-green-600" : "text-stone-400"}`} />
+                          <span className={isEnabled ? "text-green-700" : "text-stone-500"}>{tool.name}</span>
+                        </div>
+                        {isEnabled ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        ) : (
+                          <div className="h-4 w-4 rounded-full border-2 border-stone-300" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm">
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="flex items-center gap-2 font-display text-lg font-semibold text-stone-800">
+                    <Brain className="h-5 w-5 text-stone-500" />
+                    Knowledge Base
+                  </h3>
+                  <Button variant="ghost" size="sm"><Plus className="h-4 w-4" /></Button>
+                </div>
+                <div className="space-y-2">
+                  {selectedAgent.knowledge.length > 0 ? (
+                    selectedAgent.knowledge.map((item, index) => (
+                      <div key={index} className="flex items-center justify-between rounded-lg border border-stone-100 bg-stone-50 p-3">
+                        <div className="flex items-center gap-3">
+                          <FileText className="h-4 w-4 text-stone-400" />
+                          <span className="text-stone-600">{item}</span>
+                        </div>
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-stone-400 hover:text-red-500">
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="py-4 text-center text-sm text-stone-400">No knowledge sources added</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="flex items-center gap-2 font-display text-lg font-semibold text-stone-800">
+                  <Link2 className="h-5 w-5 text-stone-500" />
+                  Coordinates With
+                </h3>
+                <Button variant="ghost" size="sm"><Plus className="h-4 w-4" /></Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {selectedAgent.coordinates_with.length > 0 ? (
+                  selectedAgent.coordinates_with.map((agentName, index) => (
+                    <span key={index} className="flex items-center gap-2 rounded-full border border-stone-200 bg-stone-50 px-3 py-1.5 text-sm text-stone-600">
+                      <Bot className="h-3.5 w-3.5" />
+                      {agentName}
+                    </span>
+                  ))
+                ) : (
+                  <p className="text-sm text-stone-400">No agent coordination configured</p>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="flex h-96 items-center justify-center rounded-xl border border-stone-200 bg-white">
+            <div className="text-center">
+              <Bot className="mx-auto h-12 w-12 text-stone-300" />
+              <p className="mt-2 text-stone-500">Select an agent to view details</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-red-500" />
+              Delete Agent
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this agent? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => agentToDelete && deleteAgent(agentToDelete)}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-red-500" />
+              Delete {selectedAgentIds.size} Agents
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {selectedAgentIds.size} agent{selectedAgentIds.size > 1 ? 's' : ''}? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={bulkDeleteAgents}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete All
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+};
+
+export default AgentManagement;

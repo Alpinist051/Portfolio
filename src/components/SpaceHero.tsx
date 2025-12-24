@@ -1,345 +1,379 @@
-import { Canvas, useFrame } from "@react-three/fiber";
-import { Float, Text, Billboard } from "@react-three/drei";
-import { useRef, useMemo, Suspense, forwardRef } from "react";
-import * as THREE from "three";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
 
-// Curved screen that wraps around the viewer
-const CurvedScreen = forwardRef<THREE.Group, { 
-  angle: number;
-  color: string;
-  content: string;
-  subtext?: string;
-  radius?: number;
-  height?: number;
-}>(({ angle, color, content, subtext, radius = 8, height = 3 }, ref) => {
-  const x = Math.sin(angle) * radius;
-  const z = -Math.cos(angle) * radius;
-  const rotationY = angle;
-
-  return (
-    <Float speed={0.5} rotationIntensity={0.02} floatIntensity={0.1}>
-      <group ref={ref} position={[x, 0, z]} rotation={[0, rotationY, 0]}>
-        {/* Screen panel */}
-        <mesh>
-          <planeGeometry args={[4, height]} />
-          <meshBasicMaterial
-            color={color}
-            transparent
-            opacity={0.12}
-            side={THREE.DoubleSide}
-          />
-        </mesh>
-        {/* Border glow */}
-        <mesh position={[0, 0, -0.01]}>
-          <planeGeometry args={[4.1, height + 0.1]} />
-          <meshBasicMaterial
-            color={color}
-            transparent
-            opacity={0.3}
-            side={THREE.DoubleSide}
-          />
-        </mesh>
-        {/* Inner content area */}
-        <mesh position={[0, 0, 0.01]}>
-          <planeGeometry args={[3.8, height - 0.2]} />
-          <meshBasicMaterial
-            color={color}
-            transparent
-            opacity={0.06}
-            side={THREE.DoubleSide}
-          />
-        </mesh>
-        {/* Text content */}
-        <Billboard>
-          <Text
-            position={[0, subtext ? 0.3 : 0, 0.1]}
-            fontSize={0.4}
-            color={color}
-            anchorX="center"
-            anchorY="middle"
-            maxWidth={3.5}
-          >
-            {content}
-          </Text>
-        </Billboard>
-        {subtext && (
-          <Billboard>
-            <Text
-              position={[0, -0.3, 0.1]}
-              fontSize={0.15}
-              color={color}
-              anchorX="center"
-              anchorY="middle"
-              maxWidth={3.5}
-            >
-              {subtext}
-            </Text>
-          </Billboard>
-        )}
-        {/* Horizontal lines */}
-        <mesh position={[0, height / 2 - 0.15, 0.02]}>
-          <planeGeometry args={[3.5, 0.02]} />
-          <meshBasicMaterial color={color} transparent opacity={0.5} />
-        </mesh>
-        <mesh position={[0, -height / 2 + 0.15, 0.02]}>
-          <planeGeometry args={[3.5, 0.02]} />
-          <meshBasicMaterial color={color} transparent opacity={0.5} />
-        </mesh>
-        {/* Screen glow light */}
-        <pointLight position={[0, 0, 2]} intensity={0.8} color={color} distance={6} />
-      </group>
-    </Float>
-  );
-});
-CurvedScreen.displayName = "CurvedScreen";
-
-// Bottom row screens
-const BottomScreen = forwardRef<THREE.Group, { 
-  angle: number;
-  color: string;
-  content: string;
-  radius?: number;
-}>(({ angle, color, content, radius = 6 }, ref) => {
-  const x = Math.sin(angle) * radius;
-  const z = -Math.cos(angle) * radius;
-  const rotationY = angle;
-
-  return (
-    <Float speed={0.6} rotationIntensity={0.03} floatIntensity={0.15}>
-      <group ref={ref} position={[x, -2.2, z]} rotation={[0.25, rotationY, 0]}>
-        <mesh>
-          <planeGeometry args={[3, 1.8]} />
-          <meshBasicMaterial color={color} transparent opacity={0.1} side={THREE.DoubleSide} />
-        </mesh>
-        <mesh position={[0, 0, -0.01]}>
-          <planeGeometry args={[3.1, 1.9]} />
-          <meshBasicMaterial color={color} transparent opacity={0.25} side={THREE.DoubleSide} />
-        </mesh>
-        <Billboard>
-          <Text position={[0, 0, 0.1]} fontSize={0.28} color={color} anchorX="center" anchorY="middle">
-            {content}
-          </Text>
-        </Billboard>
-        <pointLight position={[0, 0, 1.5]} intensity={0.5} color={color} distance={4} />
-      </group>
-    </Float>
-  );
-});
-BottomScreen.displayName = "BottomScreen";
-
-// Ambient floating particles in the dark room
-const RoomParticles = forwardRef<THREE.Points>((_, ref) => {
-  const count = 100;
-  const meshRef = useRef<THREE.Points>(null);
-
-  const particles = useMemo(() => {
-    const positions = new Float32Array(count * 3);
-    for (let i = 0; i < count; i++) {
-      positions[i * 3] = (Math.random() - 0.5) * 25;
-      positions[i * 3 + 1] = (Math.random() - 0.5) * 15;
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 25;
-    }
-    return positions;
-  }, []);
-
-  useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y = state.clock.elapsedTime * 0.01;
-    }
-  });
-
-  return (
-    <points ref={meshRef}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" count={count} array={particles} itemSize={3} />
-      </bufferGeometry>
-      <pointsMaterial size={0.03} color="#00d4ff" transparent opacity={0.3} sizeAttenuation blending={THREE.AdditiveBlending} />
-    </points>
-  );
-});
-RoomParticles.displayName = "RoomParticles";
-
-// Ground reflection
-function GroundPlane() {
-  return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -4, 0]}>
-      <planeGeometry args={[50, 50]} />
-      <meshStandardMaterial color="#050508" metalness={0.9} roughness={0.4} />
-    </mesh>
-  );
-}
-
-function Scene() {
-  // Main curved screens arranged in a semicircle
-  const mainScreens = [
-    { angle: -0.6, color: "#ff00aa", content: "FULL STACK", subtext: "React • Node.js • Cloud" },
-    { angle: -0.3, color: "#00ff88", content: "DATA SYSTEMS", subtext: "Analytics • Pipelines" },
-    { angle: 0, color: "#00d4ff", content: "AI/ML SOLUTIONS", subtext: "Neural Networks • LLMs • Deep Learning" },
-    { angle: 0.3, color: "#ffaa00", content: "MLOPS", subtext: "Kubernetes • Docker" },
-    { angle: 0.6, color: "#aa00ff", content: "CLOUD INFRA", subtext: "AWS • Scalable Systems" },
-  ];
-
-  // Bottom row screens
-  const bottomScreens = [
-    { angle: -0.45, color: "#ff6600", content: "RAG SYSTEMS" },
-    { angle: -0.15, color: "#00ffff", content: "LLM FINE-TUNING" },
-    { angle: 0.15, color: "#ff44aa", content: "MULTI-AGENT AI" },
-    { angle: 0.45, color: "#88ff44", content: "NEURAL NETS" },
-  ];
-
-  return (
-    <>
-      {/* Dark room lighting */}
-      <ambientLight intensity={0.02} />
-      <pointLight position={[0, 5, 0]} intensity={0.3} color="#0a1020" />
-      
-      {/* Screen reflections on floor */}
-      <GroundPlane />
-      
-      {/* Subtle dust particles */}
-      <RoomParticles />
-      
-      {/* Main curved screen array */}
-      {mainScreens.map((screen, i) => (
-        <CurvedScreen key={i} {...screen} />
-      ))}
-      
-      {/* Bottom screens */}
-      {bottomScreens.map((screen, i) => (
-        <BottomScreen key={i} {...screen} />
-      ))}
-
-      {/* Simple ambient environment */}
-      
-      {/* Fog for atmosphere */}
-      <fog attach="fog" args={["#020205", 5, 25]} />
-    </>
-  );
+interface Spark {
+  id: number;
+  x: number;
+  y: number;
+  size: number;
+  duration: number;
+  delay: number;
 }
 
 const SpaceHero = () => {
+  const [stage, setStage] = useState(0);
+  const [sparks, setSparks] = useState<Spark[]>([]);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [typedText, setTypedText] = useState("");
+  const [showCursor, setShowCursor] = useState(true);
+  const containerRef = useRef<HTMLElement>(null);
+
+  const fullText = "AI / ML ENGINEER  •  FULL STACK DEVELOPER";
+
+  useEffect(() => {
+    const timer1 = setTimeout(() => setStage(1), 500);
+    const timer2 = setTimeout(() => setStage(2), 1800);
+
+    // Generate sparks after text is clear
+    const sparkTimer = setTimeout(() => {
+      const newSparks: Spark[] = [];
+      for (let i = 0; i < 30; i++) {
+        newSparks.push({
+          id: i,
+          x: Math.random() * 100,
+          y: Math.random() * 100,
+          size: 2 + Math.random() * 4,
+          duration: 3 + Math.random() * 4,
+          delay: Math.random() * 2,
+        });
+      }
+      setSparks(newSparks);
+    }, 1500);
+
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearTimeout(sparkTimer);
+    };
+  }, []);
+
+  // Typewriter effect
+  useEffect(() => {
+    if (stage < 2) return;
+
+    const startDelay = setTimeout(() => {
+      let currentIndex = 0;
+      const typeInterval = setInterval(() => {
+        if (currentIndex <= fullText.length) {
+          setTypedText(fullText.slice(0, currentIndex));
+          currentIndex++;
+        } else {
+          clearInterval(typeInterval);
+        }
+      }, 60);
+
+      return () => clearInterval(typeInterval);
+    }, 800);
+
+    return () => clearTimeout(startDelay);
+  }, [stage]);
+
+  // Cursor blink effect
+  useEffect(() => {
+    const cursorInterval = setInterval(() => {
+      setShowCursor((prev) => !prev);
+    }, 530);
+
+    return () => clearInterval(cursorInterval);
+  }, []);
+
+  // Mouse parallax effect
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!containerRef.current) return;
+      
+      const rect = containerRef.current.getBoundingClientRect();
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      
+      const x = (e.clientX - rect.left - centerX) / centerX;
+      const y = (e.clientY - rect.top - centerY) / centerY;
+      
+      setMousePosition({ x, y });
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
+
   return (
-    <section className="relative h-screen w-full overflow-hidden bg-[#020205]">
-      {/* Three.js Canvas - Dark room with screens */}
-      <div className="absolute inset-0">
-        <Canvas
-          camera={{ position: [0, 0, 0], fov: 75 }}
-          gl={{ antialias: true, alpha: false }}
+    <section 
+      ref={containerRef}
+      className="relative h-screen w-full overflow-hidden bg-[#020205]"
+    >
+      {/* Background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#020205] via-[#0a0a15] to-[#020205]" />
+
+      {/* Video background - expands from center */}
+      <motion.div
+        initial={{ scale: 0, opacity: 0, borderRadius: "50%" }}
+        animate={
+          stage >= 2
+            ? { scale: 1.2, opacity: 1, borderRadius: "0%" }
+            : { scale: 0, opacity: 0, borderRadius: "50%" }
+        }
+        transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
+        className="absolute inset-0 z-0 overflow-hidden"
+      >
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="h-full w-full object-cover opacity-70"
         >
-          <Suspense fallback={null}>
-            <Scene />
-          </Suspense>
-        </Canvas>
-      </div>
+          <source
+            src="https://cdn.pixabay.com/video/2024/03/21/205050-925361774_large.mp4"
+            type="video/mp4"
+          />
+        </video>
+        <div className="absolute inset-0 bg-gradient-to-t from-[#020205] via-transparent to-[#020205]/80" />
+      </motion.div>
 
-      {/* Human silhouette overlay - viewing from behind */}
-      <div className="pointer-events-none absolute inset-0 flex items-end justify-center">
-        <div className="relative h-[70%] w-full max-w-[500px]">
-          {/* Head */}
-          <div className="absolute left-1/2 top-[5%] h-[12%] w-[18%] -translate-x-1/2 rounded-full bg-gradient-to-b from-[#0a0a12] to-[#050508] shadow-[0_0_30px_rgba(0,212,255,0.1)]" />
-          {/* Neck */}
-          <div className="absolute left-1/2 top-[16%] h-[5%] w-[8%] -translate-x-1/2 bg-gradient-to-b from-[#0a0a12] to-[#080810]" />
-          {/* Shoulders & upper body */}
-          <div className="absolute left-1/2 top-[20%] h-[25%] w-[55%] -translate-x-1/2 rounded-t-[100px] bg-gradient-to-b from-[#0a0a12] via-[#080810] to-[#050508]" />
-          {/* Left shoulder curve */}
-          <div className="absolute left-[22%] top-[21%] h-[12%] w-[15%] rounded-full bg-gradient-to-br from-[#0c0c14] to-[#080810]" />
-          {/* Right shoulder curve */}
-          <div className="absolute right-[22%] top-[21%] h-[12%] w-[15%] rounded-full bg-gradient-to-bl from-[#0c0c14] to-[#080810]" />
-          {/* Body */}
-          <div className="absolute bottom-0 left-1/2 h-[55%] w-[60%] -translate-x-1/2 bg-gradient-to-b from-[#050508] to-[#020205]" />
-          {/* Rim light effects */}
-          <div className="absolute left-1/2 top-[5%] h-[12%] w-[18%] -translate-x-1/2 rounded-full opacity-30 shadow-[inset_-8px_0_15px_rgba(255,0,170,0.3),inset_8px_0_15px_rgba(0,255,136,0.3)]" />
-          <div className="absolute left-[22%] top-[21%] h-[12%] w-[15%] rounded-full opacity-40 shadow-[inset_-5px_0_10px_rgba(255,0,170,0.4)]" />
-          <div className="absolute right-[22%] top-[21%] h-[12%] w-[15%] rounded-full opacity-40 shadow-[inset_5px_0_10px_rgba(0,255,136,0.4)]" />
-        </div>
-      </div>
-
-      {/* Vignette effect */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(2,2,5,0.3)_50%,rgba(2,2,5,0.85)_100%)]" />
-
-      {/* Content overlay */}
-      <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.8 }}
-          className="max-w-4xl"
+      {/* Main content */}
+      <div className="relative z-10 flex h-full flex-col items-center justify-center">
+        {/* SENIOR text container with sparks */}
+        <motion.div 
+          className="relative"
+          style={{
+            transform: `translate(${mousePosition.x * -15}px, ${mousePosition.y * -15}px)`,
+          }}
         >
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.7 }}
-            className="mb-4 font-body text-sm tracking-[0.3em] text-primary"
-          >
-            SENIOR AI/ML & FULL STACK DEVELOPER
-          </motion.p>
+          {/* Floating particle sparks with parallax */}
+          {stage >= 1 && sparks.map((spark) => (
+            <motion.div
+              key={spark.id}
+              className="pointer-events-none absolute"
+              style={{
+                left: `${spark.x}%`,
+                top: `${spark.y}%`,
+                width: spark.size,
+                height: spark.size,
+                transform: `translate(${mousePosition.x * (20 + spark.id * 2)}px, ${mousePosition.y * (20 + spark.id * 2)}px)`,
+              }}
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{
+                opacity: [0, 1, 1, 0],
+                scale: [0, 1, 1, 0],
+                x: [0, (Math.random() - 0.5) * 60, (Math.random() - 0.5) * 80],
+                y: [0, -30 - Math.random() * 40, -60 - Math.random() * 50],
+              }}
+              transition={{
+                duration: spark.duration,
+                delay: spark.delay,
+                repeat: Infinity,
+                ease: "easeOut",
+              }}
+            >
+              <div
+                className="h-full w-full rounded-full"
+                style={{
+                  background: `radial-gradient(circle, ${
+                    spark.id % 3 === 0
+                      ? "rgba(255, 220, 100, 1)"
+                      : spark.id % 3 === 1
+                      ? "rgba(255, 150, 50, 1)"
+                      : "rgba(255, 255, 200, 1)"
+                  }, transparent)`,
+                  boxShadow: `0 0 ${spark.size * 2}px ${
+                    spark.id % 2 === 0
+                      ? "rgba(255, 200, 50, 0.8)"
+                      : "rgba(255, 100, 0, 0.8)"
+                  }`,
+                }}
+              />
+            </motion.div>
+          ))}
 
-          <motion.h1
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.9, duration: 0.6 }}
-            className="mb-6 font-display text-4xl font-bold leading-tight tracking-wider md:text-6xl lg:text-7xl"
-          >
-            <span className="text-neon">BUILDING</span>{" "}
-            <span className="text-foreground">THE</span>
-            <br />
-            <span className="text-neon-magenta">FUTURE</span>{" "}
-            <span className="text-foreground">OF TECH</span>
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.2 }}
-            className="mx-auto mb-8 max-w-2xl font-body text-lg text-muted-foreground md:text-xl"
-          >
-            6+ years crafting intelligent systems, from neural networks to scalable full-stack solutions.
-          </motion.p>
-
+          {/* SENIOR text with blur-to-clear effect */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.5 }}
-            className="flex flex-wrap justify-center gap-4"
+            initial={{ filter: "blur(20px)", opacity: 0, scale: 0.9 }}
+            animate={
+              stage >= 1
+                ? { filter: "blur(0px)", opacity: 1, scale: 1 }
+                : { filter: "blur(20px)", opacity: 0.5, scale: 0.9 }
+            }
+            transition={{ duration: 1.2, ease: "easeOut" }}
+            className="relative"
           >
-            <a
-              href="#contact"
-              className="group relative overflow-hidden rounded-lg bg-primary px-8 py-3 font-display text-sm font-semibold tracking-wider text-primary-foreground transition-all hover:shadow-neon"
+            {/* Pulsing glow effect behind text */}
+            {stage >= 2 && (
+              <motion.div
+                className="pointer-events-none absolute inset-0 flex items-center justify-center"
+                animate={{
+                  opacity: [0.3, 0.6, 0.3],
+                  scale: [1, 1.05, 1],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              >
+                <div
+                  className="h-32 w-full sm:h-40 md:h-48 lg:h-64"
+                  style={{
+                    background: "radial-gradient(ellipse, rgba(255, 100, 0, 0.4) 0%, rgba(255, 50, 0, 0.2) 40%, transparent 70%)",
+                    filter: "blur(30px)",
+                  }}
+                />
+              </motion.div>
+            )}
+
+            {/* 3D shadow layers with parallax */}
+            <motion.span
+              className="absolute font-display text-7xl font-bold tracking-wider sm:text-8xl md:text-9xl lg:text-[11rem]"
+              style={{
+                color: "rgba(40, 15, 0, 0.8)",
+                transform: `translate(${8 + mousePosition.x * 5}px, ${10 + mousePosition.y * 5}px)`,
+              }}
             >
-              <span className="relative z-10">INITIATE CONTACT</span>
-              <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-foreground/20 to-transparent transition-transform group-hover:translate-x-full" />
-            </a>
-            <Link
-              to="/projects"
-              className="rounded-lg border border-primary/50 bg-primary/10 px-8 py-3 font-display text-sm font-semibold tracking-wider text-primary transition-all hover:border-primary hover:bg-primary/20"
+              SENIOR
+            </motion.span>
+            <motion.span
+              className="absolute font-display text-7xl font-bold tracking-wider sm:text-8xl md:text-9xl lg:text-[11rem]"
+              style={{
+                color: "rgba(80, 30, 0, 0.6)",
+                transform: `translate(${5 + mousePosition.x * 3}px, ${6 + mousePosition.y * 3}px)`,
+              }}
             >
-              VIEW PROJECTS
-            </Link>
+              SENIOR
+            </motion.span>
+            <motion.span
+              className="absolute font-display text-7xl font-bold tracking-wider sm:text-8xl md:text-9xl lg:text-[11rem]"
+              style={{
+                color: "rgba(120, 50, 0, 0.4)",
+                transform: `translate(${3 + mousePosition.x * 1.5}px, ${3 + mousePosition.y * 1.5}px)`,
+              }}
+            >
+              SENIOR
+            </motion.span>
+
+            {/* Main glossy text with animated glow */}
+            <motion.span
+              className="relative font-display text-7xl font-bold tracking-wider sm:text-8xl md:text-9xl lg:text-[11rem]"
+              style={{
+                background: "linear-gradient(180deg, #fffacd 0%, #ffd700 15%, #ff8c00 40%, #ff4500 70%, #8b0000 100%)",
+                backgroundClip: "text",
+                WebkitBackgroundClip: "text",
+                color: "transparent",
+              }}
+              animate={
+                stage >= 2
+                  ? {
+                      textShadow: [
+                        "0 0 60px rgba(255, 100, 0, 0.5), 0 0 120px rgba(255, 50, 0, 0.3)",
+                        "0 0 80px rgba(255, 120, 0, 0.7), 0 0 150px rgba(255, 70, 0, 0.5)",
+                        "0 0 60px rgba(255, 100, 0, 0.5), 0 0 120px rgba(255, 50, 0, 0.3)",
+                      ],
+                    }
+                  : {}
+              }
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+            >
+              SENIOR
+            </motion.span>
+
+            {/* Top glossy highlight overlay */}
+            <span
+              className="pointer-events-none absolute inset-0 font-display text-7xl font-bold tracking-wider sm:text-8xl md:text-9xl lg:text-[11rem]"
+              style={{
+                background: "linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.4) 20%, transparent 50%)",
+                backgroundClip: "text",
+                WebkitBackgroundClip: "text",
+                color: "transparent",
+                mixBlendMode: "overlay",
+              }}
+            >
+              SENIOR
+            </span>
           </motion.div>
         </motion.div>
+
+        {/* Typewriter subtitle */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={stage >= 2 ? { opacity: 1 } : { opacity: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="mt-10 text-center"
+          style={{
+            transform: `translate(${mousePosition.x * -8}px, ${mousePosition.y * -8}px)`,
+          }}
+        >
+          <div className="relative inline-block">
+            <span
+              className="font-body text-base tracking-[0.3em] sm:text-lg md:text-xl"
+              style={{
+                background: "linear-gradient(90deg, #888888, #ffffff, #888888)",
+                backgroundClip: "text",
+                WebkitBackgroundClip: "text",
+                color: "transparent",
+                textShadow: "0 0 30px rgba(255, 150, 0, 0.3)",
+              }}
+            >
+              {typedText}
+            </span>
+            {/* Blinking cursor */}
+            <span
+              className="inline-block w-[2px] h-5 sm:h-6 md:h-7 ml-1 align-middle"
+              style={{
+                backgroundColor: showCursor && typedText.length < fullText.length ? "#ffd700" : "transparent",
+                boxShadow: showCursor && typedText.length < fullText.length ? "0 0 10px rgba(255, 200, 0, 0.8)" : "none",
+              }}
+            />
+          </div>
+        </motion.div>
+
+        {/* Animated underline */}
+        <motion.div
+          initial={{ scaleX: 0, opacity: 0 }}
+          animate={
+            stage >= 2 && typedText.length === fullText.length
+              ? { scaleX: 1, opacity: 1 }
+              : { scaleX: 0, opacity: 0 }
+          }
+          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          className="mt-4 h-[2px] w-64 sm:w-80 md:w-[500px] origin-center"
+          style={{
+            background: "linear-gradient(90deg, transparent, rgba(255, 150, 0, 0.8), rgba(255, 200, 50, 1), rgba(255, 150, 0, 0.8), transparent)",
+            transform: `translate(${mousePosition.x * -5}px, 0)`,
+          }}
+        />
 
         {/* Scroll indicator */}
         <motion.div
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 2 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+          animate={stage >= 2 ? { opacity: 1 } : { opacity: 0 }}
+          transition={{ duration: 0.8, delay: 2.5 }}
+          className="absolute bottom-10 left-1/2 -translate-x-1/2"
         >
           <motion.div
             animate={{ y: [0, 10, 0] }}
             transition={{ duration: 1.5, repeat: Infinity }}
             className="flex flex-col items-center gap-2"
           >
-            <span className="font-body text-xs tracking-widest text-muted-foreground">SCROLL</span>
-            <div className="h-8 w-px bg-gradient-to-b from-primary to-transparent" />
+            <span className="text-xs tracking-widest text-muted-foreground">
+              SCROLL
+            </span>
+            <div className="h-10 w-[1px] bg-gradient-to-b from-muted-foreground to-transparent" />
           </motion.div>
         </motion.div>
       </div>
 
-      {/* Scanlines */}
-      <div className="scanlines pointer-events-none absolute inset-0 opacity-50" />
+      {/* Bottom glow effect */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={stage >= 2 ? { opacity: 0.5 } : { opacity: 0 }}
+        transition={{ duration: 1 }}
+        className="absolute bottom-0 left-1/2 h-[40%] w-[80%] -translate-x-1/2 z-0"
+        style={{
+          background: "radial-gradient(ellipse at bottom, rgba(255, 80, 0, 0.3) 0%, transparent 70%)",
+        }}
+      />
     </section>
   );
 };
