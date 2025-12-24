@@ -120,10 +120,11 @@ const SpaceHero = () => {
           muted
           loop
           playsInline
+          preload="auto"
           className="h-full w-full object-cover opacity-70"
         >
           <source
-            src="https://cdn.pixabay.com/video/2024/03/21/205050-925361774_large.mp4"
+            src="https://cdn.pixabay.com/video/2020/02/10/32112-391539067_large.mp4"
             type="video/mp4"
           />
         </video>
