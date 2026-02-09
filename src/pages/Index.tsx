@@ -12,11 +12,12 @@ import Footer from "@/components/Footer";
 
 const Index = () => {
   // Check if this is a navigation (not refresh) using navigation entry
-  const isNavigation = performance.getEntriesByType("navigation")[0]?.toJSON?.()?.type === "navigate" 
+  const isNavigation = performance.getEntriesByType("navigation")[0]?.toJSON?.()?.type === "navigate"
     && sessionStorage.getItem("hasVisited") === "true";
-  
+
   const [isLoading, setIsLoading] = useState(!isNavigation);
   const [showContent, setShowContent] = useState(isNavigation);
+  const [preloadedVideo, setPreloadedVideo] = useState<HTMLVideoElement | undefined>(undefined);
 
   useEffect(() => {
     // Mark that user has visited during this session
@@ -40,7 +41,10 @@ const Index = () => {
     <>
       <AnimatePresence mode="wait">
         {isLoading && (
-          <LoadingScreen onComplete={() => setIsLoading(false)} />
+          <LoadingScreen onComplete={(videoElement) => {
+            setPreloadedVideo(videoElement);
+            setIsLoading(false);
+          }} />
         )}
       </AnimatePresence>
 
@@ -52,7 +56,7 @@ const Index = () => {
           className="min-h-screen bg-background"
         >
           <Navigation />
-          <SpaceHero />
+          <SpaceHero preloadedVideo={preloadedVideo} />
           <AboutSection />
           <ProjectsSection />
           <CertificationsSection />

@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
-import CityBackground from "./CityBackground";
 
 interface Spark {
   id: number;
@@ -11,15 +10,20 @@ interface Spark {
   delay: number;
 }
 
-const SpaceHero = () => {
+interface SpaceHeroProps {
+  preloadedVideo?: HTMLVideoElement;
+}
+
+const SpaceHero = ({ preloadedVideo }: SpaceHeroProps) => {
   const [stage, setStage] = useState(0);
   const [sparks, setSparks] = useState<Spark[]>([]);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [typedText, setTypedText] = useState("");
   const [showCursor, setShowCursor] = useState(true);
   const containerRef = useRef<HTMLElement>(null);
+  const videoElementRef = useRef<HTMLVideoElement>(null);
 
-  const fullText = "AI / ML ENGINEER  •  FULL STACK DEVELOPER";
+  const fullText = "AI / ML ENGINEER  •  FULL STACK, MOBILE & PHP DEVELOPER";
 
   useEffect(() => {
     const timer1 = setTimeout(() => setStage(1), 500);
@@ -78,6 +82,25 @@ const SpaceHero = () => {
     return () => clearInterval(cursorInterval);
   }, []);
 
+  // Handle preloaded video
+  useEffect(() => {
+    if (preloadedVideo && videoElementRef.current) {
+      // Replace the current video element with the preloaded one
+      const currentVideo = videoElementRef.current;
+      const parent = currentVideo.parentNode;
+      if (parent) {
+        parent.replaceChild(preloadedVideo, currentVideo);
+        // Start playing the video when the hero section is displayed
+        const playPromise = preloadedVideo.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(() => {
+            // Silently handle autoplay failure
+          });
+        }
+      }
+    }
+  }, [preloadedVideo]);
+
   // Mouse parallax effect
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -118,7 +141,8 @@ const SpaceHero = () => {
       >
         {/* In your SpaceHero component video element */}
         <video
-          autoPlay
+          ref={videoElementRef}
+          autoPlay={!!preloadedVideo}
           muted
           loop
           playsInline
@@ -133,10 +157,12 @@ const SpaceHero = () => {
             // target.parentElement.style.backgroundColor = '#0a0a15';
           }}
         >
-          <source
-            src="https://adstorm.co/videos/AdStormAdvertiser.webm"
-            type="video/mp4"
-          />
+          {!preloadedVideo && (
+            <source
+              src="https://adstorm.co/videos/AdStormAdvertiser.webm"
+              type="video/webm"
+            />
+          )}
           {/* Add a backup source if needed */}
           {/* <source src="/local-background.mp4" type="video/mp4" /> */}
         </video>

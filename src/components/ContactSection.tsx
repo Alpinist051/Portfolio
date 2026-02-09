@@ -1,6 +1,10 @@
 import { motion, useInView } from "framer-motion";
 import { useRef, useState } from "react";
 import { toast } from "@/hooks/use-toast";
+import emailjs from '@emailjs/browser';
+
+// Initialize EmailJS with your public key (replace with your actual key)
+// emailjs.init("YOUR_PUBLIC_KEY_HERE");
 
 const ContactSection = () => {
   const ref = useRef(null);
@@ -10,29 +14,68 @@ const ContactSection = () => {
     name: "",
     email: "",
     subject: "",
+    from: "",
     message: "",
   });
+  const [isSelectFocused, setIsSelectFocused] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      // Prepare template parameters for EmailJS
+      const templateParams = {
+        from_name: formData.name,
+        from_email: formData.email,
+        subject: formData.subject,
+        source: formData.from,
+        message: formData.message,
+        reply_to: formData.email,
+        to_name: "Your Name", // Replace with your name
+      };
 
-    toast({
-      title: "Message Transmitted",
-      description: "Your message has been sent successfully. I'll respond shortly.",
-    });
+      // Send email using EmailJS
+      // Replace these IDs with your actual EmailJS IDs
+      await emailjs.send(
+        import.meta.env.VITE_EMAILJS_SERVICE_ID!,      // Note the VITE_ prefix
+        import.meta.env.VITE_EMAILJS_TEMPLATE_ID!,
+        templateParams,
+        import.meta.env.VITE_EMAILJS_PUBLIC_KEY!       // Also use VITE_ here
+      );
 
-    setFormData({ name: "", email: "", subject: "", message: "" });
-    setIsSubmitting(false);
+      toast({
+        title: "Message Transmitted Successfully!",
+        description: "Your message has been sent. I'll respond shortly.",
+      });
+
+      // Reset form
+      setFormData({ name: "", email: "", subject: "", from: "", message: "" });
+      setIsSelectFocused(false);
+    } catch (error) {
+      console.error('Email sending error:', error);
+      toast({
+        title: "Transmission Failed",
+        description: "Failed to send message. Please try again or contact me directly via email.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSelectFocus = () => {
+    setIsSelectFocused(true);
+  };
+
+  const handleSelectBlur = () => {
+    setIsSelectFocused(false);
   };
 
   return (
@@ -61,10 +104,10 @@ const ContactSection = () => {
               <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
             </svg>
           </div>
-          
+
           {/* Vertical line */}
           <div className="mb-4 h-8 w-px bg-foreground/60" />
-          
+
           {/* Title with watermark effect */}
           <div className="relative">
             <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 select-none font-display text-5xl font-bold uppercase tracking-widest text-muted/30 md:text-7xl">
@@ -74,7 +117,7 @@ const ContactSection = () => {
               Contact
             </h2>
           </div>
-          
+
           <p className="mx-auto mt-6 max-w-2xl font-body text-muted-foreground">
             Ready to build something extraordinary together.
           </p>
@@ -128,20 +171,70 @@ const ContactSection = () => {
               </div>
             </div>
 
-            {/* Subject field */}
-            <div className="group relative mt-6">
-              <input
-                type="text"
-                name="subject"
-                value={formData.subject}
-                onChange={handleChange}
-                required
-                className="peer w-full rounded-lg border border-border bg-background px-4 py-3 font-body text-foreground outline-none transition-all focus:border-primary focus:ring-1 focus:ring-primary"
-                placeholder=" "
-              />
-              <label className="pointer-events-none absolute left-4 top-3 font-body text-sm text-muted-foreground transition-all peer-focus:-top-6 peer-focus:text-xs peer-focus:text-primary peer-[:not(:placeholder-shown)]:-top-6 peer-[:not(:placeholder-shown)]:text-xs">
-                Subject
-              </label>
+            {/* Subject and Where From fields */}
+            <div className="grid gap-6 md:grid-cols-2 mt-6">
+              {/* Subject field */}
+              <div className="group relative">
+                <input
+                  type="text"
+                  name="subject"
+                  value={formData.subject}
+                  onChange={handleChange}
+                  required
+                  className="peer w-full rounded-lg border border-border bg-background px-4 py-3 font-body text-foreground outline-none transition-all focus:border-primary focus:ring-1 focus:ring-primary"
+                  placeholder=" "
+                />
+                <label className="pointer-events-none absolute left-4 top-3 font-body text-sm text-muted-foreground transition-all peer-focus:-top-6 peer-focus:text-xs peer-focus:text-primary peer-[:not(:placeholder-shown)]:-top-6 peer-[:not(:placeholder-shown)]:text-xs">
+                  Subject
+                </label>
+              </div>
+
+              {/* Where From field - Updated with state-based floating label */}
+              <div className="group relative">
+                <select
+                  name="from"
+                  value={formData.from}
+                  onChange={handleChange}
+                  onFocus={handleSelectFocus}
+                  onBlur={handleSelectBlur}
+                  required
+                  className="peer w-full rounded-lg border border-border bg-background px-4 py-3 font-body text-foreground outline-none transition-all focus:border-primary focus:ring-1 focus:ring-primary appearance-none cursor-pointer"
+                >
+                  <option value="" disabled hidden></option>
+                  <option value="Upwork">Upwork</option>
+                  <option value="Freelancer">Freelancer</option>
+                  <option value="LinkedIn">LinkedIn</option>
+                  <option value="Dice">Dice</option>
+                  <option value="Indeed">Indeed</option>
+                  <option value="Others">Others</option>
+                </select>
+                {/* Custom dropdown arrow */}
+                <div className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 transition-colors
+                  ${isSelectFocused ? 'text-primary' : 'text-muted-foreground'}`}>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="transition-transform"
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </div>
+                {/* Floating label for select */}
+                <label className={`pointer-events-none absolute left-4 font-body transition-all
+                  ${formData.from || isSelectFocused
+                    ? '-top-6 text-xs text-primary'
+                    : 'top-3 text-sm text-muted-foreground'
+                  }`}>
+                  Where From
+                </label>
+              </div>
             </div>
 
             {/* Message field */}

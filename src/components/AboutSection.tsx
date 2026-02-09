@@ -41,16 +41,18 @@ const AboutSection = () => {
   const [activeTab, setActiveTab] = useState("about");
 
   // CountUp values
-  const yearsCount = useCountUp(6, 2000, statsInView);
+  const yearsCount = useCountUp(9, 2000, statsInView);
   const projectsCount = useCountUp(50, 2000, statsInView);
   const aiCount = useCountUp(20, 2000, statsInView);
   const satisfactionCount = useCountUp(100, 2000, statsInView);
 
   const skills = [
     { category: "Frontend", items: ["React", "TypeScript", "Next.js", "Tailwind CSS"] },
-    { category: "Backend", items: ["Node.js", "Python", "FastAPI", "GraphQL"] },
+    { category: "Backend", items: ["Node.js", "Python", "PHP", "FastAPI", "GraphQL"] },
+    { category: "Mobile", items: ["React Native", "Flutter", "iOS", "Android"] },
     { category: "AI/ML", items: ["LLMs", "RAG Systems", "Fine-tuning", "Multi-Agent"] },
     { category: "Infrastructure", items: ["AWS", "Docker", "Kubernetes", "MLOps"] },
+    { category: "Blockchain", items: ["Solidity", "Web3.js", "Smart Contracts", "DeFi"] },
   ];
 
   const education = [
@@ -161,11 +163,11 @@ const AboutSection = () => {
                 </motion.div>
               </motion.div>
 
-              <motion.h3 
+              <motion.h3
                 className="mb-2 font-serif text-2xl font-bold text-gray-800"
                 whileHover={{ scale: 1.02 }}
               >
-                AI/ML Engineer & Full Stack Developer
+                AI/ML Engineer & Full Stack, Mobile & Blockchain Developer
               </motion.h3>
               <motion.p 
                 className="font-serif text-sm italic text-gray-600"
@@ -183,9 +185,9 @@ const AboutSection = () => {
               >
                 <p>
                   Results-driven <strong className="text-gray-800">AI/ML Engineer</strong> and{" "}
-                  <strong className="text-gray-800">Full Stack Developer</strong> with over 6 years of expertise in
-                  building intelligent, end-to-end software systems. I specialize in designing and deploying 
-                  scalable web applications using modern technologies including React, Node.js, and Python-based frameworks.
+                  <strong className="text-gray-800">Full Stack, Mobile & Blockchain Developer</strong> with over 9 years of expertise in
+                  building intelligent, end-to-end software systems. I specialize in designing and deploying
+                  scalable web and mobile applications using modern technologies including React, Node.js, React Native, PHP, Blockchain, and Python-based frameworks.
                 </p>
               </motion.div>
             </motion.div>
@@ -198,9 +200,9 @@ const AboutSection = () => {
               animate="visible"
             >
               {[
-                { icon: MapPin, label: "Location", value: "Singapore" },
-                { icon: Calendar, label: "Experience", value: "6+ Years" },
-                { icon: Award, label: "Specialization", value: "AI/ML & Full Stack" },
+                { icon: MapPin, label: "When Available", value: "Free to your timezone" },
+                { icon: Calendar, label: "Experience", value: "9+ Years" },
+                { icon: Award, label: "Specialization", value: "AI/ML, Full Stack, Mobile & Blockchain" },
               ].map((item) => (
                 <motion.div
                   key={item.label}
@@ -303,6 +305,9 @@ const AboutSection = () => {
               {[
                 { name: "React & Frontend", level: 95 },
                 { name: "Node.js & Backend", level: 90 },
+                { name: "PHP Development", level: 86 },
+                { name: "Mobile Development", level: 87 },
+                { name: "Blockchain Development", level: 87 },
                 { name: "AI/ML Development", level: 88 },
                 { name: "Cloud & DevOps", level: 85 },
               ].map((skill, i) => (
@@ -564,7 +569,7 @@ const AboutSection = () => {
               animate={isInView ? { opacity: 1 } : {}}
               transition={{ duration: 0.6, delay: 0.6 }}
             >
-              Experience, technologies and background.
+              Who Am I to You?
             </motion.p>
           </motion.div>
 

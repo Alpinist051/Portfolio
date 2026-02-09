@@ -110,6 +110,78 @@ const allInsights: Insight[] = [
     icon: Brain,
     size: "normal",
   },
+  {
+    id: 13,
+    quote: "Mobile-first design isn't just about screens—it's about constraints that force better solutions.",
+    category: "Mobile Development",
+    expanded: "Limited screen real estate, battery constraints, and network variability force you to prioritize what's truly essential.",
+    icon: Code,
+    size: "normal",
+  },
+  {
+    id: 14,
+    quote: "The best mobile apps are invisible to users. They solve problems without demanding attention.",
+    category: "Mobile UX",
+    expanded: "Great mobile design anticipates user needs and provides seamless experiences that feel natural and effortless.",
+    icon: Users,
+    size: "large",
+  },
+  {
+    id: 15,
+    quote: "Cross-platform frameworks are great for MVPs, but native code wins for performance-critical features.",
+    category: "Mobile Architecture",
+    expanded: "Start with React Native or Flutter for rapid development, but don't hesitate to drop to native when performance matters.",
+    icon: Server,
+    size: "normal",
+  },
+  {
+    id: 16,
+    quote: "PHP isn't dead—it's just evolved. Modern PHP with frameworks like Laravel and Symfony rivals any modern web technology.",
+    category: "PHP Development",
+    expanded: "PHP 8+ with proper architecture, testing, and modern practices creates maintainable, scalable applications that perform exceptionally well.",
+    icon: Code,
+    size: "normal",
+  },
+  {
+    id: 17,
+    quote: "Composer revolutionized PHP development. Dependency management changed everything about how we build PHP applications.",
+    category: "PHP Ecosystem",
+    expanded: "Before Composer, PHP lacked proper package management. Now we have a rich ecosystem of high-quality, well-tested libraries.",
+    icon: Zap,
+    size: "normal",
+  },
+  {
+    id: 18,
+    quote: "Laravel's ecosystem isn't just a framework—it's a complete development philosophy that emphasizes developer experience.",
+    category: "Laravel Framework",
+    expanded: "Laravel doesn't just make PHP easier; it makes development more enjoyable and productive through thoughtful design and comprehensive tooling.",
+    icon: Rocket,
+    size: "large",
+  },
+  {
+    id: 19,
+    quote: "Blockchain isn't just cryptocurrency—it's a fundamental shift in how we think about trust, transparency, and decentralized systems.",
+    category: "Blockchain Technology",
+    expanded: "The real power of blockchain lies in its ability to create trustless systems where intermediaries become unnecessary.",
+    icon: Zap,
+    size: "normal",
+  },
+  {
+    id: 20,
+    quote: "Smart contracts are self-executing agreements that run on blockchain, but they're only as good as the code they're written in.",
+    category: "Smart Contracts",
+    expanded: "Security is paramount in smart contract development. Every line of code represents real financial value and potential risk.",
+    icon: Shield,
+    size: "normal",
+  },
+  {
+    id: 21,
+    quote: "DeFi represents the future of finance, but it requires a deep understanding of both blockchain technology and traditional financial systems.",
+    category: "DeFi & Web3",
+    expanded: "Building DeFi protocols demands expertise in cryptography, economics, and user experience design.",
+    icon: Brain,
+    size: "wide",
+  },
 ];
 
 const InsightCard = ({ insight, index }: { insight: Insight; index: number }) => {
@@ -304,8 +376,8 @@ const InsightsPage = () => {
               INSIGHTS & <span className="text-neon-magenta">PHILOSOPHY</span>
             </h1>
             <p className="mx-auto mt-4 max-w-2xl font-body text-muted-foreground">
-              Lessons learned from 6+ years of building software, leading teams, and 
-              delivering AI-powered solutions. Practical wisdom for technical leaders and builders.
+              Lessons learned from 6+ years of building software, leading teams, and
+              delivering AI-powered, full-stack, mobile, PHP, and blockchain solutions. Practical wisdom for technical leaders and builders.
             </p>
           </motion.div>
 

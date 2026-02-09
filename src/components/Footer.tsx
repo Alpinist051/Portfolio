@@ -343,10 +343,10 @@ const Footer = () => {
               </div>
               <div className="flex flex-col">
                 <span className="font-display text-sm tracking-widest text-foreground transition-all duration-300 group-hover:text-primary">
-                  IVAN<span className="text-primary"> TAN</span>
+                  AI / ML<span className="text-primary"> DEV</span>
                 </span>
                 <span className="font-body text-[9px] tracking-wider text-muted-foreground/60">
-                  DEVELOPER & CREATOR
+                  DEVELOPER & ENGINEER
                 </span>
               </div>
             </motion.div>

@@ -23,6 +23,7 @@ const Navigation = () => {
     { href: "#certifications", label: "CERTS", isPage: false },
     { href: "#contact", label: "CONTACT", isPage: false },
     { href: "/platform", label: "PLATFORM", isPage: true },
+    { href: "/lipsync", label: "LIPSYNC", isPage: true },
   ];
 
   const handleNavClick = (item: { href: string; label: string; isPage: boolean }) => {
@@ -104,10 +105,10 @@ const Navigation = () => {
           
           <div className="hidden flex-col sm:flex">
             <span className="font-display text-base tracking-widest text-foreground transition-all duration-300 group-hover:text-primary group-hover:drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]">
-              IVAN<span className="text-primary"> TAN</span>
+              AI / ML<span className="text-primary"> DEV</span>
             </span>
             <span className="font-body text-[10px] tracking-wider text-muted-foreground/70 transition-all duration-300 group-hover:text-muted-foreground">
-              DEVELOPER & CREATOR
+              DEVELOPER & ENGINEER
             </span>
           </div>
         </Link>

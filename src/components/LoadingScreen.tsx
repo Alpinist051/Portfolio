@@ -84,7 +84,7 @@ const MeteorShower = () => {
   );
 };
 
-const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
+const LoadingScreen = ({ onComplete }: { onComplete: (videoElement?: HTMLVideoElement) => void }) => {
   const [progress, setProgress] = useState(0);
   const [isShaking, setIsShaking] = useState(false);
   const [shakeIntensity, setShakeIntensity] = useState(0);
@@ -95,6 +95,8 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
   const [completionFlash, setCompletionFlash] = useState(false);
   const triggeredMilestones = useRef<Set<number>>(new Set());
   const timeoutsRef = useRef<number[]>([]);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [videoLoaded, setVideoLoaded] = useState(false);
 
   const setManagedTimeout = (fn: () => void, ms: number) => {
     const id = window.setTimeout(fn, ms);
@@ -145,7 +147,14 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
   useEffect(() => {
     const interval = window.setInterval(() => {
       setProgress((prev) => {
-        const newProgress = prev + 2;
+        // Calculate base progress (timer-based)
+        const baseProgress = Math.min(prev + 2, 85); // Cap timer progress at 85% to leave room for video
+
+        // Calculate video loading progress (15% weight)
+        const videoProgress = videoLoaded ? 15 : 0;
+
+        // Combine both progresses
+        const newProgress = baseProgress + videoProgress;
 
         // Milestone 1: Light shake at 35%
         if (newProgress >= 34 && newProgress <= 38) {
@@ -177,7 +186,7 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
       timeoutsRef.current.forEach((id) => window.clearTimeout(id));
       timeoutsRef.current = [];
     };
-  }, []);
+  }, [videoLoaded]);
 
   // When reaching 100%, trigger dramatic flash and transition
   useEffect(() => {
@@ -201,9 +210,35 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
 
     // Complete after exit animation
     setManagedTimeout(() => {
-      onComplete();
+      onComplete(videoRef.current || undefined);
     }, 1200);
   }, [progress, isFinalEffect, onComplete]);
+
+  // Video preloading logic
+  useEffect(() => {
+    const preloadVideo = () => {
+      const video = document.createElement('video');
+      video.preload = 'auto';
+      video.muted = true;
+      video.playsInline = true;
+      video.crossOrigin = 'anonymous';
+
+      video.addEventListener('canplaythrough', () => {
+        setVideoLoaded(true);
+        videoRef.current = video;
+      });
+
+      video.addEventListener('error', () => {
+        // If video fails to load, still mark as loaded to not block the loading screen
+        setVideoLoaded(true);
+      });
+
+      video.src = 'https://adstorm.co/videos/AdStormAdvertiser.webm';
+      video.load();
+    };
+
+    preloadVideo();
+  }, []);
 
   // Generate shake transform
   const shakeStyle = isShaking
@@ -444,7 +479,7 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
           <h1 className="font-display text-5xl font-bold tracking-wider md:text-7xl">
             <span className="text-neon">LOAD</span>
             <span className="text-foreground">_</span>
-            <span className="text-neon-magenta">FUTURE</span>
+            <span className="text-neon-magenta">SYSTEM</span>
           </h1>
           <motion.div
             className="absolute -inset-4 -z-10 rounded-lg bg-primary/5"

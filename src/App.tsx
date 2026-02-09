@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Projects from "./pages/Projects";
 import Insights from "./pages/Insights";
 import Platform from "./pages/Platform";
+import Lipsync from "./pages/Lipsync";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/projects" element={<Projects />} />
           <Route path="/insights" element={<Insights />} />
           <Route path="/platform" element={<Platform />} />
+          <Route path="/lipsync" element={<Lipsync />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

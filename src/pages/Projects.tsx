@@ -13,6 +13,7 @@ interface Project {
   gradient: string;
   image: string;
   featured?: boolean;
+  githubUrl?: string;
 }
 
 const allProjects: Project[] = [
@@ -23,7 +24,8 @@ const allProjects: Project[] = [
     description: "Custom retrieval-augmented generation system for enterprise knowledge bases with multi-source indexing and semantic search.",
     tech: ["Python", "LangChain", "Vector DB", "FastAPI"],
     gradient: "from-primary via-primary/50 to-accent",
-    image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=400&fit=crop",
+    image: "https://images.unsplash.com/photo-1689363302902-2c58330d6494?w=600&h=400&fit=crop",
+    githubUrl: "https://github.com/mlsmall/RAG-Application-with-LangChain",
     featured: true,
   },
   {
@@ -33,6 +35,7 @@ const allProjects: Project[] = [
     description: "Autonomous agent coordination platform for complex workflow automation with real-time monitoring and self-healing capabilities.",
     tech: ["CrewAI", "OpenAI", "React", "WebSocket"],
     gradient: "from-secondary via-secondary/50 to-accent",
+    githubUrl: "https://github.com/akj2018/Multi-AI-Agent-Systems-with-crewAI",
     image: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=600&h=400&fit=crop",
     featured: true,
   },
@@ -43,6 +46,7 @@ const allProjects: Project[] = [
     description: "End-to-end infrastructure for training and deploying custom language models at scale with version control and A/B testing.",
     tech: ["PyTorch", "AWS SageMaker", "Docker", "MLflow"],
     gradient: "from-accent via-accent/50 to-primary",
+    githubUrl: "https://github.com/philschmid/fine-tune-llms-efficiently",
     image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600&h=400&fit=crop",
     featured: true,
   },
@@ -53,6 +57,7 @@ const allProjects: Project[] = [
     description: "High-performance dashboard for processing millions of events with sub-second latency and interactive visualizations.",
     tech: ["React", "Node.js", "Kafka", "TimescaleDB"],
     gradient: "from-primary via-accent/50 to-secondary",
+    githubUrl: "https://github.com/getindata/kedro-telemetry",
     image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&h=400&fit=crop",
   },
   {
@@ -62,7 +67,8 @@ const allProjects: Project[] = [
     description: "Multi-modal content creation system with text, image, and video generation capabilities for marketing teams.",
     tech: ["GPT-4", "DALL-E", "Next.js", "Prisma"],
     gradient: "from-secondary via-primary/50 to-accent",
-    image: "https://images.unsplash.com/photo-1686191128892-3b37add4c844?w=600&h=400&fit=crop",
+    githubUrl: "https://github.com/hwchase17/langchain-hub",
+    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=400&fit=crop&crop=entropy",
   },
   {
     id: 6,
@@ -71,65 +77,145 @@ const allProjects: Project[] = [
     description: "IaC solution automating entire cloud deployments with AI-driven cost optimization and security compliance.",
     tech: ["Terraform", "Kubernetes", "AWS", "Python"],
     gradient: "from-accent via-secondary/50 to-primary",
+    githubUrl: "https://github.com/bridgecrewio/checkov",
     image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=400&fit=crop",
   },
   {
     id: 7,
+    title: "AI-Powered Fitness Companion",
+    category: "Mobile",
+    description: "Cross-platform mobile app with AI-driven workout planning, real-time form correction, and personalized nutrition tracking.",
+    tech: ["React Native", "TensorFlow Lite", "Firebase", "HealthKit"],
+    gradient: "from-primary via-accent/50 to-secondary",
+    githubUrl: "https://github.com/expo/examples",
+    image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&h=400&fit=crop",
+    featured: true,
+  },
+  {
+    id: 8,
+    title: "Smart Learning Platform",
+    category: "Mobile",
+    description: "Educational app with adaptive learning algorithms, offline capabilities, and gamified progress tracking for K-12 students.",
+    tech: ["Flutter", "Dart", "SQLite", "ML Kit"],
+    gradient: "from-secondary via-primary/50 to-accent",
+    githubUrl: "https://github.com/flutter/samples",
+    image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=600&h=400&fit=crop",
+  },
+  {
+    id: 9,
+    title: "Social Commerce Mobile App",
+    category: "Mobile",
+    description: "E-commerce platform with social features, live streaming shopping, AR product visualization, and AI-powered recommendations.",
+    tech: ["React Native", "Node.js", "MongoDB", "Stripe"],
+    gradient: "from-accent via-primary/50 to-secondary",
+    githubUrl: "https://github.com/invertase/react-native-firebase",
+    image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&h=400&fit=crop",
+  },
+  {
+    id: 10,
+    title: "Healthcare Telemedicine App",
+    category: "Mobile",
+    description: "Secure telemedicine platform with video consultations, prescription management, and integrated health monitoring via wearables.",
+    tech: ["React Native", "WebRTC", "HIPAA Compliant", "Firebase"],
+    gradient: "from-primary via-secondary/50 to-accent",
+    githubUrl: "https://github.com/twilio/twilio-video-app-react-native",
+    image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=600&h=400&fit=crop",
+  },
+  {
+    id: 11,
+    title: "IoT Smart Home Controller",
+    category: "Mobile",
+    description: "Cross-platform app for managing smart home devices with voice commands, automation rules, and energy consumption analytics.",
+    tech: ["Flutter", "MQTT", "SQLite", "Bluetooth LE"],
+    gradient: "from-secondary via-accent/50 to-primary",
+    githubUrl: "https://github.com/fluttercommunity/flutter_bluetooth_serial",
+    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&h=400&fit=crop",
+  },
+  {
+    id: 12,
+    title: "FinTech Payment Wallet",
+    category: "Mobile",
+    description: "Secure digital wallet with biometric authentication, NFC payments, cryptocurrency support, and financial analytics dashboard.",
+    tech: ["React Native", "NFC", "Biometric Auth", "Blockchain"],
+    gradient: "from-accent via-secondary/50 to-primary",
+    githubUrl: "https://github.com/react-native-community/react-native-nfc-manager",
+    image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&h=400&fit=crop&crop=center",
+  },
+  {
+    id: 13,
+    title: "E-Commerce CMS Platform",
+    category: "Full Stack",
+    description: "Custom content management system for e-commerce with multi-vendor support, inventory management, and advanced analytics dashboard.",
+    tech: ["PHP", "Laravel", "MySQL", "Vue.js", "Redis"],
+    gradient: "from-primary via-secondary/50 to-accent",
+    githubUrl: "https://github.com/laravel/framework",
+    image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&h=400&fit=crop&crop=center",
+    featured: true,
+  },
+  {
+    id: 14,
+    title: "Learning Management System",
+    category: "Full Stack",
+    description: "Comprehensive LMS with course creation, student progress tracking, certification system, and interactive learning modules.",
+    tech: ["PHP", "Symfony", "PostgreSQL", "React", "WebRTC"],
+    gradient: "from-secondary via-primary/50 to-accent",
+    githubUrl: "https://github.com/symfony/symfony",
+    image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=600&h=400&fit=crop",
+  },
+  {
+    id: 15,
+    title: "API Gateway & Microservices",
+    category: "Backend",
+    description: "Scalable API gateway managing microservices architecture with rate limiting, authentication, and real-time monitoring.",
+    tech: ["PHP", "Slim Framework", "RabbitMQ", "Docker", "Kubernetes"],
+    gradient: "from-accent via-primary/50 to-secondary",
+    githubUrl: "https://github.com/slimphp/Slim",
+    image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600&h=400&fit=crop",
+  },
+  {
+    id: 16,
     title: "Conversational AI Platform",
     category: "AI/ML",
     description: "Enterprise chatbot framework with multi-language support, sentiment analysis, and CRM integration.",
     tech: ["Rasa", "Python", "PostgreSQL", "Redis"],
     gradient: "from-primary via-secondary/50 to-accent",
+    githubUrl: "https://github.com/RasaHQ/rasa",
     image: "https://images.unsplash.com/photo-1531746790731-6c087fecd65a?w=600&h=400&fit=crop",
   },
   {
-    id: 8,
+    id: 17,
     title: "Document Intelligence System",
     category: "AI/ML",
     description: "Automated document processing with OCR, entity extraction, and intelligent classification for legal documents.",
     tech: ["Tesseract", "spaCy", "FastAPI", "MongoDB"],
     gradient: "from-secondary via-accent/50 to-primary",
+    githubUrl: "https://github.com/Nanonets-OCR-SDK/python-sample",
     image: "https://images.unsplash.com/photo-1568667256549-094345857637?w=600&h=400&fit=crop",
   },
   {
-    id: 9,
+    id: 18,
     title: "Predictive Maintenance IoT",
     category: "AI/ML",
     description: "Machine learning system for predicting equipment failures using sensor data and reducing downtime by 40%.",
     tech: ["TensorFlow", "Apache Spark", "InfluxDB", "Grafana"],
     gradient: "from-accent via-primary/50 to-secondary",
+    githubUrl: "https://github.com/kanishal/influxdb-grafana-docker",
     image: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&h=400&fit=crop",
   },
   {
-    id: 10,
-    title: "E-commerce Recommendation Engine",
-    category: "AI/ML",
-    description: "Personalized product recommendation system increasing conversion rates through collaborative filtering and deep learning.",
-    tech: ["PyTorch", "Redis", "FastAPI", "PostgreSQL"],
+    id: 19,
+    title: "DeFi Yield Farming Platform",
+    category: "Blockchain",
+    description: "Decentralized finance platform with automated yield farming, liquidity mining, and cross-chain asset management with smart contracts.",
+    tech: ["Solidity", "Web3.js", "React", "Ethereum", "IPFS"],
     gradient: "from-primary via-accent/50 to-secondary",
-    image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&h=400&fit=crop",
-  },
-  {
-    id: 11,
-    title: "Microservices Architecture",
-    category: "Full Stack",
-    description: "Complete migration of monolithic application to microservices with service mesh and observability stack.",
-    tech: ["Go", "gRPC", "Istio", "Prometheus"],
-    gradient: "from-secondary via-primary/50 to-accent",
-    image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600&h=400&fit=crop",
-  },
-  {
-    id: 12,
-    title: "Computer Vision Quality Control",
-    category: "AI/ML",
-    description: "Real-time defect detection system for manufacturing with 99.5% accuracy using custom trained models.",
-    tech: ["YOLO", "OpenCV", "TensorRT", "C++"],
-    gradient: "from-accent via-secondary/50 to-primary",
-    image: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&h=400&fit=crop",
+    githubUrl: "https://github.com/OpenZeppelin/openzeppelin-contracts",
+    image: "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=600&h=400&fit=crop",
+    featured: true,
   },
 ];
 
-const categories = ["All", "AI/ML", "Full Stack", "MLOps", "DevOps"];
+const categories = ["All", "AI/ML", "Full Stack", "Mobile", "Backend", "Blockchain", "MLOps", "DevOps"];
 
 const ProjectCard = ({ project, index }: { project: Project; index: number }) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -150,6 +236,7 @@ const ProjectCard = ({ project, index }: { project: Project; index: number }) =>
       transition={{ duration: 0.6, delay: index * 0.05 }}
       className="group relative h-full"
       onMouseEnter={() => setIsHovered(true)}
+      onMouseDown={() => console.log(project.githubUrl)}
       onMouseLeave={() => setIsHovered(false)}
       onMouseMove={handleMouseMove}
     >
@@ -175,14 +262,14 @@ const ProjectCard = ({ project, index }: { project: Project; index: number }) =>
           <motion.div
             className={`absolute inset-0 bg-gradient-to-br ${project.gradient} opacity-0 mix-blend-overlay transition-opacity duration-500 group-hover:opacity-40`}
           />
-          
+
           {/* Category badge - positioned over image */}
           <div className="absolute left-4 top-4 z-20 inline-block rounded-full border border-primary/30 bg-card/80 backdrop-blur-sm px-3 py-1">
             <span className="font-display text-xs tracking-wider text-primary">
               {project.category}
             </span>
           </div>
-          
+
           {project.featured && (
             <div className="absolute right-4 top-4 z-20 rounded-full bg-primary/20 backdrop-blur-sm px-2 py-1">
               <span className="font-display text-[10px] tracking-wider text-primary">FEATURED</span>
@@ -272,7 +359,7 @@ const ProjectsPage = () => {
               ALL <span className="text-neon">PROJECTS</span>
             </h1>
             <p className="mx-auto mt-4 max-w-2xl font-body text-muted-foreground">
-              A comprehensive collection of AI/ML solutions, full-stack applications, and DevOps 
+              A comprehensive collection of AI/ML solutions, full-stack applications, mobile apps, PHP systems, and DevOps
               implementations that demonstrate technical excellence and innovation.
             </p>
           </motion.div>
@@ -288,11 +375,10 @@ const ProjectsPage = () => {
               <button
                 key={category}
                 onClick={() => setActiveCategory(category)}
-                className={`rounded-lg px-4 py-2 font-display text-xs tracking-wider transition-all ${
-                  activeCategory === category
-                    ? "bg-primary text-primary-foreground shadow-neon"
-                    : "border border-border bg-card text-muted-foreground hover:border-primary hover:text-primary"
-                }`}
+                className={`rounded-lg px-4 py-2 font-display text-xs tracking-wider transition-all ${activeCategory === category
+                  ? "bg-primary text-primary-foreground shadow-neon"
+                  : "border border-border bg-card text-muted-foreground hover:border-primary hover:text-primary"
+                  }`}
               >
                 {category}
               </button>
