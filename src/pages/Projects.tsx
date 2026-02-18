@@ -25,7 +25,7 @@ const allProjects: Project[] = [
     tech: ["Python", "LangChain", "Vector DB", "FastAPI"],
     gradient: "from-primary via-primary/50 to-accent",
     image: "https://images.unsplash.com/photo-1689363302902-2c58330d6494?w=600&h=400&fit=crop",
-    githubUrl: "https://github.com/mlsmall/RAG-Application-with-LangChain",
+    githubUrl: "https://github.com/Alpinist051/Neural-RAG-Engine",
     featured: true,
   },
   {
@@ -35,7 +35,7 @@ const allProjects: Project[] = [
     description: "Autonomous agent coordination platform for complex workflow automation with real-time monitoring and self-healing capabilities.",
     tech: ["CrewAI", "OpenAI", "React", "WebSocket"],
     gradient: "from-secondary via-secondary/50 to-accent",
-    githubUrl: "https://github.com/akj2018/Multi-AI-Agent-Systems-with-crewAI",
+    githubUrl: "https://github.com/Alpinist051/Multi-Agent-Orchestrator",
     image: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=600&h=400&fit=crop",
     featured: true,
   },
@@ -46,7 +46,7 @@ const allProjects: Project[] = [
     description: "End-to-end infrastructure for training and deploying custom language models at scale with version control and A/B testing.",
     tech: ["PyTorch", "AWS SageMaker", "Docker", "MLflow"],
     gradient: "from-accent via-accent/50 to-primary",
-    githubUrl: "https://github.com/philschmid/fine-tune-llms-efficiently",
+    githubUrl: "https://github.com/Alpinist051/LLM-Fine-tuning-Pipeline",
     image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600&h=400&fit=crop",
     featured: true,
   },
@@ -57,7 +57,7 @@ const allProjects: Project[] = [
     description: "High-performance dashboard for processing millions of events with sub-second latency and interactive visualizations.",
     tech: ["React", "Node.js", "Kafka", "TimescaleDB"],
     gradient: "from-primary via-accent/50 to-secondary",
-    githubUrl: "https://github.com/getindata/kedro-telemetry",
+    githubUrl: "https://github.com/Alpinist051/Real-time-Analytics-Platform",
     image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&h=400&fit=crop",
   },
   {
@@ -67,7 +67,7 @@ const allProjects: Project[] = [
     description: "Multi-modal content creation system with text, image, and video generation capabilities for marketing teams.",
     tech: ["GPT-4", "DALL-E", "Next.js", "Prisma"],
     gradient: "from-secondary via-primary/50 to-accent",
-    githubUrl: "https://github.com/hwchase17/langchain-hub",
+    githubUrl: "https://github.com/Alpinist051/AI-Content-Generator.git",
     image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=400&fit=crop&crop=entropy",
   },
   {
@@ -77,7 +77,7 @@ const allProjects: Project[] = [
     description: "IaC solution automating entire cloud deployments with AI-driven cost optimization and security compliance.",
     tech: ["Terraform", "Kubernetes", "AWS", "Python"],
     gradient: "from-accent via-secondary/50 to-primary",
-    githubUrl: "https://github.com/bridgecrewio/checkov",
+    githubUrl: "https://github.com/Alpinist051/Cloud-Infrastructure-Automation.git",
     image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=400&fit=crop",
   },
   {
@@ -87,7 +87,7 @@ const allProjects: Project[] = [
     description: "Cross-platform mobile app with AI-driven workout planning, real-time form correction, and personalized nutrition tracking.",
     tech: ["React Native", "TensorFlow Lite", "Firebase", "HealthKit"],
     gradient: "from-primary via-accent/50 to-secondary",
-    githubUrl: "https://github.com/expo/examples",
+    githubUrl: "https://github.com/Alpinist051/AI-Powered-Fitness-Companion.git",
     image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&h=400&fit=crop",
     featured: true,
   },
@@ -98,7 +98,7 @@ const allProjects: Project[] = [
     description: "Educational app with adaptive learning algorithms, offline capabilities, and gamified progress tracking for K-12 students.",
     tech: ["Flutter", "Dart", "SQLite", "ML Kit"],
     gradient: "from-secondary via-primary/50 to-accent",
-    githubUrl: "https://github.com/flutter/samples",
+    githubUrl: "https://github.com/Alpinist051/Smart-Learning-Platform.git",
     image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=600&h=400&fit=crop",
   },
   {
@@ -108,7 +108,7 @@ const allProjects: Project[] = [
     description: "E-commerce platform with social features, live streaming shopping, AR product visualization, and AI-powered recommendations.",
     tech: ["React Native", "Node.js", "MongoDB", "Stripe"],
     gradient: "from-accent via-primary/50 to-secondary",
-    githubUrl: "https://github.com/invertase/react-native-firebase",
+    githubUrl: "https://github.com/Alpinist051/Social-Commerce-Mobile-App",
     image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&h=400&fit=crop",
   },
   {
@@ -118,7 +118,7 @@ const allProjects: Project[] = [
     description: "Secure telemedicine platform with video consultations, prescription management, and integrated health monitoring via wearables.",
     tech: ["React Native", "WebRTC", "HIPAA Compliant", "Firebase"],
     gradient: "from-primary via-secondary/50 to-accent",
-    githubUrl: "https://github.com/twilio/twilio-video-app-react-native",
+    githubUrl: "https://github.com/Alpinist051/Healthcare-Telemedicine-App.git",
     image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=600&h=400&fit=crop",
   },
   {
@@ -128,7 +128,7 @@ const allProjects: Project[] = [
     description: "Cross-platform app for managing smart home devices with voice commands, automation rules, and energy consumption analytics.",
     tech: ["Flutter", "MQTT", "SQLite", "Bluetooth LE"],
     gradient: "from-secondary via-accent/50 to-primary",
-    githubUrl: "https://github.com/fluttercommunity/flutter_bluetooth_serial",
+    githubUrl: "https://github.com/Alpinist051/IoT-Smart-Home-Controller.git",
     image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&h=400&fit=crop",
   },
   {
@@ -138,7 +138,7 @@ const allProjects: Project[] = [
     description: "Secure digital wallet with biometric authentication, NFC payments, cryptocurrency support, and financial analytics dashboard.",
     tech: ["React Native", "NFC", "Biometric Auth", "Blockchain"],
     gradient: "from-accent via-secondary/50 to-primary",
-    githubUrl: "https://github.com/react-native-community/react-native-nfc-manager",
+    githubUrl: "https://github.com/Alpinist051/FinTech-Payment-Wallet.git",
     image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&h=400&fit=crop&crop=center",
   },
   {
@@ -148,7 +148,7 @@ const allProjects: Project[] = [
     description: "Custom content management system for e-commerce with multi-vendor support, inventory management, and advanced analytics dashboard.",
     tech: ["PHP", "Laravel", "MySQL", "Vue.js", "Redis"],
     gradient: "from-primary via-secondary/50 to-accent",
-    githubUrl: "https://github.com/laravel/framework",
+    githubUrl: "https://github.com/Alpinist051/E-Commerce-CMS-Platform.git",
     image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&h=400&fit=crop&crop=center",
     featured: true,
   },
@@ -159,7 +159,7 @@ const allProjects: Project[] = [
     description: "Comprehensive LMS with course creation, student progress tracking, certification system, and interactive learning modules.",
     tech: ["PHP", "Symfony", "PostgreSQL", "React", "WebRTC"],
     gradient: "from-secondary via-primary/50 to-accent",
-    githubUrl: "https://github.com/symfony/symfony",
+    githubUrl: "https://github.com/Alpinist051/Learning-Management-System.git",
     image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=600&h=400&fit=crop",
   },
   {
@@ -169,7 +169,7 @@ const allProjects: Project[] = [
     description: "Scalable API gateway managing microservices architecture with rate limiting, authentication, and real-time monitoring.",
     tech: ["PHP", "Slim Framework", "RabbitMQ", "Docker", "Kubernetes"],
     gradient: "from-accent via-primary/50 to-secondary",
-    githubUrl: "https://github.com/slimphp/Slim",
+    githubUrl: "https://github.com/Alpinist051/API-Gateway-Microservices.git",
     image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600&h=400&fit=crop",
   },
   {
@@ -179,7 +179,7 @@ const allProjects: Project[] = [
     description: "Enterprise chatbot framework with multi-language support, sentiment analysis, and CRM integration.",
     tech: ["Rasa", "Python", "PostgreSQL", "Redis"],
     gradient: "from-primary via-secondary/50 to-accent",
-    githubUrl: "https://github.com/RasaHQ/rasa",
+    githubUrl: "https://github.com/Alpinist051/Conversational-AI-Platform.git",
     image: "https://images.unsplash.com/photo-1531746790731-6c087fecd65a?w=600&h=400&fit=crop",
   },
   {
@@ -189,7 +189,7 @@ const allProjects: Project[] = [
     description: "Automated document processing with OCR, entity extraction, and intelligent classification for legal documents.",
     tech: ["Tesseract", "spaCy", "FastAPI", "MongoDB"],
     gradient: "from-secondary via-accent/50 to-primary",
-    githubUrl: "https://github.com/Nanonets-OCR-SDK/python-sample",
+    githubUrl: "https://github.com/Alpinist051/Document-Intelligence-System.git",
     image: "https://images.unsplash.com/photo-1568667256549-094345857637?w=600&h=400&fit=crop",
   },
   {
@@ -199,7 +199,7 @@ const allProjects: Project[] = [
     description: "Machine learning system for predicting equipment failures using sensor data and reducing downtime by 40%.",
     tech: ["TensorFlow", "Apache Spark", "InfluxDB", "Grafana"],
     gradient: "from-accent via-primary/50 to-secondary",
-    githubUrl: "https://github.com/kanishal/influxdb-grafana-docker",
+    githubUrl: "https://github.com/Alpinist051/Predictive-Maintenance-IoT.git",
     image: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&h=400&fit=crop",
   },
   {
@@ -209,7 +209,7 @@ const allProjects: Project[] = [
     description: "Decentralized finance platform with automated yield farming, liquidity mining, and cross-chain asset management with smart contracts.",
     tech: ["Solidity", "Web3.js", "React", "Ethereum", "IPFS"],
     gradient: "from-primary via-accent/50 to-secondary",
-    githubUrl: "https://github.com/OpenZeppelin/openzeppelin-contracts",
+    githubUrl: "https://github.com/Alpinist051/DeFi-Yield-Farming-Platform.git",
     image: "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=600&h=400&fit=crop",
     featured: true,
   },
@@ -230,15 +230,17 @@ const ProjectCard = ({ project, index }: { project: Project; index: number }) =>
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 50 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, delay: index * 0.05 }}
-      className="group relative h-full"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseDown={() => console.log(project.githubUrl)}
-      onMouseLeave={() => setIsHovered(false)}
-      onMouseMove={handleMouseMove}
+<motion.div
+  initial={{ opacity: 0, y: 50 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.6, delay: index * 0.05 }}
+  className="group relative h-full"
+  onMouseEnter={() => setIsHovered(true)}
+  onMouseDown={() => {
+    window.open(project.githubUrl, '_blank', 'noopener,noreferrer')
+  }}
+  onMouseLeave={() => setIsHovered(false)}
+  onMouseMove={handleMouseMove}
     >
       <motion.div
         animate={{
