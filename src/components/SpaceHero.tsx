@@ -178,7 +178,6 @@ const SpaceHero = () => {
           transition={{ delay: 2.8, duration: 1.2 }}
         >
           <span className="text-sm font-mono tracking-[0.35em] uppercase text-cyan-300/55">Scroll to explore</span>
-
           <motion.div
             className="w-1.5 h-10 rounded-full bg-gradient-to-b from-cyan-400/55 to-transparent"
             animate={{ scaleY: [0.6, 1.25, 0.6], opacity: [0.55, 0.9, 0.55] }}
