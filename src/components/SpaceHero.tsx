@@ -28,7 +28,7 @@ const SpaceHero = () => {
   return (
     <section
       className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden"
-      style={{ backgroundColor: "#030014" }}
+      style={{ backgroundColor: "#020013" }}
     >
       {/* Subtle breathing background */}
       <motion.div
