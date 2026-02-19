@@ -23,7 +23,7 @@ const Navigation = () => {
     { href: "#certifications", label: "CERTS", isPage: false },
     { href: "#contact", label: "CONTACT", isPage: false },
     { href: "/platform", label: "PLATFORM", isPage: true },
-    { href: "/lipsync", label: "LIPSYNC", isPage: true },
+    // { href: "/lipsync", label: "LIPSYNC", isPage: true },
   ];
 
   const handleNavClick = (item: { href: string; label: string; isPage: boolean }) => {
