@@ -34,7 +34,7 @@ const SpaceHero = () => {
       <motion.div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: "radial-gradient(circle at 50% 30%, rgba(30,60,120,0.10) 0%, transparent 65%)",
+          background: "radial-gradient(circle at 50% 30%, #020013 0%, transparent 65%)",
         }}
         animate={{ opacity: [0.5, 0.75, 0.5] }}
         transition={{ duration: 13, repeat: Infinity, repeatType: "reverse" }}
